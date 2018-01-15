@@ -20,7 +20,7 @@ const Client = function() {
   this.version = null;
   this.creds = null;
 
-  this.name = "HODL";
+  this.exchange = "HODL";
 
   this.getUserInfo = async function() {
     return new Response();

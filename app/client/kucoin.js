@@ -37,7 +37,7 @@ let Client = function() {
   this.host = config.kucoin_api_host;
   this.creds = {key:config.kucoin_api_key, secret:config.kucoin_api_secret};
   this.version = config.kucoin_api_version;
-  this.name = "Kucoin";
+  this.exchange = "Kucoin";
 
   this.getUserInfo = async function() {
     return this.request(GET, "user/info", {});
