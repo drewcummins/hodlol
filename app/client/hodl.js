@@ -30,7 +30,7 @@ const Client = function() {
     return new Response();
   }
 
-  this.withdraw = async function(symbol, amount) {
+  this.withdraw = async function(symbol, amount, targetAddress) {
     return new Response();
   }
 
