@@ -6,7 +6,7 @@ const config = require('../../config');
 let Response = function() {
   HODL.Response.call(this);
 
-  this.setHTTPResponse = function(response) {
+  this.setHTTPResponse = (response) => {
     try {
       this.statusCode = response.statusCode;
       this.body = JSON.parse(response.body);
@@ -18,7 +18,7 @@ let Response = function() {
     }
   }
 
-  this.setHTTPErrorResponse = function(err) {
+  this.setHTTPErrorResponse = (err) => {
     this.success = false;
     this.statusCode = err.statusCode;
     this.body = JSON.parse(err.body);
@@ -39,71 +39,71 @@ let Client = function() {
   this.version = config.kucoin_api_version;
   this.exchange = "Kucoin";
 
-  this.getUserInfo = async function() {
+  this.getUserInfo = async () => {
     return this.request(GET, "user/info", {});
   }
 
-  this.getDepositAddress = async function(symbol) {
+  this.getDepositAddress = async (symbol) => {
     return this.request(GET, "account/" + symbol + "/wallet/address", {});
   }
 
-  this.getBalance = async function(symbol) {
+  this.getBalance = async (symbol) => {
     return this.request(GET, "account/" + symbol + "/balance", {});
   }
 
-  this.getTicker = async function(pair) {
+  this.getTicker = async (pair) => {
     return this.request(GET, "open/tick", {symbol: pair}, false);
   }
 
-  this.getOrderBook = async function(pair) {
+  this.getOrderBook = async (pair) => {
     return this.request(GET, "open/orders", {symbol: pair}, false);
   }
 
-  this.getMarkets = async function() {
+  this.getMarkets = async () => {
     return this.request(GET, "open/markets", {}, false);
   }
 
-  this.getSymbols = async function(market, callback, errorCallback) {
+  this.getSymbols = async (market) => {
     return this.request(GET, "open/symbols", {}, false);
   }
 
-  this.addFavoriteSymbol = async function(pair) {
+  this.addFavoriteSymbol = async (pair) => {
     return this.request(POST, "market/symbol/fav", {symbol: pair, fav: 1});
   }
 
-  this.deleteFavoriteSymbol = async function(pair) {
+  this.deleteFavoriteSymbol = async (pair) => {
     return this.request(POST, "market/symbol/fav", {symbol: pair, fav: 0});
   }
 
-  this.createBuyOrder = async function(pair, price, amount) {
+  this.createBuyOrder = async (pair, price, amount) => {
     var req = {symbol:pair, price:price, amount:amount, type:BUY};
     return this.request(POST, "order", req);
   }
 
-  this.createSellOrder = async function(pair, price, amount) {
+  this.createSellOrder = async (pair, price, amount) => {
     var req = {symbol:pair, price:price, amount:amount, type:SELL};
     return this.request(POST, "order", req);
   }
 
-  this.cancelBuyOrder = async function(pair, orderID) {
+  this.cancelBuyOrder = async (pair, orderID) => {
     return this.request(POST, "cancel-order", {symbol:pair, orderOid:orderID, type:BUY});
   }
 
-  this.cancelSellOrder = async function(pair, orderID) {
+  this.cancelSellOrder = async (pair, orderID) => {
     return this.request(POST, "cancel-order", {symbol:pair, orderOid:orderID, type:SELL});
   }
 
-  this.getBuyOrderDetails = async function(pair, orderID) {
+  this.getBuyOrderDetails = async (pair, orderID) => {
     return this.request(GET, "order/detail", {symbol: pair, orderOid: orderID, type:BUY});
   }
 
-  this.getSellOrderDetails = async function(pair, orderID) {
+  this.getSellOrderDetails = async (pair, orderID) => {
     return this.request(GET, "order/detail", {symbol: pair, orderOid: orderID, type:SELL});
   }
 
 
 
-  this.sign = function(endpoint, timestamp, params) {
+  this.sign = (endpoint, timestamp, params) => {
     var raw = "/" + this.version + "/" + endpoint + "/" + timestamp + "/" + params;
     var utf8 = CryptoJS.enc.Utf8.parse(raw);
     var b64 = CryptoJS.enc.Base64.stringify(utf8);
@@ -111,7 +111,7 @@ let Client = function() {
     return CryptoJS.HmacSHA256(b64, secret).toString(CryptoJS.enc.Hex);
   }
 
-  this.request = async function(method, endpoint, params, requireSignature=true) {
+  this.request = async (method, endpoint, params, requireSignature=true) => {
     const query = this.getQueryParamString(params);
 
     var options = {

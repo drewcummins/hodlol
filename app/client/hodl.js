@@ -5,11 +5,11 @@ const Response = function() {
   this.statusCode = -1;
   this.success = false;
 
-  this.setHTTPResponse = function(response) {
+  this.setHTTPResponse = (response) => {
     //
   }
 
-  this.setHTTPErrorResponse = function(err) {
+  this.setHTTPErrorResponse = (err) => {
     this.success = false;
   }
 }
@@ -22,65 +22,65 @@ const Client = function() {
 
   this.exchange = "HODL";
 
-  this.getUserInfo = async function() {
+  this.getUserInfo = async () => {
     return new Response();
   }
 
-  this.getDepositAddress = async function(symbol) {
+  this.getDepositAddress = async (symbol) => {
     return new Response();
   }
 
-  this.withdraw = async function(symbol, amount, targetAddress) {
+  this.withdraw = async (symbol, amount, targetAddress) => {
     return new Response();
   }
 
-  this.getBalance = async function(symbol) {
+  this.getBalance = async (symbol) => {
     return new Response();
   }
 
-  this.getTicker = async function(pair) {
+  this.getTicker = async (pair) => {
     return new Response();
   }
 
-  this.getOrderBook = async function(pair) {
+  this.getOrderBook = async (pair) => {
     return new Response();
   }
 
-  this.getMarkets = async function() {
+  this.getMarkets = async () => {
     return new Response();
   }
 
-  this.getSymbols = async function(market) {
+  this.getSymbols = async (market) => {
     return new Response();
   }
 
-  this.createBuyOrder = async function(pair, price, amount) {
+  this.createBuyOrder = async (pair, price, amount) => {
     return new Response();
   }
 
-  this.createSellOrder = async function(pair, price, amount) {
+  this.createSellOrder = async (pair, price, amount) => {
     return new Response();
   }
 
-  this.cancelBuyOrder = async function(pair, orderID) {
+  this.cancelBuyOrder = async (pair, orderID) => {
     return new Response();
   }
 
-  this.cancelSellOrder = async function(pair, orderID) {
+  this.cancelSellOrder = async (pair, orderID) => {
     return new Response();
   }
 
-  this.getBuyOrderDetails = async function(pair, orderID) {
+  this.getBuyOrderDetails = async (pair, orderID) => {
     return new Response();
   }
 
-  this.getSellOrderDetails = async function(pair, orderID) {
+  this.getSellOrderDetails = async (pair, orderID) => {
     return new Response();
   }
 
 
 
-  this.getQueryParamString = function(params) {
+  this.getQueryParamString = (params) => {
     var query = [];
     for (const param in params) {
       query.push(param + "=" + params[param]);
