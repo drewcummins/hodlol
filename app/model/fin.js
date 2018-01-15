@@ -75,17 +75,27 @@ function Portfolio() {
       throw new Error("Asset already belongs to portfolio", portfolio.id);
     }
     asset.portfolioID = this.id;
-    if (!this.assets[asset.symbol]) {
-      this.assets[asset.symbol] = {};
+
+    let quote = this.assets[asset.pair.quote];
+    if (!quote) {
+      quote = this.assets[asset.pair.quote] = {};
     }
-    this.assets[asset.symbol][asset.id] = asset;
+
+    let base = quote[asset.pair.base];
+    if (!base) {
+      base = quote[asset.pair.base] = {};
+    }
+
+    base[asset.id] = asset;
   }
 
   this.removeAsset = (asset) => {
-    if (this.assets[asset.symbol]) {
-      if (this.assets[asset.symbol][asset.id]) {
-        this.assets[asset.symbol][asset.id].portfolioID = null;
-        delete this.assets[asset.symbol][asset.id];
+    let quote = this.assets[asset.pair.quote];
+    if (quote) {
+      let base = quote[asset.pair.base];
+      if (base && base[asset.id]) {
+        base[asset.id].portfolioID = null;
+        delete base[asset.id];
         return true;
       }
     }
@@ -94,12 +104,17 @@ function Portfolio() {
 
   this.assetList = () => {
     let all = [];
-    for (var symbol in this.assets) {
-      if (this.assets.hasOwnProperty(symbol)) {
-        let a = this.assets[symbol];
-        for (var assetID in a) {
-          if (a.hasOwnProperty(assetID)) {
-            all.push(a[assetID]);
+    for (var quote in this.assets) {
+      if (this.assets.hasOwnProperty(quote)) {
+        let q = this.assets[quote];
+        for (var base in q) {
+          if (q.hasOwnProperty(base)) {
+            let b = q[base];
+            for (var assetID in b) {
+              if (b.hasOwnProperty(assetID)) {
+                all.push(b[assetID]);
+              }
+            }
           }
         }
       }
@@ -107,19 +122,46 @@ function Portfolio() {
     return all;
   }
 
-  this.reduce = (func) => {
-    const all = this.assetList();
-    return all.reduce((mem, asset) => mem + asset[func]());
+  this.assetHash = () => {
+    let all = {};
+    for (var quote in this.assets) {
+      if (this.assets.hasOwnProperty(quote)) {
+        if (!all[quote]) {
+          all[quote] = [];
+        }
+        let q = this.assets[quote];
+        for (var base in q) {
+          if (q.hasOwnProperty(base)) {
+            let b = q[base];
+            for (var assetID in b) {
+              if (b.hasOwnProperty(assetID)) {
+                all[quote].push(b[assetID]);
+              }
+            }
+          }
+        }
+      }
+    }
+    return all;
+  }
+
+  this.reduce = (lambda, init=0) => {
+    const all = this.assetHash();
+    let out = {};
+    for (var quote in all) {
+      if (all.hasOwnProperty(quote)) {
+        out[quote] = all[quote].reduce(lambda, init);
+      }
+    }
+    return out;
   }
 
   this.initialValue = () => {
-    const all = this.assetList();
-    return all.reduce((mem, asset) => mem + asset.initialValue());
+    return this.reduce((mem, asset) => mem + asset.initialValue());
   }
 
   this.currentValue = () => {
-    const all = this.assetList();
-    return all.reduce((mem, asset) => mem + asset.currentValue());
+    return this.reduce((mem, asset) => mem + asset.currentValue());
   }
 }
 
