@@ -163,6 +163,20 @@ function Portfolio() {
   this.currentValue = () => {
     return this.reduce((mem, asset) => mem + asset.currentValue());
   }
+
+  this.currentGrowth = () => {
+    const init = this.initialValue();
+    const curr = this.currentValue();
+    let growth = {};
+    for (var quote in curr) {
+      growth[quote] = curr[quote] / init[quote];
+    }
+    return growth;
+  }
+
+  this.numAssets = () => {
+    return this.assetList().length;
+  }
 }
 
 
