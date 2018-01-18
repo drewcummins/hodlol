@@ -1,10 +1,18 @@
 'use strict';
-const ccxt = require ('ccxt');
+const ccxt = require('ccxt');
+const config = require('./config');
+const fin = require('./app/model/fin');
+const Trader = require('./app/model/trader');
 
 (async () => {
-    let kraken = new ccxt.kraken();
-    let markets = await kraken.loadMarkets();
-    console.log(kraken.id, markets);
+    let binance = new ccxt.binance({
+      apiKey: config.binance_api_key,
+      secret: config.binance_api_secret,
+      enableRateLimit: true
+    });
+    let trader = new Trader(binance, 'BTC', 0.00001);
+    await trader.connect();
+    await trader.spoolFeeds(['ETH/BTC', 'LTC/BTC', 'XMR/BTC']);
 })();
 
 

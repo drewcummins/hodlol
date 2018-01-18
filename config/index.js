@@ -2,10 +2,11 @@
 require('dotenv').config({path: `./env/${process.env.NODE_ENV}.env`});
 
 const config = {
-  kucoin_api_host: process.env.KUCOIN_API_HOST,
   kucoin_api_key: process.env.KUCOIN_API_KEY,
   kucoin_api_secret: process.env.KUCOIN_API_SECRET,
-  kucoin_api_version: process.env.KUCOIN_API_VERSION
+
+  binance_api_key: process.env.BINANCE_API_KEY,
+  binance_api_secret: process.env.BINANCE_API_SECRET
 };
 
 module.exports = config;

@@ -24,7 +24,17 @@ describe('Binance.fetchOHLCV()', function() {
       const mappedMarket = marketMap.getMarket(base, quote);
       const symbol = mappedMarket.symbol;
       const ohlcv = await binance.fetchOHLCV(symbol, period);
-      console.log(ohlcv);
+      expect(ohlcv).to.be.a('array');
+      expect(ohlcv.length).to.be.gt(0);
+      const lc = ohlcv[ohlcv.length-1]; // last candlestick
+      expect(lc).to.be.a('array');
+      expect(lc.length).to.equal(6);
+      expect(lc[0]).to.be.a('number');
+      expect(lc[1]).to.be.a('number');
+      expect(lc[2]).to.be.a('number');
+      expect(lc[3]).to.be.a('number');
+      expect(lc[4]).to.be.a('number');
+      expect(lc[5]).to.be.a('number');
       return Promise.resolve()
       .then(nockDone);
     });
@@ -43,7 +53,17 @@ describe('Bittrex.fetchOHLCV()', function() {
       const mappedMarket = marketMap.getMarket(base, quote);
       const symbol = mappedMarket.symbol;
       const ohlcv = await bittrex.fetchOHLCV(symbol, period);
-      console.log(ohlcv);
+      expect(ohlcv).to.be.a('array');
+      expect(ohlcv.length).to.be.gt(0);
+      const lc = ohlcv[ohlcv.length-1]; // last candlestick
+      expect(lc).to.be.a('array');
+      expect(lc.length).to.equal(6);
+      expect(lc[0]).to.be.a('number');
+      expect(lc[1]).to.be.a('number');
+      expect(lc[2]).to.be.a('number');
+      expect(lc[3]).to.be.a('number');
+      expect(lc[4]).to.be.a('number');
+      expect(lc[5]).to.be.a('number');
       return Promise.resolve()
       .then(nockDone);
     });
