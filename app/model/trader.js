@@ -15,9 +15,6 @@ class Trader {
   async connect() {
     this.markets = await this.exchange.loadMarkets();
     this.marketMap = xu.buildBaseQuoteSymbolMap(this.markets);
-    // console.log(this.marketMap.getMarket(this.fundSymbol, 'BTC'));
-    // return;
-    await xu.sleep(500);
     const balances = await this.exchange.fetchBalance();
     let hasSufficientFunds = false;
     if (balances && balances[this.fundSymbol]) {
@@ -29,8 +26,6 @@ class Trader {
       throw new Error("Insufficient funds.");
     }
     console.log('Trader connected to', this.exchange.name, 'with', this.fund, this.fundSymbol);
-    this.portfolio = new fin.Portfolio();
-    // const asset = new fin.Asset();
   }
 
   spoolFeeds(tickers) {
@@ -53,7 +48,6 @@ class Trader {
         const portfolio = this.portfolios[strategy.id] = new fin.Portfolio();
         const market = this.marketMap.getMarket(this.fundSymbol, quote);
         const ticker = await this.exchange.fetchTicker(market.symbol);
-
         const pair = new fin.Pair(this.fundSymbol, quote, ticker);
         const asset = new fin.Asset(pair, amount);
         portfolio.addAsset(asset);
