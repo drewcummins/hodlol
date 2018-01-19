@@ -29,7 +29,6 @@ class Trader {
   }
 
   spoolFeeds(tickers) {
-    var t1 = null;
     tickers.forEach((symbol) => {
       let ticker = new Ticker(this.exchange, symbol);
       this.feeds.tickers[symbol] = ticker;
