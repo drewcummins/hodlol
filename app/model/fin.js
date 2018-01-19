@@ -4,73 +4,89 @@ const uuid = require('uuid/v4');
 
 
 
-function Price(price, timestamp) {
-  this.x = price;
-  this.t = timestamp;
+class Price {
+  constructor(price, timestamp) {
+    this.x = price;
+    this.t = timestamp;
+  }
+  static priceFromTicker(ticker) {
+    return new Price(ticker.ask, ticker.timestamp);
+  }
 }
 
 
 
-function Pair(base, quote) {
-  this.base = base;
-  this.quote = quote;
-  this.prices = [];
-  this.symbol = () => {
+class Pair {
+  constructor(base, quote, ticker=null) {
+    this.base = base;
+    this.quote = quote;
+    this.prices = [];
+    if (ticker) {
+      this.push(Price.priceFromTicker(ticker));
+    }
+  }
+  symbol() {
     return `${this.base}-${this.quote}`;
   }
-  this.push = (price) => {
+  push(price) {
     this.prices.push(price);
   }
-  this.currentPrice = () => {
+  currentPrice() {
     return this.prices[this.prices.length - 1];
   }
 }
 
 
 
-function Asset(pair, price, amount, timestamp) {
-  this.id = uuid();
-  this.pair = pair;
-  this.symbol = pair.symbol();
-  this.paid = new Price(price, timestamp);
-  this.amount = amount;
-  this.portfolioID = null; // just to be explicit
-  this.initialValue = () => {
+class Asset {
+  constructor(pair, amount) {
+    this.id = uuid();
+    this.pair = pair;
+    this.symbol = pair.symbol();
+    this.paid = pair.currentPrice();
+    this.amount = amount;
+    this.portfolioID = null; // just to be explicit
+    this.pending = false;
+    this.pendingOrderID = null;
+  }
+  initialValue() {
     return this.paid.x * this.amount;
   }
-  this.currentValue = () => {
+  currentValue() {
     const current = this.pair.currentPrice();
     return current.x * this.amount;
   }
-  this.currentDelta = () => {
+  currentDelta() {
     const current = this.pair.currentPrice();
     return current.x - this.paid.x;
   }
-  this.currentGrowth = () => {
+  currentGrowth() {
     const current = this.pair.currentPrice();
     return current.x/this.paid.x;
   }
-  this.valueAtPrice = (price) => {
+  valueAtPrice(price) {
     return price.x * this.amount;
   }
-  this.deltaAtPrice = (price) => {
+  deltaAtPrice(price) {
     return price.x - this.paid.x;
   }
-  this.growthAtPrice = (price) => {
+  growthAtPrice(price) {
     return price.x/this.paid.x;
   }
-  this.duration = () => {
+  duration() {
     return + new Date() - this.paid.t;
   }
 }
 
 
 
-function Portfolio() {
-  this.id = uuid();
-  this.assets = {};
+class Portfolio {
+  constructor() {
+    this.id = uuid();
+    this.assets = {};
+  }
 
-  this.addAsset = (asset) => {
+  addAsset(asset) {
     if (asset.portfolioID != null) {
       throw new Error("Asset already belongs to portfolio", portfolio.id);
     }
@@ -89,7 +105,7 @@ function Portfolio() {
     base[asset.id] = asset;
   }
 
-  this.removeAsset = (asset) => {
+  removeAsset(asset) {
     let quote = this.assets[asset.pair.quote];
     if (quote) {
       let base = quote[asset.pair.base];
@@ -102,7 +118,7 @@ function Portfolio() {
     return false;
   }
 
-  this.assetList = () => {
+  assetList() {
     let all = [];
     for (var quote in this.assets) {
       if (this.assets.hasOwnProperty(quote)) {
@@ -122,7 +138,7 @@ function Portfolio() {
     return all;
   }
 
-  this.assetHash = () => {
+  assetHash() {
     let all = {};
     for (var quote in this.assets) {
       if (this.assets.hasOwnProperty(quote)) {
@@ -145,7 +161,7 @@ function Portfolio() {
     return all;
   }
 
-  this.reduce = (lambda, init=0) => {
+  reduce(lambda, init=0) {
     const all = this.assetHash();
     let out = {};
     for (var quote in all) {
@@ -156,15 +172,15 @@ function Portfolio() {
     return out;
   }
 
-  this.initialValue = () => {
+  initialValue() {
     return this.reduce((mem, asset) => mem + asset.initialValue());
   }
 
-  this.currentValue = () => {
+  currentValue() {
     return this.reduce((mem, asset) => mem + asset.currentValue());
   }
 
-  this.currentGrowth = () => {
+  currentGrowth() {
     const init = this.initialValue();
     const curr = this.currentValue();
     let growth = {};
@@ -174,7 +190,7 @@ function Portfolio() {
     return growth;
   }
 
-  this.numAssets = () => {
+  numAssets() {
     return this.assetList().length;
   }
 }

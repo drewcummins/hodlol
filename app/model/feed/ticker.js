@@ -10,13 +10,14 @@ class Ticker {
   constructor(exchange, market) {
     this.exchange = exchange;
     this.market = market;
+    this.ticks = [];
   }
 
   async run() {
     const exchange = this.exchange;
     while (true) {
       const ticker = await exchange.fetchTicker(this.market);
-      console.log(ticker);
+      this.ticks.push(ticker);
       await xu.sleep(3000);
     }
   }
