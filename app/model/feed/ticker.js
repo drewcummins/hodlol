@@ -22,6 +22,21 @@ class Ticker {
     }
   }
 
+  length() {
+    return this.ticks.length;
+  }
+
+  getAt(idx) {
+    if (idx < 0) {
+      idx = this.length() + idx;
+    }
+    return this.ticks[idx];
+  }
+
+  last() {
+    return this.ticks[this.length() - 1];
+  }
+
 }
 
 module.exports = Ticker;

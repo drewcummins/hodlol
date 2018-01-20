@@ -3,7 +3,9 @@ const ccxt = require('ccxt');
 const config = require('./config');
 const fin = require('./app/model/fin');
 const Trader = require('./app/model/trader');
-const Strategy = require('./app/model/strategy');
+// const Strategy = require('./app/model/strategy');
+const BuyOnDip = require('./app/model/strategy/buy-on-dip');
+
 
 (async () => {
     let binance = new ccxt.binance({
@@ -13,10 +15,11 @@ const Strategy = require('./app/model/strategy');
     });
     let trader = new Trader(binance, 'BTC', 0.00001);
     await trader.connect();
-    // trader.spoolFeeds(['ETH/BTC', 'LTC/BTC', 'XMR/BTC']);
-    let strat = new Strategy();
+    trader.spoolFeeds(['ETH/BTC', 'LTC/BTC', 'XMR/BTC']);
+    // let strat = new Strategy();
+    const strat = new BuyOnDip();
     trader.initStrategies([strat], 'USDT');
-    // trader.getToWork();
+    trader.getToWork();
 
 })();
 

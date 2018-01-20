@@ -43,7 +43,7 @@ class Trader {
     this.strategies.forEach(async (strategy) => {
       const amount = this.fund * strategy.weight / sum;
       if (amount > 0) {
-        strategy.register(this.fundSymbol, amount, this.handleStrategyRequest);
+        strategy.register(this.fundSymbol, amount, this.handleStrategyRequest, this.feeds);
         const portfolio = this.portfolios[strategy.id] = new fin.Portfolio();
         const market = this.marketMap.getMarket(this.fundSymbol, quote);
         const ticker = await this.exchange.fetchTicker(market.symbol);
@@ -55,7 +55,7 @@ class Trader {
   }
 
   handleStrategyRequest(request) {
-
+    console.log("Got a request!", request);
   }
 
   sumWeight() {
@@ -63,7 +63,12 @@ class Trader {
   }
 
   async getToWork() {
-
+    while (true) {
+      await xu.sleep(100);
+      this.strategies.forEach(async (strategy) => {
+        strategy.tick();
+      });
+    }
   }
 }
 
