@@ -86,6 +86,10 @@ class Portfolio {
     this.assets = {};
   }
 
+  join() {
+    
+  }
+
   addAsset(asset) {
     if (asset.portfolioID != null) {
       throw new Error("Asset already belongs to portfolio", portfolio.id);
@@ -136,6 +140,15 @@ class Portfolio {
       }
     }
     return all;
+  }
+
+  balance(quote, base) {
+    let hash = this.assetHash();
+    if (hash[quote]) {
+      let assets = hash[quote];
+      return assets.reduce((mem, asset) => asset.pair.base == base ? mem + asset.amount : 0, 0);
+    }
+    return 0;
   }
 
   assetHash() {

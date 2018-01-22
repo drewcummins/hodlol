@@ -22,6 +22,7 @@ class Strategy {
     this.weight = weight;
     this.id = uuid();
     this.signals = [];
+    this.portfolio = null;
   }
 
   register(fundSymbol, fundAmount, requestHandler, feeds) {
@@ -33,7 +34,7 @@ class Strategy {
   }
 
   initSignals(feeds) {
-    //
+    // 
   }
 
   tick() {

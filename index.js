@@ -4,7 +4,7 @@ const config = require('./config');
 const fin = require('./app/model/fin');
 const Trader = require('./app/model/trader');
 // const Strategy = require('./app/model/strategy');
-const BuyOnDip = require('./app/model/strategy/buy-on-dip');
+const BuyDipSellPeak = require('./app/model/strategy/buy-dip-sell-peak');
 
 
 (async () => {
@@ -13,11 +13,11 @@ const BuyOnDip = require('./app/model/strategy/buy-on-dip');
       secret: config.binance_api_secret,
       enableRateLimit: true
     });
-    let trader = new Trader(binance, 'BTC', 0.00001);
+    let trader = new Trader(binance, 'BTC', 0.01);
     await trader.connect();
     trader.spoolFeeds(['ETH/BTC', 'LTC/BTC', 'XMR/BTC']);
     // let strat = new Strategy();
-    const strat = new BuyOnDip();
+    const strat = new BuyDipSellPeak(0.0001);
     trader.initStrategies([strat], 'USDT');
     trader.getToWork();
 

@@ -3,6 +3,7 @@
 var fin = require('./fin');
 var xu = require('../util/exchange-util');
 const Ticker = require('./feed/ticker');
+const strat = require('./strategy')
 
 class Trader {
   constructor(exchange, fundSymbol, fundAmount) {
@@ -43,19 +44,36 @@ class Trader {
     this.strategies.forEach(async (strategy) => {
       const amount = this.fund * strategy.weight / sum;
       if (amount > 0) {
-        strategy.register(this.fundSymbol, amount, this.handleStrategyRequest, this.feeds);
-        const portfolio = this.portfolios[strategy.id] = new fin.Portfolio();
+        strategy.register(this.fundSymbol, amount, this.handleStrategyRequest.bind(this), this.feeds);
+        strategy.portfolio = this.portfolios[strategy.id] = new fin.Portfolio();
         const market = this.marketMap.getMarket(this.fundSymbol, quote);
         const ticker = await this.exchange.fetchTicker(market.symbol);
         const pair = new fin.Pair(this.fundSymbol, quote, ticker);
         const asset = new fin.Asset(pair, amount);
-        portfolio.addAsset(asset);
+        strategy.portfolio.addAsset(asset);
+        this.pool = asset;
       }
     })
   }
 
   handleStrategyRequest(request) {
-    console.log("Got a request!", request);
+    if (request.type == strat.REQ_LIMIT_BUY) {
+      console.log("Got buy order request!", request);
+      const market = this.markets[request.market];
+      const fee = market.taker * request.amount * request.price;
+
+      const pair = new fin.Pair(market.base, market.quote);
+      const price = new fin.Price(request.price, + new Date());
+      pair.push(price);
+      const asset = new fin.Asset(pair, request.amount);
+      let s = this.strategies[0];
+      s.portfolio.addAsset(asset);
+      s.portfolio.removeAsset(this.pool);
+      this.pool == null;
+    } else {
+      console.log("Got SELL order request!!!", request);
+    }
+    // console.log("Got a request!", request);
   }
 
   sumWeight() {
