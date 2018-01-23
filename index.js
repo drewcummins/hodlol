@@ -3,6 +3,7 @@ const ccxt = require('ccxt');
 const config = require('./config');
 const fin = require('./app/model/fin');
 const Trader = require('./app/model/trader');
+const model = require('./app/model');
 // const Strategy = require('./app/model/strategy');
 const BuyDipSellPeak = require('./app/model/strategy/buy-dip-sell-peak');
 
@@ -13,13 +14,24 @@ const BuyDipSellPeak = require('./app/model/strategy/buy-dip-sell-peak');
       secret: config.binance_api_secret,
       enableRateLimit: true
     });
-    let trader = new Trader(binance, 'BTC', 0.01);
-    await trader.connect();
-    trader.spoolFeeds(['ETH/BTC', 'LTC/BTC', 'XMR/BTC']);
-    // let strat = new Strategy();
-    const strat = new BuyDipSellPeak(0.0001);
-    trader.initStrategies([strat], 'USDT');
-    trader.getToWork();
+
+    let markets = await binance.loadMarkets();
+    let exchange = new model.Exchange(markets);
+    let portfolio = new model.Portfolio(exchange);
+
+    console.log(exchange.path("XMR", "USDT"));
+
+    // let market = exchange.baseQuote("QTUM", "BTC");
+    // portfolio.add(market.symbol, 500);
+    // console.log(portfolio);
+    // console.log(market);
+    // let trader = new Trader(binance, 'BTC', 0.01);
+    // await trader.connect();
+    // trader.spoolFeeds(['ETH/BTC', 'LTC/BTC', 'XMR/BTC']);
+    // // let strat = new Strategy();
+    // const strat = new BuyDipSellPeak(0.0001);
+    // trader.initStrategies([strat], 'USDT');
+    // trader.getToWork();
 
 })();
 

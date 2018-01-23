@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports.buildBaseQuoteSymbolMap = (markets) => {
+  console.log(markets);
   let map = {};
   for (const symbol in markets) {
     if (markets.hasOwnProperty(symbol)) {
