@@ -30,11 +30,6 @@ class Exchange {
       }
     }
   }
-  static async ExchangeFromAPI(api) {
-    let exchange = new Exchange(api);
-    await exchange.init();
-    return exchange;
-  }
 
   // Gets market for @symbol
   // e.g. XMR/BTC
@@ -105,6 +100,12 @@ class Exchange {
     return path;
   }
 
+
+  static async FromAPI(api) {
+    let exchange = new Exchange(api);
+    await exchange.init();
+    return exchange;
+  }
 }
 
 class Portfolio {
@@ -125,8 +126,32 @@ class Portfolio {
     this.add(symbol, -amount);
   }
 
-  value() {
-    return this.balances;
+  balance(symbol) {
+    if (!this.balances[symbol]) return 0;
+    return this.balances[symbol];
+  }
+
+  balanceByMarket(symbol, side="quote") {
+    let market = this.exchange.sym(symbol);
+    if (!market) return 0;
+    return this.balance(market[side]);
+  }
+
+  async value(quote='USDT') {
+    let value = {total: 0};
+    for (var base in this.balances) {
+      if (base == quote) {
+        value.total += this.balances[base];
+        value[base] = this.balances[base];
+        continue;
+      }
+      let rate = await this.exchange.price(base, quote);
+      value[base] = rate * this.balances[base];
+      value.total += value[base];
+      value[base] += ` ${quote}`;
+    }
+    value.total += ` ${quote}`;
+    return value;
   }
 }
 

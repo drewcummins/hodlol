@@ -14,22 +14,26 @@ class OrderRequest {
     this.amount = amount;
     this.price = price;
   }
+
+  cost() {
+    return this.amount * this.price;
+  }
 }
 
 class Strategy {
-  constructor(weight=1) {
+  constructor(params={}, weight=-1) {
     this.weight = weight;
     this.id = uuid();
     this.signals = [];
     this.portfolio = null;
   }
 
-  register(fundSymbol, fundAmount, requestHandler, feeds) {
+  register(fundSymbol, fundAmount, requestHandler, feed) {
     this.fundSymbol = fundSymbol;
     this.fundAmount = fundAmount;
     this.requestHandler = requestHandler;
-    this.feeds = feeds;
-    this.initSignals(feeds);
+    this.feed = feed;
+    this.initSignals(feed);
   }
 
   initSignals(feeds) {
@@ -42,8 +46,8 @@ class Strategy {
     });
   }
 
-  orderRequest(type, market, amount, price=null) {
-    this.requestHandler(new OrderRequest(type, market, amount, price));
+  async requestOrder(type, market, amount, price=null) {
+    let order = this.requestHandler(this, new OrderRequest(type, market, amount, price));
   }
 
 }
