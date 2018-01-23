@@ -1,8 +1,5 @@
 'use strict';
 
-var fin = require('../fin');
-var xu = require('../../util/exchange-util');
-
 const BUY = 1;
 const NULL = 0;
 const SELL = -1;

@@ -11,7 +11,7 @@ class JumpThreshold extends sig.Signal {
     this.threshold = threshold;
   }
 
-  async tick(time) {
+  async tick() {
     const tickers = this.feed.tickers;
     let moves = [];
     for (var symbol in tickers) {

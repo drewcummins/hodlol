@@ -1,8 +1,6 @@
 'use strict';
 const ccxt = require('ccxt');
 const config = require('./config');
-const fin = require('./app/model/fin');
-const Trader = require('./app/model/trader');
 const model = require('./app/model');
 const JumpThreshold = require('./app/model/signal/jump-threshold');
 // const Strategy = require('./app/model/strategy');
@@ -16,15 +14,17 @@ const BuyDipSellPeak = require('./app/model/strategy/buy-dip-sell-peak');
       enableRateLimit: true
     });
 
-    let markets = await binance.loadMarkets();
-    let exchange = new model.Exchange(markets);
+    let exchange = await model.Exchange.ExchangeFromAPI(binance);
     let portfolio = new model.Portfolio(exchange);
-    let feed = new model.Feed(binance);
-    let signal = new JumpThreshold(feed, 0.0001);
-
-    feed.addTicker("XMR/BTC", "abc");
-
-    console.log(exchange.path("XMR", "USDT"));
+    exchange.feed.addTicker("XMR/BTC");
+    console.log(await exchange.price("XMR", "USDT"));
+    // let feed = new model.Feed(binance);
+    // let signal = new JumpThreshold(feed, 0.0001);
+    //
+    // feed.addTicker("XMR/BTC", "abc");
+    //
+    // console.log(exchange.path("XMR", "USDT"));
+    // console.log(exchange.path("USDT", "XMR"));
 
     // let market = exchange.baseQuote("QTUM", "BTC");
     // portfolio.add(market.symbol, 500);

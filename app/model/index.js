@@ -1,11 +1,16 @@
 'use strict';
 
 const uuid = require('uuid/v4');
-const xu = require('../util/exchange-util')
+const xu = require('../util/exchange')
 
 class Exchange {
-  constructor(markets) {
-    this.indexMarkets(markets);
+  constructor(api) {
+    this.api = api;
+  }
+  async init() {
+    this.markets = await this.api.loadMarkets();
+    this.feed = new Feed(this.api);
+    this.indexMarkets(this.markets);
   }
   indexMarkets(markets) {
     this.markets = {symbol: {}, base:{}, quote:{}};
@@ -24,6 +29,11 @@ class Exchange {
         q[market.quote][market.base] = market;
       }
     }
+  }
+  static async ExchangeFromAPI(api) {
+    let exchange = new Exchange(api);
+    await exchange.init();
+    return exchange;
   }
 
   // Gets market for @symbol
@@ -45,6 +55,27 @@ class Exchange {
   // Gets market for @base @quote pair
   baseQuote(base, quote) {
     return this.markets.base[base][quote];
+  }
+
+  async price(base, quote) {
+    let path = this.path(base, quote);
+    if (path) {
+      let price = 1;
+      for (var i = 0; i < path.length; i++) {
+        let pair = path[i];
+        let ticker = this.feed.tickers[pair];
+        if (ticker && ticker.length() > 0) {
+          let tick = ticker.last(); // last here means most recent tick
+          price *= tick.last; // last here means most recent price
+        } else {
+          let tick = await this.api.fetchTicker(pair);
+          price *= tick.last;
+        }
+      }
+      return price;
+    } else {
+      return NaN;
+    }
   }
   /*
     Builds a market path between @a and @b
@@ -135,7 +166,6 @@ class Feed {
   constructor(api) {
     this.api = api;
     this.tickers = {};
-    this.reads = {};
   }
 
   addTicker(symbol) {

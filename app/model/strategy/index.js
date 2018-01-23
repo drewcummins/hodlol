@@ -1,6 +1,5 @@
 'use strict';
 
-const fin = require('../fin');
 const uuid = require('uuid/v4');
 
 const REQ_LIMIT_BUY = 1;
@@ -34,7 +33,7 @@ class Strategy {
   }
 
   initSignals(feeds) {
-    // 
+    //
   }
 
   tick() {
@@ -43,8 +42,8 @@ class Strategy {
     });
   }
 
-  static orderRequest(type, market, amount, price=null) {
-    return new OrderRequest(type, market, amount, price);
+  orderRequest(type, market, amount, price=null) {
+    this.requestHandler(new OrderRequest(type, market, amount, price));
   }
 
 }
