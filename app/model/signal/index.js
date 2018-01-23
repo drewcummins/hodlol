@@ -9,8 +9,8 @@ const SELL = -1;
 
 class Signal {
 
-  constructor(feeds) {
-    this.feeds = feeds;
+  constructor(feed) {
+    this.feed = feed;
     this.reads = {};
   }
 

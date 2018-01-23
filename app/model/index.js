@@ -110,7 +110,7 @@ class Ticker {
     const api = this.api;
     while (true) {
       const tick = await api.fetchTicker(this.symbol);
-      this.ticks.push(ticker);
+      this.ticks.push(tick);
       await xu.sleep(3000);
     }
   }
@@ -131,8 +131,22 @@ class Ticker {
   }
 }
 
+class Feed {
+  constructor(api) {
+    this.api = api;
+    this.tickers = {};
+    this.reads = {};
+  }
+
+  addTicker(symbol) {
+    const ticker = new Ticker(this.api, symbol);
+    ticker.run();
+    this.tickers[symbol] = ticker;
+  }
+}
+
 module.exports = {
   Portfolio: Portfolio,
   Exchange: Exchange,
-  Ticker: Ticker
+  Feed: Feed
 };
