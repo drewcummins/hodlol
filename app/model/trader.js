@@ -32,6 +32,7 @@ class Trader {
     // this normalizes the weights in all provided strategies and
     // divvies up the trader's total funds accordingly
     strategies.forEach(async (strategy) => {
+      console.log(strategy.basename());
       const amount = this.fundAmount * strategy.weight / sum;
       if (amount > 0) {
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
@@ -44,6 +45,7 @@ class Trader {
 
   async execute(hertz=10) {
     const timeout = Math.round(1000/hertz);
+    this.executionRate = hertz;
     let n = 0;
     while (true) {
       this.strategies.forEach(async (strat) => strat.tick());
@@ -74,6 +76,17 @@ class Trader {
 
   sumWeight() {
     return this.strategies.reduce((mem, strategy) => mem + strategy.weight, 0);
+  }
+
+  serialize() {
+    let json = {
+      exchange: this.api.name.toLowerCase(),
+      name: this.name,
+      strategies: this.strategies.map((strat) => strat.serialize()),
+      tickers: Object.keys(this.feed.tickers),
+      executionRate: this.executionRate
+    };
+    return JSON.stringify(json);
   }
 
   static async FromAPI(api, fundSymbol, fundAmount, strategies) {

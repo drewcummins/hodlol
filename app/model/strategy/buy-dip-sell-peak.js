@@ -7,6 +7,7 @@ class BuyDipSellPeak extends strat.Strategy {
   constructor(params={}, weight=-1) {
     super(weight);
     this.title = "BDSP";
+    this.filename = "buy-dip-sell-peak";
     this.threshold = params.threshold;
   }
 
@@ -42,6 +43,12 @@ class BuyDipSellPeak extends strat.Strategy {
         this.requestOrder(strat.REQ_LIMIT_BUY, buy, maxAmount, last.ask);
       }
     });
+  }
+
+  serialize() {
+    let json = super.serialize();
+    json.params.threshold = this.threshold;
+    return json;
   }
 }
 

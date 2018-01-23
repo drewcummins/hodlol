@@ -1,6 +1,7 @@
 'use strict';
 
 const uuid = require('uuid/v4');
+const path = require('path');
 
 const REQ_LIMIT_BUY = 1;
 const REQ_LIMIT_SELL = 2;
@@ -51,6 +52,13 @@ class Strategy {
     let order = this.requestHandler(this, new OrderRequest(type, market, amount, price));
   }
 
+  basename() {
+    return this.filename;
+  }
+
+  serialize() {
+    return {id: this.basename(), weight: this.weight, params: {}};
+  }
 }
 
 module.exports = {
