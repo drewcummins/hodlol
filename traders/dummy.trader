@@ -1,0 +1,19 @@
+{
+  "name": "dummy",
+  "exchange": "binance",
+  "strategies": [
+    {
+      "id": "buy-dip-sell-peak",
+      "weight": 1,
+      "params": {"threshold": 0.0005}
+    },
+    {
+      "id": "hodl",
+      "weight": 1
+    }
+  ],
+  "tickers": [
+    "ETH/BTC", "LTC/BTC", "XMR/BTC"
+  ],
+  "executionRate": 10
+}

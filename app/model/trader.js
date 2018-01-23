@@ -2,7 +2,8 @@
 
 const model = require('./');
 const xu = require('../util/exchange');
-const strat = require('./strategy')
+const strat = require('./strategy');
+var fs = require("fs");
 
 class Trader {
   constructor(api, fundSymbol, fundAmount) {
@@ -13,6 +14,16 @@ class Trader {
 
   spoolTickers(tickers) {
     tickers.forEach((symbol) => this.feed.addTicker(symbol));
+  }
+
+  async printPerformance() {
+    console.log("==============================================");
+    for (var i = 0; i < this.strategies.length; i++) {
+      let strategy = this.strategies[i];
+      let value = await strategy.portfolio.value("USDT");
+      console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
+    }
+    console.log("==============================================\n");
   }
 
   initStrategies(strategies) {
@@ -27,15 +38,19 @@ class Trader {
         strategy.portfolio = new model.Portfolio(this.exchange);
         strategy.portfolio.add(this.fundSymbol, amount);
       }
-      console.log((await strategy.portfolio.value()).total);
-    })
+    });
+    this.printPerformance();
   }
 
   async execute(hertz=10) {
     const timeout = Math.round(1000/hertz);
+    let n = 0;
     while (true) {
       this.strategies.forEach(async (strat) => strat.tick());
       await xu.sleep(timeout);
+      if (++n % 50 == 0) {
+        this.printPerformance();
+      }
     }
   }
 
@@ -55,7 +70,6 @@ class Trader {
         portfolio.remove(market.base, orderRequest.amount);
       }
     }
-    console.log((await portfolio.value()).total);
   }
 
   sumWeight() {
@@ -67,6 +81,22 @@ class Trader {
     trader.exchange = await model.Exchange.FromAPI(trader.api);
     trader.feed = trader.exchange.feed;
     trader.initStrategies(strategies);
+    return trader;
+  }
+
+  static async deserialize(path, fund, run=true) {
+    const json = JSON.parse(fs.readFileSync(path));
+    let api = xu.getExchange(json.exchange);
+    let strategies = json.strategies.map((strat) => {
+      let stratClass = require(`./strategy/${strat.id}`);
+      return new stratClass(strat.params, strat.weight);
+    });
+    let trader = await Trader.FromAPI(api, fund.symbol, fund.amount, strategies);
+    if (run) {
+      trader.spoolTickers(json.tickers);
+      trader.execute(json.executionRate);
+    }
+    trader.source = json;
     return trader;
   }
 }

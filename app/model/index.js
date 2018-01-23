@@ -148,9 +148,7 @@ class Portfolio {
       let rate = await this.exchange.price(base, quote);
       value[base] = rate * this.balances[base];
       value.total += value[base];
-      value[base] += ` ${quote}`;
     }
-    value.total += ` ${quote}`;
     return value;
   }
 }

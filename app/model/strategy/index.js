@@ -26,6 +26,7 @@ class Strategy {
     this.id = uuid();
     this.signals = [];
     this.portfolio = null;
+    this.title = "Strategy";
   }
 
   register(fundSymbol, fundAmount, requestHandler, feed) {

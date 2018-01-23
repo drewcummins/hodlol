@@ -6,6 +6,7 @@ const JumpThreshold = require('../signal/jump-threshold');
 class BuyDipSellPeak extends strat.Strategy {
   constructor(params={}, weight=-1) {
     super(weight);
+    this.title = "BDSP";
     this.threshold = params.threshold;
   }
 
