@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 'use strict';
-const commandLineArgs = require("command-line-args")
+const commandLineArgs = require("command-line-args");
 const Trader = require("./app/model/trader");
 
 const optionDefinitions = [

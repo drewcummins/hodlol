@@ -154,9 +154,10 @@ class Portfolio {
 }
 
 class Ticker {
-  constructor(api, symbol) {
+  constructor(api, symbol, timeout=3000) {
     this.api = api;
     this.symbol = symbol;
+    this.timeout = timeout;
     this.ticks = [];
   }
 
@@ -165,8 +166,12 @@ class Ticker {
     while (true) {
       const tick = await api.fetchTicker(this.symbol);
       this.ticks.push(tick);
-      await xu.sleep(3000);
+      this.sleep();
     }
+  }
+
+  async sleep() {
+    await xu.sleep(this.timeout);
   }
 
   length() {
@@ -185,21 +190,54 @@ class Ticker {
   }
 }
 
+class CandleTicker extends Ticker {
+  constructor(api, symbol, timeout=60000, period="1m") {
+    super(api, symbol, timeout);
+    this.period = period;
+    this.candlesticks = {};
+  }
+
+  async run() {
+    const api = this.api;
+    while (true) {
+      let since = undefined;
+      let last = this.last();
+      if (last) {
+        since = last[0];
+      }
+      const tick = await api.fetchOHLCV(this.symbol, this.period, since);
+      tick.forEach((candlestick) => {
+        let [timestamp] = candlestick;
+        this.candlesticks[timestamp] = candlestick;
+      })
+      this.ticks = Object.values(this.candlesticks);
+      await xu.sleep(20000); // sleep for a minute
+    }
+  }
+}
+
 class Feed {
   constructor(api) {
     this.api = api;
     this.tickers = {};
+    this.candles = {};
   }
 
   addTicker(symbol) {
-    const ticker = new Ticker(this.api, symbol);
+    const ticker = new Ticker(this.api, symbol, 3000);
     ticker.run();
     this.tickers[symbol] = ticker;
+  }
+
+  addCandleTicker(symbol) {
+    const ticker = new CandleTicker(this.api, symbol, 60000);
+    ticker.run();
+    this.candles[symbol] = ticker;
   }
 }
 
 module.exports = {
   Portfolio: Portfolio,
   Exchange: Exchange,
-  Feed: Feed
+  Feed: Feed,
 };

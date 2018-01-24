@@ -16,6 +16,10 @@ class Trader {
     tickers.forEach((symbol) => this.feed.addTicker(symbol));
   }
 
+  spoolCandleTickers(tickers) {
+    tickers.forEach((symbol) => this.feed.addCandleTicker(symbol));
+  }
+
   async printPerformance() {
     console.log("==============================================");
     for (var i = 0; i < this.strategies.length; i++) {
@@ -84,6 +88,7 @@ class Trader {
       name: this.name,
       strategies: this.strategies.map((strat) => strat.serialize()),
       tickers: Object.keys(this.feed.tickers),
+      candles: Object.keys(this.feed.candles),
       executionRate: this.executionRate
     };
     return JSON.stringify(json);
@@ -107,6 +112,7 @@ class Trader {
     let trader = await Trader.FromAPI(api, fund.symbol, fund.amount, strategies);
     if (run) {
       trader.spoolTickers(json.tickers);
+      trader.spoolCandleTickers(json.candles);
       trader.execute(json.executionRate);
     }
     trader.source = json;
