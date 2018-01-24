@@ -21,6 +21,7 @@ class Trader {
   }
 
   async printPerformance() {
+    if (this.strategies.length == 0) return;
     console.log("==============================================");
     for (var i = 0; i < this.strategies.length; i++) {
       let strategy = this.strategies[i];
@@ -36,7 +37,6 @@ class Trader {
     // this normalizes the weights in all provided strategies and
     // divvies up the trader's total funds accordingly
     strategies.forEach(async (strategy) => {
-      console.log(strategy.basename());
       const amount = this.fundAmount * strategy.weight / sum;
       if (amount > 0) {
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);

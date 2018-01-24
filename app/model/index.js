@@ -1,7 +1,8 @@
 'use strict';
 
 const uuid = require('uuid/v4');
-const xu = require('../util/exchange')
+const xu = require('../util/exchange');
+const fs = require('fs');
 
 class Exchange {
   constructor(api) {
@@ -159,6 +160,8 @@ class Ticker {
     this.symbol = symbol;
     this.timeout = timeout;
     this.ticks = [];
+    this.record = true;
+    this.lastWrite = 0;
   }
 
   async run() {
@@ -166,12 +169,43 @@ class Ticker {
     while (true) {
       const tick = await api.fetchTicker(this.symbol);
       this.ticks.push(tick);
-      this.sleep();
+      this.write();
+      await this.sleep();
     }
   }
 
-  async sleep() {
-    await xu.sleep(this.timeout);
+  filename() {
+    return `${this.symbol.replace("/", "-")}.${this.extension()}`;
+  }
+
+  extension() {
+    return 'ticker';
+  }
+
+  serializeTick(tick) {
+    return [tick.timestamp, tick.high, tick.low, tick.bid, tick.bidVolume,
+            tick.ask, tick.askVolume, tick.vwap, tick.open, tick.close, tick.last,
+            tick.change, tick.baseVolume, tick.quoteVolume].join(",");
+  }
+
+  write() {
+    if (this.record) {
+      let str = "";
+      // don't go all the way to the end as the candlestick data gets updated
+      // once we have an extra one, the previous should be written in stone
+      let n = this.ticks.length - 1;
+      for (var i = this.lastWrite; i < n; i++) {
+        str += this.serializeTick(this.ticks[i]) + "\n";
+      }
+      fs.appendFile(`./data/${this.api.name.toLowerCase()}/${this.filename()}`, str, (err) => {
+        if (err) throw err;
+        this.lastWrite = n;
+      });
+    }
+  }
+
+  async sleep(timeout) {
+    await xu.sleep(timeout ? timeout : this.timeout);
   }
 
   length() {
@@ -191,7 +225,7 @@ class Ticker {
 }
 
 class CandleTicker extends Ticker {
-  constructor(api, symbol, timeout=60000, period="1m") {
+  constructor(api, symbol, timeout=20000, period="1m") {
     super(api, symbol, timeout);
     this.period = period;
     this.candlesticks = {};
@@ -211,8 +245,17 @@ class CandleTicker extends Ticker {
         this.candlesticks[timestamp] = candlestick;
       })
       this.ticks = Object.values(this.candlesticks);
-      await xu.sleep(20000); // sleep for a minute
+      this.write();
+      await this.sleep();
     }
+  }
+
+  extension() {
+    return 'ohlcv';
+  }
+
+  serializeTick(tick) {
+    return tick.join(",");
   }
 }
 

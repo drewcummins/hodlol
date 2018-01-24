@@ -1,0 +1,12 @@
+{
+  "name": "recorder",
+  "exchange": "binance",
+  "strategies": [],
+  "tickers": [
+    "ETH/BTC", "LTC/BTC", "XMR/BTC"
+  ],
+  "candles": [
+    "ETH/BTC"
+  ],
+  "executionRate": 10
+}

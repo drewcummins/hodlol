@@ -16,5 +16,4 @@ const opts = commandLineArgs(optionDefinitions);
 (async () => {
   let fund = {symbol: opts.symbol, amount: opts.amount};
   let trader = await Trader.deserialize(opts.trader, fund);
-  console.log(trader.serialize());
 })();
