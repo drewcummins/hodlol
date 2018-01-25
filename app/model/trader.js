@@ -3,6 +3,7 @@
 const model = require('./');
 const xu = require('../util/exchange');
 const strat = require('./strategy');
+const mkdirp = require("mkdirp");
 var fs = require("fs");
 
 class Trader {
@@ -12,12 +13,12 @@ class Trader {
     this.fundAmount = fundAmount;
   }
 
-  spoolTickers(tickers) {
-    tickers.forEach((symbol) => this.feed.addTicker(symbol));
+  spoolTickers(tickers, record) {
+    tickers.forEach((symbol) => this.feed.addTicker(symbol, record));
   }
 
-  spoolCandleTickers(tickers) {
-    tickers.forEach((symbol) => this.feed.addCandleTicker(symbol));
+  spoolCandleTickers(tickers, record) {
+    tickers.forEach((symbol) => this.feed.addCandleTicker(symbol, record));
   }
 
   async printPerformance() {
@@ -102,17 +103,22 @@ class Trader {
     return trader;
   }
 
-  static async deserialize(path, fund, run=true) {
+  static async deserialize(path, params, run=true) {
     const json = JSON.parse(fs.readFileSync(path));
-    let api = xu.getExchange(json.exchange);
+    let api = xu.getExchange(json.exchange, params.backtest);
     let strategies = json.strategies.map((strat) => {
       let stratClass = require(`./strategy/${strat.id}`);
       return new stratClass(strat.params, strat.weight);
     });
-    let trader = await Trader.FromAPI(api, fund.symbol, fund.amount, strategies);
+    let trader = await Trader.FromAPI(api, params.symbol, params.amount, strategies);
+    if (json.record) {
+      // make sure we have directories setup if we're going to record
+      mkdirp.sync(`./data/${json.exchange}/ticker/${xu.DATE_ID}`);
+      mkdirp.sync(`./data/${json.exchange}/ohlcv`);
+    }
     if (run) {
-      trader.spoolTickers(json.tickers);
-      trader.spoolCandleTickers(json.candles);
+      trader.spoolTickers(json.tickers, json.record);
+      trader.spoolCandleTickers(json.candles, json.record);
       trader.execute(json.executionRate);
     }
     trader.source = json;

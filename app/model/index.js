@@ -2,6 +2,7 @@
 
 const uuid = require('uuid/v4');
 const xu = require('../util/exchange');
+const su = require('../util/search');
 const fs = require('fs');
 
 class Exchange {
@@ -155,27 +156,38 @@ class Portfolio {
 }
 
 class Ticker {
-  constructor(api, symbol, timeout=3000) {
+  constructor(api, symbol, record, timeout=3000) {
     this.api = api;
     this.symbol = symbol;
     this.timeout = timeout;
     this.ticks = [];
-    this.record = true;
+    this.record = record;
     this.lastWrite = 0;
   }
 
   async run() {
-    const api = this.api;
     while (true) {
-      const tick = await api.fetchTicker(this.symbol);
-      this.ticks.push(tick);
-      this.write();
+      this.step();
       await this.sleep();
     }
   }
 
+  step() {
+    const tick = await this.api.fetchTicker(this.symbol);
+    this.ticks.push(tick);
+    this.write();
+  }
+
   filename() {
     return `${this.symbol.replace("/", "-")}.${this.extension()}`;
+  }
+
+  subdir() {
+    return `ticker/${xu.DATE_ID}`
+  }
+
+  filepath() {
+    return `./data/${this.api.name.toLowerCase()}/${this.subdir()}/${this.filename()}`;
   }
 
   extension() {
@@ -188,6 +200,14 @@ class Ticker {
             tick.change, tick.baseVolume, tick.quoteVolume].join(",");
   }
 
+  nearest(timestamp) {
+    return su.bnearest(this.ticks, timestamp, this.compareLambda(timestamp));
+  }
+
+  compareLambda(timestamp) {
+    return (x) => timestamp - x.timestamp;
+  }
+
   write() {
     if (this.record) {
       let str = "";
@@ -197,7 +217,7 @@ class Ticker {
       for (var i = this.lastWrite; i < n; i++) {
         str += this.serializeTick(this.ticks[i]) + "\n";
       }
-      fs.appendFile(`./data/${this.api.name.toLowerCase()}/${this.filename()}`, str, (err) => {
+      fs.appendFile(this.filepath(), str, (err) => {
         if (err) throw err;
         this.lastWrite = n;
       });
@@ -225,29 +245,33 @@ class Ticker {
 }
 
 class CandleTicker extends Ticker {
-  constructor(api, symbol, timeout=20000, period="1m") {
-    super(api, symbol, timeout);
+  constructor(api, symbol, record, timeout=20000, period="1m") {
+    super(api, symbol, record, timeout);
     this.period = period;
     this.candlesticks = {};
   }
 
-  async run() {
-    const api = this.api;
-    while (true) {
-      let since = undefined;
-      let last = this.last();
-      if (last) {
-        since = last[0];
-      }
-      const tick = await api.fetchOHLCV(this.symbol, this.period, since);
-      tick.forEach((candlestick) => {
-        let [timestamp] = candlestick;
-        this.candlesticks[timestamp] = candlestick;
-      })
-      this.ticks = Object.values(this.candlesticks);
-      this.write();
-      await this.sleep();
+  step() {
+    let since = undefined;
+    let last = this.last();
+    if (last) {
+      since = last[0];
     }
+    const tick = await api.fetchOHLCV(this.symbol, this.period, since);
+    tick.forEach((candlestick) => {
+      let [timestamp] = candlestick;
+      this.candlesticks[timestamp] = candlestick;
+    })
+    this.ticks = Object.values(this.candlesticks);
+    this.write();
+  }
+
+  subdir() {
+    return 'ohlcv';
+  }
+
+  compareLambda(timestamp) {
+    return (x) => timestamp - x[0];
   }
 
   extension() {
@@ -266,14 +290,14 @@ class Feed {
     this.candles = {};
   }
 
-  addTicker(symbol) {
-    const ticker = new Ticker(this.api, symbol, 3000);
+  addTicker(symbol, record) {
+    const ticker = new Ticker(this.api, symbol, record, 3000);
     ticker.run();
     this.tickers[symbol] = ticker;
   }
 
-  addCandleTicker(symbol) {
-    const ticker = new CandleTicker(this.api, symbol, 60000);
+  addCandleTicker(symbol, record) {
+    const ticker = new CandleTicker(this.api, symbol, record, 60000);
     ticker.run();
     this.candles[symbol] = ticker;
   }

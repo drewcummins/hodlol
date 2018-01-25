@@ -1,6 +1,7 @@
 'use strict';
 const ccxt = require('ccxt');
 const config = require('../../config');
+const dateFormat = require('dateformat');
 
 module.exports.sleep = (ms) => new Promise (resolve => setTimeout (resolve, ms));
 
@@ -21,3 +22,6 @@ module.exports.getExchange = (name) => {
       throw new Error("Must specify exchange")
   }
 }
+
+module.exports.DATE_ID = dateFormat(new Date(), "mmmm-d-yyyy-h:MM:ss-TT");
+console.log(module.exports.DATE_ID);
