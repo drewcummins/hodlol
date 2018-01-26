@@ -1,19 +1,41 @@
 'use strict';
 
+const config = require('../../config');
 const uuid = require('uuid/v4');
 const xu = require('../util/exchange');
 const su = require('../util/search');
 const fs = require('fs');
 
+const RECORD = 1;
+const BACKTEST = 2;
+
 class Exchange {
-  constructor(api) {
+
+  constructor(api, mode=RECORD) {
     this.api = api;
+    this.mode = mode;
+    this.name = api.name.toLowerCase();
   }
+
   async init() {
-    this.markets = await this.api.loadMarkets();
-    this.feed = new Feed(this.api);
+    this.markets = await this.loadMarkets();
+    // this is the set of feeds that act exactly the same whether we're live
+    // or backtesting
+    this.feed = new Feed(this);
+    if (this.mode & BACKTEST) {
+      // if we're backtesting, create tickers that will mock the API calls
+      this.backtick = new Ticker();
+    }
     this.indexMarkets(this.markets);
   }
+
+  /*
+    Maps symbol pairs, base symbols and quote symbols to associated markets
+    e.g. markets.symbol['XMR/BTC'] gives you a hash with base XMR and quote BTC
+    Base and quote each give you a hash keyed by the other value.
+
+    @markets Markets hash returned from exchange API
+  */
   indexMarkets(markets) {
     this.markets = {symbol: {}, base:{}, quote:{}};
     let [s,b,q] = [this.markets.symbol, this.markets.base, this.markets.quote];
@@ -31,6 +53,25 @@ class Exchange {
         q[market.quote][market.base] = market;
       }
     }
+  }
+
+  // This API stuff just wraps the ccxt exchange.
+  // This makes it simpler to fake calls in backtest mode.
+  async loadMarkets() {
+    // This might make sense to write on record runs
+    // But for now, let's just always load it from the API
+    return await this.api.loadMarkets();
+  }
+
+  async fetchTicker(pair) {
+    if (this.mode & BACKTEST) {
+
+    }
+    return await this.api.fetchTicker(pair);
+  }
+
+  async fetchOHLCV(symbol, period="1m", since=undefined) {
+    return await this.api.fetchOHLCV(symbol, period, since);
   }
 
   // Gets market for @symbol
@@ -65,7 +106,7 @@ class Exchange {
           let tick = ticker.last(); // last here means most recent tick
           price *= tick.last; // last here means most recent price
         } else {
-          let tick = await this.api.fetchTicker(pair);
+          let tick = await this.fetchTicker(pair);
           price *= tick.last;
         }
       }
@@ -156,8 +197,8 @@ class Portfolio {
 }
 
 class Ticker {
-  constructor(api, symbol, record, timeout=3000) {
-    this.api = api;
+  constructor(exchange, symbol, record, timeout=3000) {
+    this.exchange = exchange;
     this.symbol = symbol;
     this.timeout = timeout;
     this.ticks = [];
@@ -172,8 +213,8 @@ class Ticker {
     }
   }
 
-  step() {
-    const tick = await this.api.fetchTicker(this.symbol);
+  async step() {
+    const tick = await this.exchange.fetchTicker(this.symbol);
     this.ticks.push(tick);
     this.write();
   }
@@ -183,11 +224,11 @@ class Ticker {
   }
 
   subdir() {
-    return `ticker/${xu.DATE_ID}`
+    return `ticker/${config.dateID}`
   }
 
   filepath() {
-    return `./data/${this.api.name.toLowerCase()}/${this.subdir()}/${this.filename()}`;
+    return `./data/${this.exchange.name.toLowerCase()}/${this.subdir()}/${this.filename()}`;
   }
 
   extension() {
@@ -242,22 +283,28 @@ class Ticker {
   last() {
     return this.ticks[this.length() - 1];
   }
+
+  static FromScenario(symbol) {
+    let ticker = new Ticker(null, symbol, false);
+    let file = fs.readFileSync(ticker.filepath());
+    
+  }
 }
 
 class CandleTicker extends Ticker {
-  constructor(api, symbol, record, timeout=20000, period="1m") {
-    super(api, symbol, record, timeout);
+  constructor(exchange, symbol, record, timeout=20000, period="1m") {
+    super(exchange, symbol, record, timeout);
     this.period = period;
     this.candlesticks = {};
   }
 
-  step() {
+  async step() {
     let since = undefined;
     let last = this.last();
     if (last) {
       since = last[0];
     }
-    const tick = await api.fetchOHLCV(this.symbol, this.period, since);
+    const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     tick.forEach((candlestick) => {
       let [timestamp] = candlestick;
       this.candlesticks[timestamp] = candlestick;
@@ -284,20 +331,20 @@ class CandleTicker extends Ticker {
 }
 
 class Feed {
-  constructor(api) {
-    this.api = api;
+  constructor(exchange) {
+    this.exchange = exchange;
     this.tickers = {};
     this.candles = {};
   }
 
   addTicker(symbol, record) {
-    const ticker = new Ticker(this.api, symbol, record, 3000);
+    const ticker = new Ticker(this.exchange, symbol, record, 3000);
     ticker.run();
     this.tickers[symbol] = ticker;
   }
 
   addCandleTicker(symbol, record) {
-    const ticker = new CandleTicker(this.api, symbol, record, 60000);
+    const ticker = new CandleTicker(this.exchange, symbol, record, 60000);
     ticker.run();
     this.candles[symbol] = ticker;
   }

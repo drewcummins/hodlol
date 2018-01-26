@@ -1,5 +1,6 @@
 'use strict';
 
+const config = require('../../config');
 const model = require('./');
 const xu = require('../util/exchange');
 const strat = require('./strategy');
@@ -7,8 +8,8 @@ const mkdirp = require("mkdirp");
 var fs = require("fs");
 
 class Trader {
-  constructor(api, fundSymbol, fundAmount) {
-    this.api = api;
+  constructor(exchange, fundSymbol, fundAmount) {
+    this.exchange = exchange;
     this.fundSymbol = fundSymbol;
     this.fundAmount = fundAmount;
   }
@@ -96,8 +97,8 @@ class Trader {
   }
 
   static async FromAPI(api, fundSymbol, fundAmount, strategies) {
-    let trader = new Trader(api, fundSymbol, fundAmount);
-    trader.exchange = await model.Exchange.FromAPI(trader.api);
+    let exchange = await model.Exchange.FromAPI(api);
+    let trader = new Trader(exchange, fundSymbol, fundAmount);
     trader.feed = trader.exchange.feed;
     trader.initStrategies(strategies);
     return trader;
@@ -105,21 +106,29 @@ class Trader {
 
   static async deserialize(path, params, run=true) {
     const json = JSON.parse(fs.readFileSync(path));
-    let api = xu.getExchange(json.exchange, params.backtest);
+    if (params.backtest) {
+      let scenario = JSON.parse(fs.readFileSync(params.backtest));
+      config.backtest = true;
+      config.scenario = scenario;
+      config.dateID = scenario.date_id;
+    } else {
+      config.dateID = xu.DATE_ID;
+    }
     let strategies = json.strategies.map((strat) => {
       let stratClass = require(`./strategy/${strat.id}`);
       return new stratClass(strat.params, strat.weight);
     });
+    let api = xu.getExchange(json.exchange, params.backtest);
     let trader = await Trader.FromAPI(api, params.symbol, params.amount, strategies);
     if (json.record) {
       // make sure we have directories setup if we're going to record
-      mkdirp.sync(`./data/${json.exchange}/ticker/${xu.DATE_ID}`);
+      mkdirp.sync(`./data/${json.exchange}/ticker/${config.dateID}`);
       mkdirp.sync(`./data/${json.exchange}/ohlcv`);
     }
     if (run) {
       trader.spoolTickers(json.tickers, json.record);
       trader.spoolCandleTickers(json.candles, json.record);
-      trader.execute(json.executionRate);
+      trader.execute(json.execution_rate);
     }
     trader.source = json;
     return trader;
