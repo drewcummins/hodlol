@@ -30,7 +30,7 @@ class Ticker {
   }
 
   length() {
-    return this.series.length;
+    return this.series.length();
   }
 
   getAt(idx) {
@@ -46,7 +46,7 @@ class Ticker {
   }
 
   subdir() {
-    return `ticker/${config.dateID}`
+    return `${config.dateID}`
   }
 
   filepath() {
@@ -74,10 +74,6 @@ class CandleTicker extends Ticker {
       this.series.append(this.series.serializer.in(cs), true);
     });
     if (this.series.autoWrite) this.series.write();
-  }
-
-  subdir() {
-    return 'ohlcv';
   }
 
   extension() {

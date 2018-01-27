@@ -33,6 +33,7 @@ class Exchange {
     if (this.isBacktesting()) {
       this.backticker = {};
       this.backcandle = {};
+      this.time = config.scenario.start;
     } else {
       this.time = +new Date();
     }
@@ -42,28 +43,44 @@ class Exchange {
   tick() {
     if (this.isBacktesting()) {
       this.time += 1000; // one second per tick in backtest mode
+      Object.values(this.backticker).forEach((ticker) => ticker.setCursorToTimestamp(this.time));
+      Object.values(this.backcandle).forEach((candle) => candle.setCursorToTimestamp(this.time));
     } else {
       this.time = +new Date();
     }
   }
 
   addTickers(tickers, candles) {
-    this.feed.addTickers(tickers, Feed.Ticker);
-    this.feed.addTickers(candles, Feed.CandleTicker);
+    this.feed.addTickers(tickers, Feed.Ticker, this.isBacktesting() ? 3 : 3000);
+    this.feed.addTickers(candles, Feed.CandleTicker, this.isBacktesting() ? 20 : 20000);
     if (this.isBacktesting()) {
-      console.log("ok backtesting");
+      let max = 0;
+      let min = Number.MAX_VALUE;
       tickers.forEach((ticker) => {
         const series = Series.FromTicker(this.feed.tickers[ticker]);
         this.backticker[ticker] = series;
         series.read();
-        console.log("read tickers!", series);
+        if (series.series[0].timestamp < min) {
+          min = series.series[0].timestamp;
+        }
+        let n = series.series.length - 1;
+        if (series.series[n].timestamp > max) {
+          max = series.series[n].timestamp;
+        }
       });
+      if (isNaN(config.scenario.start)) {
+        this.time = config.scenario.start = min;
+        console.log("Manually set start:", min);
+      }
+      if (isNaN(config.scenario.end)) {
+        config.scenario.end = max;
+        console.log("Manually set end:", max);
+      }
 
       candles.forEach((candle) => {
         const series = Series.FromCandle(this.feed.candles[candle]);
         this.backcandle[candle] = series;
         series.read();
-        console.log("read candles!", series);
       });
     }
     this.feed.run();
@@ -105,6 +122,7 @@ class Exchange {
 
   async fetchTicker(pair) {
     if (this.isBacktesting()) {
+      // console.log("um pair?", pair, this.backticker[pair])
       return await this.backticker[pair].last();
     }
     return await this.api.fetchTicker(pair);

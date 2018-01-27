@@ -13,10 +13,10 @@
     }
   ],
   "tickers": [
-    "ETH/BTC", "LTC/BTC", "XMR/BTC"
+    "ETH/BTC", "BTC/USDT", "ETH/USDT"
   ],
   "candles": [
-    "ETH/BTC"
+    "ETH/BTC", "BTC/USDT", "ETH/USDT"
   ],
   "record": false,
   "execution_rate": 10

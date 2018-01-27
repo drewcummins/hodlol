@@ -32,14 +32,14 @@ class Trader {
   }
 
   async execute(hertz=10) {
-    const timeout = Math.round(1000/hertz);
+    const timeout = config.backtest ? 1 : Math.round(1000/hertz);
     this.executionRate = hertz;
     let n = 0;
     while (true) {
       this.exchange.tick()
       this.strategies.forEach(async (strat) => strat.tick());
       await xu.sleep(timeout);
-      if (++n % 50 == 0) {
+      if (++n % 2 == 0) {
         this.printPerformance();
       }
       if (this.exchange.isBacktesting() && this.exchange.time >= config.scenario.end) {
@@ -50,7 +50,8 @@ class Trader {
   }
 
   terminate() {
-
+    console.log("Terminating process at end of backtest.");
+    process.exit();
   }
 
   async consider(strategy, orderRequest) {
@@ -82,7 +83,8 @@ class Trader {
       strategies: this.strategies.map((strat) => strat.serialize()),
       tickers: Object.keys(this.feed.tickers),
       candles: Object.keys(this.feed.candles),
-      executionRate: this.executionRate
+      executionRate: this.executionRate,
+      record: config.record
     };
     return JSON.stringify(json);
   }
@@ -92,8 +94,12 @@ class Trader {
     console.log("==============================================");
     for (var i = 0; i < this.strategies.length; i++) {
       let strategy = this.strategies[i];
-      let value = await strategy.portfolio.value("USDT");
-      console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
+      try {
+        let value = await strategy.portfolio.value("USDT");
+        console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
+      } catch(err) {
+        console.log("Error calculating value");
+      }
     }
     console.log("==============================================\n");
   }
@@ -126,8 +132,7 @@ class Trader {
     let trader = await Trader.FromAPI(api, params.symbol, params.amount, strategies);
     if (json.record) {
       // make sure we have directories setup if we're going to record
-      mkdirp.sync(`./data/${json.exchange}/ticker/${config.dateID}`);
-      mkdirp.sync(`./data/${json.exchange}/ohlcv`);
+      mkdirp.sync(`./data/${json.exchange}/${config.dateID}`);
     }
     if (run) {
       trader.exchange.addTickers(json.tickers, json.candles);

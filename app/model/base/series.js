@@ -51,7 +51,23 @@ class Series {
   }
 
   setCursorToTimestamp(timestamp) {
+    this.manual = true;
+    let [nearest, idx] = this.nearest(timestamp);
+    if (!nearest) return;
+    if (nearest.timestamp > timestamp && idx > 0) {
+      this.cursor = idx - 1;
+    } else {
+      this.cursor = idx;
+    }
+  }
 
+  range(timestampA, timestampB) {
+    let _, adx = this.nearest(timestampA);
+    let _, bdx = this.nearest(timestampB);
+    if (adx != bdx) {
+      return this.series.slice(adx, bdx);
+    }
+    return [adx];
   }
 
   nearest(timestamp) {
@@ -88,11 +104,13 @@ class Series {
   }
 
   length() {
-    return this.series.length;
+    if (!this.manual) return this.series.length;
+    return this.cursor + 1;
   }
 
   last() {
-    return this.series[this.series.length-1];
+    if (!this.manual) return this.series[this.series.length-1];
+    return this.series[this.cursor];
   }
 
   getAt(idx) {

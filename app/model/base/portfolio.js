@@ -1,5 +1,7 @@
 'use strict';
 
+const uuid = require('uuid/v4');
+
 class Portfolio {
   constructor(exchange) {
     this.id = uuid();
@@ -44,3 +46,5 @@ class Portfolio {
     return value;
   }
 }
+
+module.exports = Portfolio;

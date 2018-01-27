@@ -3,10 +3,10 @@
   "exchange": "binance",
   "strategies": [],
   "tickers": [
-    "ETH/BTC"
+    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/ETH", "XMR/BTC"
   ],
   "candles": [
-    "ETH/BTC"
+    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/ETH", "XMR/BTC"
   ],
   "record": true,
   "execution_rate": 10
