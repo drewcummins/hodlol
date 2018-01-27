@@ -1,7 +1,8 @@
 'use strict';
 
 const config = require('../../config');
-const model = require('./');
+const Exchange = require('./base/exchange');
+const Portfolio = require('./base/portfolio');
 const xu = require('../util/exchange');
 const strat = require('./strategy');
 const mkdirp = require("mkdirp");
@@ -14,17 +15,6 @@ class Trader {
     this.fundAmount = fundAmount;
   }
 
-  async printPerformance() {
-    if (this.strategies.length == 0) return;
-    console.log("==============================================");
-    for (var i = 0; i < this.strategies.length; i++) {
-      let strategy = this.strategies[i];
-      let value = await strategy.portfolio.value("USDT");
-      console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
-    }
-    console.log("==============================================\n");
-  }
-
   initStrategies(strategies) {
     this.strategies = strategies;
     const sum = this.sumWeight();
@@ -34,7 +24,7 @@ class Trader {
       const amount = this.fundAmount * strategy.weight / sum;
       if (amount > 0) {
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
-        strategy.portfolio = new model.Portfolio(this.exchange);
+        strategy.portfolio = new Portfolio(this.exchange);
         strategy.portfolio.add(this.fundSymbol, amount);
       }
     });
@@ -97,12 +87,19 @@ class Trader {
     return JSON.stringify(json);
   }
 
+  async printPerformance() {
+    if (this.strategies.length == 0) return;
+    console.log("==============================================");
+    for (var i = 0; i < this.strategies.length; i++) {
+      let strategy = this.strategies[i];
+      let value = await strategy.portfolio.value("USDT");
+      console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
+    }
+    console.log("==============================================\n");
+  }
+
   static async FromAPI(api, fundSymbol, fundAmount, strategies) {
-    let mode = 0;
-    if (config.record) mode |= model.RECORD;
-    if (config.backtest) mode |= model.BACKTEST;
-    console.log("mode is:", mode);
-    let exchange = await model.Exchange.FromAPI(api, mode);
+    let exchange = await Exchange.FromAPI(api);
     let trader = new Trader(exchange, fundSymbol, fundAmount);
     trader.feed = trader.exchange.feed;
     trader.initStrategies(strategies);
@@ -134,8 +131,6 @@ class Trader {
     }
     if (run) {
       trader.exchange.addTickers(json.tickers, json.candles);
-      // trader.spoolTickers(json.tickers, json.record);
-      // trader.spoolCandleTickers(json.candles, json.record);
       trader.execute(json.execution_rate);
     }
     trader.source = json;
