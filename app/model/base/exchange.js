@@ -60,6 +60,7 @@ class Exchange {
         const series = Series.FromTicker(this.feed.tickers[ticker]);
         this.backticker[ticker] = series;
         series.read();
+        // This manual time set on backtest is hack as fuck, clean up!
         if (series.series[0].timestamp < min) {
           min = series.series[0].timestamp;
         }
