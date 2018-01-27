@@ -17,16 +17,56 @@ class Exchange {
     this.name = api.name.toLowerCase();
   }
 
+  isBacktesting() {
+    return (this.mode & BACKTEST) > 0;
+  }
+
+  isRecording() {
+    return (this.mode & RECORD) > 0;
+  }
+
   async init() {
     this.markets = await this.loadMarkets();
     // this is the set of feeds that act exactly the same whether we're live
     // or backtesting
-    this.feed = new Feed(this);
-    if (this.mode & BACKTEST) {
-      // if we're backtesting, create tickers that will mock the API calls
-      this.backtick = new Ticker();
+    this.feed = new Feed(this, false);
+    if (this.isBacktesting()) {
+      this.backticker = {};
+      this.backcandle = {};
+    } else {
+      this.time = +new Date();
     }
     this.indexMarkets(this.markets);
+  }
+
+  tick() {
+    if (this.isBacktesting()) {
+      this.time += 1000; // one second per tick in backtest mode
+    } else {
+      this.time = +new Date();
+    }
+  }
+
+  addTickers(tickers, candles) {
+    this.feed.addTickers(tickers, Ticker);
+    this.feed.addTickers(candles, CandleTicker);
+    if (this.isBacktesting()) {
+      console.log("ok backtesting");
+      tickers.forEach((ticker) => {
+        const series = Series.FromTicker(this.feed.tickers[ticker]);
+        this.backticker[ticker] = series;
+        series.read();
+        console.log("read tickers!", series);
+      });
+
+      candles.forEach((candle) => {
+        const series = Series.FromCandle(this.feed.candles[candle]);
+        this.backcandle[candle] = series;
+        series.read();
+        console.log("read candles!", series);
+      });
+    }
+    this.feed.run();
   }
 
   /*
@@ -64,13 +104,18 @@ class Exchange {
   }
 
   async fetchTicker(pair) {
-    if (this.mode & BACKTEST) {
-
+    if (this.isBacktesting()) {
+      return await this.backticker[pair].last();
     }
     return await this.api.fetchTicker(pair);
   }
 
   async fetchOHLCV(symbol, period="1m", since=undefined) {
+    if (this.isBacktesting()) {
+      let last = await this.backcandle[symbol].last();
+      // have to format it as the ticker expects it from CCXT
+      return this.backcandle[symbol].serializer.outCCXT(last);
+    }
     return await this.api.fetchOHLCV(symbol, period, since);
   }
 
@@ -144,8 +189,8 @@ class Exchange {
   }
 
 
-  static async FromAPI(api) {
-    let exchange = new Exchange(api);
+  static async FromAPI(api, mode=RECORD) {
+    let exchange = new Exchange(api, mode);
     await exchange.init();
     return exchange;
   }
@@ -196,27 +241,150 @@ class Portfolio {
   }
 }
 
+class Serializer {
+  constructor(props) {
+    this.props = props;
+  }
+
+  out(tick) {
+    return this.props.map((prop) => tick[prop]).join(",");
+  }
+
+  in(xs) {
+    let x = {};
+    xs.split(",").forEach((value, i) => {
+      x[this.props[i]] = Number(value);
+    });
+    return x;
+  }
+}
+
+class TickerSerializer extends Serializer {
+  constructor() {
+    super(["timestamp", "high", "low", "bid", "bidVolume", "ask","askVolume", "vwap", "open", "close", "last", "change","baseVolume", "quoteVolume"]);
+  }
+}
+
+class CandleSerializer extends Serializer {
+  constructor() {
+    super(["timestamp", "open", "high", "low", "close", "volume"]);
+  }
+
+  outCCXT(tick) {
+    return [this.out(tick).split(",")];
+  }
+}
+
+
+
+class Series {
+  constructor(filepath, serializer, autoWrite=false) {
+    this.filepath = filepath;
+    this.serializer = serializer;
+    this.autoWrite = autoWrite;
+    this.data = {};
+    this.series = [];
+    this.lastWrite = 0;
+    this.cursor = 0;
+  }
+
+  setCursorToTimestamp(timestamp) {
+
+  }
+
+  nearest(timestamp) {
+    return su.bnearest(this.series, timestamp, (x) => timestamp - x.timestamp);
+  }
+
+  append(x, lock=false) {
+    this.data[x.timestamp] = x;
+    this.series = Object.values(this.data);
+    if (this.autoWrite && !lock) this.write();
+  }
+
+  write() {
+    let str = "";
+    let n = this.length() - 1;
+    for (var i = this.lastWrite; i < n; i++) {
+      str += this.serializer.out(this.series[i]) + "\n";
+    }
+    if (str.length > 0) {
+      fs.appendFile(this.filepath, str, (err) => {
+        if (err) throw err;
+        this.lastWrite = n;
+      });
+    }
+  }
+
+  read() {
+    let file = fs.readFileSync(this.filepath, "utf8");
+    file.split("\n").forEach((line) => {
+      if (line.length > 0) {
+        this.append(this.serializer.in(line));
+      }
+    });
+  }
+
+  length() {
+    return this.series.length;
+  }
+
+  last() {
+    return this.series[this.series.length-1];
+  }
+
+  getAt(idx) {
+    if (idx < 0) {
+      idx = this.length() + idx;
+    }
+    return this.series[idx];
+  }
+
+  static FromTicker(ticker) {
+    return new Series(ticker.filepath(), new TickerSerializer(), ticker.record);
+  }
+
+  static FromCandle(ticker) {
+    return new Series(ticker.filepath(), new CandleSerializer(), ticker.record);
+  }
+}
+
 class Ticker {
   constructor(exchange, symbol, record, timeout=3000) {
     this.exchange = exchange;
     this.symbol = symbol;
     this.timeout = timeout;
-    this.ticks = [];
     this.record = record;
+    this.series = Series.FromTicker(this);
     this.lastWrite = 0;
   }
 
   async run() {
     while (true) {
-      this.step();
+      await this.step();
       await this.sleep();
     }
   }
 
   async step() {
     const tick = await this.exchange.fetchTicker(this.symbol);
-    this.ticks.push(tick);
-    this.write();
+    this.series.append(tick);
+  }
+
+  async sleep(timeout) {
+    await xu.sleep(timeout ? timeout : this.timeout);
+  }
+
+  length() {
+    return this.series.length;
+  }
+
+  getAt(idx) {
+    return this.series.getAt(idx);
+  }
+
+  last() {
+    return this.series.last();
   }
 
   filename() {
@@ -234,119 +402,58 @@ class Ticker {
   extension() {
     return 'ticker';
   }
-
-  serializeTick(tick) {
-    return [tick.timestamp, tick.high, tick.low, tick.bid, tick.bidVolume,
-            tick.ask, tick.askVolume, tick.vwap, tick.open, tick.close, tick.last,
-            tick.change, tick.baseVolume, tick.quoteVolume].join(",");
-  }
-
-  nearest(timestamp) {
-    return su.bnearest(this.ticks, timestamp, this.compareLambda(timestamp));
-  }
-
-  compareLambda(timestamp) {
-    return (x) => timestamp - x.timestamp;
-  }
-
-  write() {
-    if (this.record) {
-      let str = "";
-      // don't go all the way to the end as the candlestick data gets updated
-      // once we have an extra one, the previous should be written in stone
-      let n = this.ticks.length - 1;
-      for (var i = this.lastWrite; i < n; i++) {
-        str += this.serializeTick(this.ticks[i]) + "\n";
-      }
-      fs.appendFile(this.filepath(), str, (err) => {
-        if (err) throw err;
-        this.lastWrite = n;
-      });
-    }
-  }
-
-  async sleep(timeout) {
-    await xu.sleep(timeout ? timeout : this.timeout);
-  }
-
-  length() {
-    return this.ticks.length;
-  }
-
-  getAt(idx) {
-    if (idx < 0) {
-      idx = this.length() + idx;
-    }
-    return this.ticks[idx];
-  }
-
-  last() {
-    return this.ticks[this.length() - 1];
-  }
-
-  static FromScenario(symbol) {
-    let ticker = new Ticker(null, symbol, false);
-    let file = fs.readFileSync(ticker.filepath());
-    
-  }
 }
 
 class CandleTicker extends Ticker {
   constructor(exchange, symbol, record, timeout=20000, period="1m") {
     super(exchange, symbol, record, timeout);
+    this.series = Series.FromCandle(this);
     this.period = period;
-    this.candlesticks = {};
   }
 
   async step() {
-    let since = undefined;
     let last = this.last();
-    if (last) {
-      since = last[0];
-    }
+    let since = last ? last.timestamp : undefined;
     const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     tick.forEach((candlestick) => {
-      let [timestamp] = candlestick;
-      this.candlesticks[timestamp] = candlestick;
-    })
-    this.ticks = Object.values(this.candlesticks);
-    this.write();
+      let cs = candlestick.join(",");
+      this.series.append(this.series.serializer.in(cs), true);
+    });
+    if (this.series.autoWrite) this.series.write();
   }
 
   subdir() {
     return 'ohlcv';
   }
 
-  compareLambda(timestamp) {
-    return (x) => timestamp - x[0];
-  }
-
   extension() {
     return 'ohlcv';
-  }
-
-  serializeTick(tick) {
-    return tick.join(",");
   }
 }
 
 class Feed {
-  constructor(exchange) {
+  constructor(exchange, backtest) {
     this.exchange = exchange;
     this.tickers = {};
     this.candles = {};
   }
 
-  addTicker(symbol, record) {
-    const ticker = new Ticker(this.exchange, symbol, record, 3000);
-    ticker.run();
-    this.tickers[symbol] = ticker;
+  addTickers(symbols, Type=Ticker) {
+    // probably all the feeds for a while
+    let tickers = Type == Ticker ? this.tickers : this.candles;
+    symbols.forEach((symbol) => {
+      const ticker = new Type(this.exchange, symbol, this.exchange.isRecording());
+      tickers[symbol] = ticker;
+    });
   }
 
-  addCandleTicker(symbol, record) {
-    const ticker = new CandleTicker(this.exchange, symbol, record, 60000);
-    ticker.run();
-    this.candles[symbol] = ticker;
+  run() {
+    for (const symbol in this.tickers) {
+      this.tickers[symbol].run();
+    }
+    for (const symbol in this.candles) {
+      this.candles[symbol].run();
+    }
   }
 }
 
@@ -354,4 +461,8 @@ module.exports = {
   Portfolio: Portfolio,
   Exchange: Exchange,
   Feed: Feed,
+  Ticker: Ticker,
+  CandleTicker: CandleTicker,
+  RECORD: RECORD,
+  BACKTEST: BACKTEST
 };

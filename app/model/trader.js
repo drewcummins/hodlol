@@ -14,14 +14,6 @@ class Trader {
     this.fundAmount = fundAmount;
   }
 
-  spoolTickers(tickers, record) {
-    tickers.forEach((symbol) => this.feed.addTicker(symbol, record));
-  }
-
-  spoolCandleTickers(tickers, record) {
-    tickers.forEach((symbol) => this.feed.addCandleTicker(symbol, record));
-  }
-
   async printPerformance() {
     if (this.strategies.length == 0) return;
     console.log("==============================================");
@@ -54,12 +46,21 @@ class Trader {
     this.executionRate = hertz;
     let n = 0;
     while (true) {
+      this.exchange.tick()
       this.strategies.forEach(async (strat) => strat.tick());
       await xu.sleep(timeout);
       if (++n % 50 == 0) {
         this.printPerformance();
       }
+      if (this.exchange.isBacktesting() && this.exchange.time >= config.scenario.end) {
+        this.terminate();
+        break;
+      }
     }
+  }
+
+  terminate() {
+
   }
 
   async consider(strategy, orderRequest) {
@@ -97,7 +98,11 @@ class Trader {
   }
 
   static async FromAPI(api, fundSymbol, fundAmount, strategies) {
-    let exchange = await model.Exchange.FromAPI(api);
+    let mode = 0;
+    if (config.record) mode |= model.RECORD;
+    if (config.backtest) mode |= model.BACKTEST;
+    console.log("mode is:", mode);
+    let exchange = await model.Exchange.FromAPI(api, mode);
     let trader = new Trader(exchange, fundSymbol, fundAmount);
     trader.feed = trader.exchange.feed;
     trader.initStrategies(strategies);
@@ -111,14 +116,16 @@ class Trader {
       config.backtest = true;
       config.scenario = scenario;
       config.dateID = scenario.date_id;
+      config.record = false; // don't let recording happen if we're backtesting
     } else {
       config.dateID = xu.DATE_ID;
+      config.record = json.record;
     }
     let strategies = json.strategies.map((strat) => {
       let stratClass = require(`./strategy/${strat.id}`);
       return new stratClass(strat.params, strat.weight);
     });
-    let api = xu.getExchange(json.exchange, params.backtest);
+    let api = xu.getExchange(json.exchange);
     let trader = await Trader.FromAPI(api, params.symbol, params.amount, strategies);
     if (json.record) {
       // make sure we have directories setup if we're going to record
@@ -126,8 +133,9 @@ class Trader {
       mkdirp.sync(`./data/${json.exchange}/ohlcv`);
     }
     if (run) {
-      trader.spoolTickers(json.tickers, json.record);
-      trader.spoolCandleTickers(json.candles, json.record);
+      trader.exchange.addTickers(json.tickers, json.candles);
+      // trader.spoolTickers(json.tickers, json.record);
+      // trader.spoolCandleTickers(json.candles, json.record);
       trader.execute(json.execution_rate);
     }
     trader.source = json;
