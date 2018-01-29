@@ -9,7 +9,6 @@ class Ticker {
     this.symbol = symbol;
     this.timeout = timeout;
     this.record = record;
-    this.lastCall = 0;
     this.series = Series.FromTicker(this);
   }
 
@@ -17,12 +16,6 @@ class Ticker {
     while (true) {
       await this.step();
       await this.sleep();
-    }
-  }
-
-  async tick(timestamp) {
-    if (timestamp - this.lastCall >= this.timeout) {
-      await this.step();
     }
   }
 
@@ -88,28 +81,18 @@ class CandleTicker extends Ticker {
 }
 
 class Feed {
-  constructor(exchange, backtest) {
-    this.exchange = exchange;
+  constructor() {
     this.tickers = {};
     this.candles = {};
   }
 
-  addTickers(symbols, Type=Ticker) {
+  addTickers(exchange, symbols, Type=Ticker, timeout=5000) {
     // probably all the feeds for a while
     let tickers = Type == Ticker ? this.tickers : this.candles;
     symbols.forEach((symbol) => {
-      const ticker = new Type(this.exchange, symbol, this.exchange.isRecording());
+      const ticker = new Type(exchange, symbol, exchange.isRecording());
       tickers[symbol] = ticker;
     });
-  }
-
-  tick(timestamp) {
-    for (const symbol in this.tickers) {
-      this.tickers[symbol].tick(timestamp);
-    }
-    for (const symbol in this.candles) {
-      this.candles[symbol].tick(timestamp);
-    }
   }
 
   run() {

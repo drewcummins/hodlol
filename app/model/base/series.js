@@ -47,18 +47,6 @@ class Series {
     this.data = {};
     this.series = [];
     this.lastWrite = 0;
-    this.cursor = 0;
-  }
-
-  setCursorToTimestamp(timestamp) {
-    this.manual = true;
-    let [nearest, idx] = this.nearest(timestamp);
-    if (!nearest) return;
-    if (nearest.timestamp > timestamp && idx > 0) {
-      this.cursor = idx - 1;
-    } else {
-      this.cursor = idx;
-    }
   }
 
   range(timestampA, timestampB) {
@@ -75,9 +63,11 @@ class Series {
   }
 
   append(x, lock=false) {
-    this.data[x.timestamp] = x;
-    this.series = Object.values(this.data);
-    if (this.autoWrite && !lock) this.write();
+    if (!this.data[x.timestamp]) {
+      this.data[x.timestamp] = x;
+      this.series = Object.values(this.data);
+      if (this.autoWrite && !lock) this.write();
+    }
   }
 
   write() {
@@ -104,13 +94,11 @@ class Series {
   }
 
   length() {
-    if (!this.manual) return this.series.length;
-    return this.cursor + 1;
+    return this.series.length;
   }
 
   last() {
-    if (!this.manual) return this.series[this.series.length-1];
-    return this.series[this.cursor];
+    return this.series[this.series.length-1];
   }
 
   getAt(idx) {

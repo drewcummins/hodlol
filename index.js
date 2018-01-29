@@ -17,4 +17,6 @@ const opts = commandLineArgs(optionDefinitions);
 (async () => {
   let params = {symbol: opts.symbol, amount: opts.amount, backtest: opts.backtest};
   let trader = await Trader.deserialize(opts.trader, params);
+  console.log("Trader initialized.");
+  trader.run(); // start tickers/candles
 })();

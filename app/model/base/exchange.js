@@ -1,6 +1,7 @@
 'use strict';
 
 const Feed = require('./feed');
+const MockAPI = require('./mock-api');
 const Series = require('./series');
 const config = require('../../../config');
 
@@ -26,71 +27,23 @@ class Exchange {
   }
 
   async init() {
+    this.feed = new Feed();
     this.markets = await this.loadMarkets();
-    // this is the set of feeds that act exactly the same whether we're live
-    // or backtesting
-    this.feed = new Feed(this, false);
-    if (this.isBacktesting()) {
-      this.backticker = {};
-      this.backcandle = {};
-      this.time = config.scenario.start;
-    } else {
-      this.time = +new Date();
-    }
+    if (this.isBacktesting()) this.time = config.scenario.start;
     this.indexMarkets(this.markets);
   }
 
   tick() {
-    if (this.isBacktesting()) {
-      this.time += 1000; // one second per tick in backtest mode
-      Object.values(this.backticker).forEach((ticker) => ticker.setCursorToTimestamp(this.time));
-      Object.values(this.backcandle).forEach((candle) => candle.setCursorToTimestamp(this.time));
-      this.feed.tick(this.time);
-    } else {
-      this.time = +new Date();
-    }
+    if (this.isBacktesting()) this.time += 1000; // one second per tick in backtest mode
   }
 
   addTickers(tickers, candles) {
-    this.feed.addTickers(tickers, Feed.Ticker, this.isBacktesting() ? 1 : 5000);
-    this.feed.addTickers(candles, Feed.CandleTicker, this.isBacktesting() ? 1 : 35000);
+    this.feed.addTickers(this, tickers, Feed.Ticker, config.backtest ? 1 : 5000);
+    this.feed.addTickers(this, candles, Feed.CandleTicker, config.backtest ? 1 : 35000);
     if (this.isBacktesting()) {
-      let max = 0;
-      let min = Number.MAX_VALUE;
-      tickers.forEach((ticker) => {
-        const series = Series.FromTicker(this.feed.tickers[ticker]);
-        series.manual = true;
-        this.backticker[ticker] = series;
-        series.read();
-        // This manual time set on backtest is hack as fuck, clean up!
-        if (series.series[0].timestamp < min) {
-          min = series.series[0].timestamp;
-        }
-        let n = series.series.length - 1;
-        if (series.series[n].timestamp > max) {
-          max = series.series[n].timestamp;
-        }
-      });
-      if (isNaN(config.scenario.start)) {
-        this.time = config.scenario.start = min;
-        console.log("Manually set start:", min);
-      }
-      if (isNaN(config.scenario.end)) {
-        config.scenario.end = max;
-        console.log("Manually set end:", max);
-      }
-
-      candles.forEach((candle) => {
-        const series = Series.FromCandle(this.feed.candles[candle]);
-        this.backcandle[candle] = series;
-        series.read();
-      });
-    } else {
-      // this runs the feed asynchronously
-      // for backtesting, we want to be able to run synchronously as fast as possible
-      this.feed.run();
+      this.mockAPI = new MockAPI(this.feed);
+      this.mockAPI.read();
     }
-
   }
 
   /*
@@ -99,11 +52,13 @@ class Exchange {
     Base and quote each give you a hash keyed by the other value.
 
     @markets Markets hash returned from exchange API
+    @constrainToTickers Only build a map for tracked markets
   */
-  indexMarkets(markets) {
+  indexMarkets(markets, constrainToTickers=true) {
     this.markets = {symbol: {}, base:{}, quote:{}};
     let [s,b,q] = [this.markets.symbol, this.markets.base, this.markets.quote];
     for (const symbol in markets) {
+      if (constrainToTickers && !this.feed.tickers[symbol]) continue;
       const market = markets[symbol];
       if (!market.darkpool) {
         s[market.symbol] = market;
@@ -129,20 +84,15 @@ class Exchange {
 
   async fetchTicker(pair) {
     if (this.isBacktesting()) {
-      if (!this.backticker[pair]) {
-        console.log("can't find pair!", pair);
-        console.log(this.path("VEN", "USDT"));
-      }
-      return await this.backticker[pair].last();
+      console.log("fetch!", this.time);
+      return this.mockAPI.fetchTicker(pair, this.time);
     }
     return await this.api.fetchTicker(pair);
   }
 
   async fetchOHLCV(symbol, period="1m", since=undefined) {
     if (this.isBacktesting()) {
-      let last = await this.backcandle[symbol].last();
-      // have to format it as the ticker expects it from CCXT
-      return this.backcandle[symbol].serializer.outCCXT(last);
+      return this.mockAPI.fetchOHLCV(symbol, this.time);
     }
     return await this.api.fetchOHLCV(symbol, period, since);
   }
