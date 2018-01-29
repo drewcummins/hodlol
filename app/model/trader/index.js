@@ -41,7 +41,7 @@ class Trader {
     this.fundAmount = params.amount;
     this.feed = this.exchange.feed;
     this.exchange.addTickers(json.tickers, json.candles);
-    this.exchange.time = config.scenario.start;
+    if (this.exchange.isBacktesting()) this.exchange.time = config.scenario.start;
     this.initStrategies();
   }
 
