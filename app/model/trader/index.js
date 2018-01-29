@@ -7,6 +7,7 @@ const xu = require('../../util/exchange');
 const strat = require('../strategy');
 const mkdirp = require("mkdirp");
 const fs = require("fs");
+const dateFormat = require('dateformat');
 
 class Trader {
   constructor(filepath) {
@@ -40,6 +41,7 @@ class Trader {
     this.fundAmount = params.amount;
     this.feed = this.exchange.feed;
     this.exchange.addTickers(json.tickers, json.candles);
+    this.exchange.time = config.scenario.start;
     this.initStrategies();
   }
 
@@ -65,11 +67,14 @@ class Trader {
       if (this.exchange.dirty) {
         this.strategies.forEach((strategy) => strategy.tick());
         this.exchange.dirty = false;
+        this.printPerformance();
       }
 
       if (this.exchange.isBacktesting()) {
         this.exchange.time += 1000; // add one second per tick in backtest mode
         if (this.exchange.time > config.scenario.end) {
+          await xu.sleep(1000); // let everything wrap up!
+          console.log("Ended backtest");
           process.exit();
         }
       }
@@ -79,7 +84,18 @@ class Trader {
 
 
   async consider(strategy, orderRequest) {
-    console.log(orderRequest);
+    let portfolio = strategy.portfolio;
+    if (orderRequest.type == strat.REQ_LIMIT_BUY) {
+      if (portfolio.canAffordBuy(orderRequest)) {
+        let market = this.exchange.sym(orderRequest.market);
+        portfolio.buy(market, orderRequest.amount, orderRequest.cost());
+      }
+    } else if (orderRequest.type == strat.REQ_LIMIT_SELL) {
+      if (portfolio.canAffordSell(orderRequest)) {
+        let market = this.exchange.sym(orderRequest.market);
+        portfolio.sell(market, orderRequest.amount, orderRequest.cost());
+      }
+    }
   }
 
 
@@ -106,6 +122,28 @@ class Trader {
 
   sumWeight() {
     return this.strategies.reduce((mem, strategy) => mem + strategy.weight, 0);
+  }
+
+
+  async printPerformance() {
+    if (this.strategies.length == 0) return;
+    console.log('\x1Bc');
+    if (this.exchange.isBacktesting()) {
+      let dateStart = dateFormat(config.scenario.start, "mmm d, h:MM:ssTT");
+      let dateEnd = dateFormat(config.scenario.end, "mmm d, h:MM:ssTT");
+      console.log(`Backtesting from ${dateStart} to ${dateEnd}\n`);
+    }
+    for (var i = 0; i < this.strategies.length; i++) {
+      let strategy = this.strategies[i];
+      try {
+        let value = await strategy.portfolio.value("USDT");
+        console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
+      } catch(err) {
+        throw err;
+        console.log("Error calculating value");
+      }
+    }
+    console.log("\n");
   }
 }
 

@@ -38,12 +38,13 @@ class Exchange {
     this.feed = new Feed();
     this.markets = await this.loadMarkets();
     if (this.isBacktesting()) this.time = config.scenario.start;
-    this.indexMarkets(this.markets);
+    // this.indexMarkets(this.markets);
   }
 
   addTickers(tickers, candles) {
     this.feed.addTickers(this, tickers, Feed.Ticker, config.backtest ? 1 : 5000);
     this.feed.addTickers(this, candles, Feed.CandleTicker, config.backtest ? 1 : 35000);
+    this.indexMarkets(this.markets);
     if (this.isBacktesting()) {
       this.mockAPI = new MockAPI(this.feed);
       this.mockAPI.read();
@@ -58,7 +59,7 @@ class Exchange {
     @markets Markets hash returned from exchange API
     @constrainToTickers Only build a map for tracked markets
   */
-  indexMarkets(markets, constrainToTickers=false) {
+  indexMarkets(markets, constrainToTickers=true) {
     this.markets = {symbol: {}, base:{}, quote:{}};
     let [s,b,q] = [this.markets.symbol, this.markets.base, this.markets.quote];
     for (const symbol in markets) {

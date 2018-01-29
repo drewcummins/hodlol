@@ -50,8 +50,8 @@ class Series {
   }
 
   range(timestampA, timestampB) {
-    let _, adx = this.nearest(timestampA);
-    let _, bdx = this.nearest(timestampB);
+    let [_, adx] = this.nearest(timestampA);
+    let [_, bdx] = this.nearest(timestampB);
     if (adx != bdx) {
       return this.series.slice(adx, bdx);
     }

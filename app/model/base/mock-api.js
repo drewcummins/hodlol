@@ -1,6 +1,7 @@
 'use strict';
 
 const Series = require('./series');
+const config = require('../../../config');
 
 class MockAPI {
   constructor(feed) {
@@ -15,7 +16,21 @@ class MockAPI {
   }
 
   read() {
-    Object.values(this.tickers).forEach((series) => series.read());
+    let min = Number.MAX_VALUE;
+    let max = 0;
+    Object.values(this.tickers).forEach((series) => {
+      series.read();
+      if (series.series[0].timestamp < min) {
+        min = series.series[0].timestamp;
+      }
+      if (series.series[series.series.length-1].timestamp > max) {
+        max = series.series[series.series.length-1].timestamp;
+      }
+    });
+    if (config.scenario.start == undefined) {
+      config.scenario.start = min;
+      config.scenario.end = max;
+    }
     Object.values(this.candles).forEach((series) => series.read());
   }
 

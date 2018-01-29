@@ -23,4 +23,4 @@ module.exports.getExchange = (name) => {
 }
 
 module.exports.DATE_ID = dateFormat(new Date(), "mmmm-d-yyyy-h:MM:ss-TT");
-console.log(module.exports.DATE_ID);
+console.log("Date tag:", module.exports.DATE_ID);

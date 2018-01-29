@@ -5,7 +5,7 @@
     {
       "id": "buy-dip-sell-peak",
       "weight": 1,
-      "params": {"threshold": 0.0005}
+      "params": {"threshold": 0.0001}
     },
     {
       "id": "hodl",

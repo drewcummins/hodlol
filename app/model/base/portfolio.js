@@ -31,6 +31,26 @@ class Portfolio {
     return this.balance(market[side]);
   }
 
+  canAffordBuy(order) {
+    let balance = this.balanceByMarket(order.market);
+    return balance >= order.cost();
+  }
+
+  canAffordSell(order) {
+    let balance = this.balanceByMarket(order.market, "base");
+    return balance >= order.cost();
+  }
+
+  buy(market, amount, cost) {
+    this.add(market.base, amount);
+    this.remove(market.quote, cost);
+  }
+
+  sell(market, amount, cost) {
+    this.add(market.quote, cost);
+    this.remove(market.base, amount);
+  }
+
   async value(quote='USDT') {
     let value = {total: 0};
     for (var base in this.balances) {

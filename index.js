@@ -3,6 +3,7 @@
 'use strict';
 const commandLineArgs = require("command-line-args");
 const Trader = require("./app/model/trader");
+const xu = require('./app/util/exchange');
 
 const optionDefinitions = [
   { name: 'help', alias: 'h', type: Boolean },
@@ -18,5 +19,6 @@ const opts = commandLineArgs(optionDefinitions);
   let params = {symbol: opts.symbol, amount: opts.amount, backtest: opts.backtest};
   let trader = await Trader.deserialize(opts.trader, params);
   console.log("Trader initialized.");
+  await xu.sleep(1000);
   trader.run(); // start tickers/candles
 })();
