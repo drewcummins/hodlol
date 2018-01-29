@@ -31,8 +31,6 @@ class JumpThreshold extends sig.Signal {
       return false;
     }
 
-    console.log(ticker.length());
-
     if (this.threshold > 0) {
       let growth = ticker.getAt(-1).bid / ticker.getAt(-2).bid;
       return growth - 1 >= this.threshold;

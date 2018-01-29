@@ -45,19 +45,21 @@ class Exchange {
       this.time += 1000; // one second per tick in backtest mode
       Object.values(this.backticker).forEach((ticker) => ticker.setCursorToTimestamp(this.time));
       Object.values(this.backcandle).forEach((candle) => candle.setCursorToTimestamp(this.time));
+      this.feed.tick(this.time);
     } else {
       this.time = +new Date();
     }
   }
 
   addTickers(tickers, candles) {
-    this.feed.addTickers(tickers, Feed.Ticker, this.isBacktesting() ? 3 : 3000);
-    this.feed.addTickers(candles, Feed.CandleTicker, this.isBacktesting() ? 20 : 20000);
+    this.feed.addTickers(tickers, Feed.Ticker, this.isBacktesting() ? 1 : 5000);
+    this.feed.addTickers(candles, Feed.CandleTicker, this.isBacktesting() ? 1 : 35000);
     if (this.isBacktesting()) {
       let max = 0;
       let min = Number.MAX_VALUE;
       tickers.forEach((ticker) => {
         const series = Series.FromTicker(this.feed.tickers[ticker]);
+        series.manual = true;
         this.backticker[ticker] = series;
         series.read();
         // This manual time set on backtest is hack as fuck, clean up!
@@ -83,8 +85,12 @@ class Exchange {
         this.backcandle[candle] = series;
         series.read();
       });
+    } else {
+      // this runs the feed asynchronously
+      // for backtesting, we want to be able to run synchronously as fast as possible
+      this.feed.run();
     }
-    this.feed.run();
+
   }
 
   /*
@@ -123,7 +129,10 @@ class Exchange {
 
   async fetchTicker(pair) {
     if (this.isBacktesting()) {
-      // console.log("um pair?", pair, this.backticker[pair])
+      if (!this.backticker[pair]) {
+        console.log("can't find pair!", pair);
+        console.log(this.path("VEN", "USDT"));
+      }
       return await this.backticker[pair].last();
     }
     return await this.api.fetchTicker(pair);

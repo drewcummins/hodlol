@@ -10,8 +10,7 @@ module.exports.getExchange = (name) => {
     case "binance":
       return new ccxt.binance({
         apiKey: config.binance_api_key,
-        secret: config.binance_api_secret,
-        enableRateLimit: true
+        secret: config.binance_api_secret
       });
     case "kucoin":
       return new ccxt.kucoin({

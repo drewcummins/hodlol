@@ -18,19 +18,20 @@ class Signal {
   markTickerRead(ticker) {
     const last = ticker.last();
     if (last) {
-      this.reads[ticker.market] = last.timestamp;
+      this.reads[ticker.symbol] = last.timestamp;
     } else {
-      this.reads[ticker.market] = 0;
+      this.reads[ticker.symbol] = 0;
     }
   }
 
   isTickerUpdated(ticker) {
-    if (!this.reads[ticker.market]) {
-      this.reads[ticker.market] = 0;
+    // console.log(ticker.symbol);
+    if (!this.reads[ticker.symbol]) {
+      this.reads[ticker.symbol] = 0;
     }
     const last = ticker.last();
     if (last) {
-      return last.timestamp > this.reads[ticker.market];
+      return last.timestamp > this.reads[ticker.symbol];
     }
     return false;
   }

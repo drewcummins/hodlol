@@ -4,19 +4,25 @@ const Series = require('./series');
 const config = require('../../../config');
 
 class Ticker {
-  constructor(exchange, symbol, record, timeout=3000) {
+  constructor(exchange, symbol, record, timeout=5000) {
     this.exchange = exchange;
     this.symbol = symbol;
     this.timeout = timeout;
     this.record = record;
+    this.lastCall = 0;
     this.series = Series.FromTicker(this);
-    this.lastWrite = 0;
   }
 
   async run() {
     while (true) {
       await this.step();
       await this.sleep();
+    }
+  }
+
+  async tick(timestamp) {
+    if (timestamp - this.lastCall >= this.timeout) {
+      await this.step();
     }
   }
 
@@ -59,7 +65,7 @@ class Ticker {
 }
 
 class CandleTicker extends Ticker {
-  constructor(exchange, symbol, record, timeout=20000, period="1m") {
+  constructor(exchange, symbol, record, timeout=35000, period="1m") {
     super(exchange, symbol, record, timeout);
     this.series = Series.FromCandle(this);
     this.period = period;
@@ -95,6 +101,15 @@ class Feed {
       const ticker = new Type(this.exchange, symbol, this.exchange.isRecording());
       tickers[symbol] = ticker;
     });
+  }
+
+  tick(timestamp) {
+    for (const symbol in this.tickers) {
+      this.tickers[symbol].tick(timestamp);
+    }
+    for (const symbol in this.candles) {
+      this.candles[symbol].tick(timestamp);
+    }
   }
 
   run() {

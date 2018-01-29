@@ -32,19 +32,23 @@ class Trader {
   }
 
   async execute(hertz=10) {
-    const timeout = config.backtest ? 1 : Math.round(1000/hertz);
+    const timeout = Math.round(1000/hertz);
     this.executionRate = hertz;
     let n = 0;
     while (true) {
-      this.exchange.tick()
+      this.exchange.tick(); // update exchange
       this.strategies.forEach(async (strat) => strat.tick());
-      await xu.sleep(timeout);
       if (++n % 2 == 0) {
         this.printPerformance();
       }
-      if (this.exchange.isBacktesting() && this.exchange.time >= config.scenario.end) {
-        this.terminate();
-        break;
+      if (this.exchange.isBacktesting()) {
+        if (this.exchange.time >= config.scenario.end) {
+          this.terminate();
+          break;
+        }
+        await xu.sleep(0);
+      } else {
+        await xu.sleep(timeout);
       }
     }
   }
@@ -98,6 +102,7 @@ class Trader {
         let value = await strategy.portfolio.value("USDT");
         console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
       } catch(err) {
+        throw err;
         console.log("Error calculating value");
       }
     }
