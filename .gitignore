@@ -2,3 +2,5 @@ node_modules
 dev.env
 prod.env
 fixtures
+*.ticker
+*.ohlcv

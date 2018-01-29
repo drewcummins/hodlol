@@ -3,10 +3,10 @@
   "exchange": "binance",
   "strategies": [],
   "tickers": [
-    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/ETH", "XMR/BTC"
+    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/BTC", "ARK/BTC", "VEN/BTC", "LTC/BTC", "BNB/BTC", "ZRX/BTC", "OMG/BTC", "IOTA/BTC", "SUB/BTC", "REQ/BTC", "ENJ/BTC", "ENJ/ETH", "ZEC/BTC", "ICX/BTC"
   ],
   "candles": [
-    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/ETH", "XMR/BTC"
+    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/BTC", "ARK/BTC", "VEN/BTC", "LTC/BTC", "BNB/BTC", "ZRX/BTC", "OMG/BTC", "IOTA/BTC", "SUB/BTC", "REQ/BTC", "ENJ/BTC", "ENJ/ETH", "ZEC/BTC", "ICX/BTC"
   ],
   "record": true,
   "execution_rate": 10
