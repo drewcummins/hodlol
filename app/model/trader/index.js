@@ -35,8 +35,9 @@ class Trader {
     });
     let api = xu.getExchange(json.exchange);
     this.exchange = await Exchange.FromAPI(api);
-    this.fundSymbol = params.fundSymbol;
-    this.fundAmount = params.fundAmount;
+    this.executionRate = json.executionRate;
+    this.fundSymbol = params.symbol;
+    this.fundAmount = params.amount;
     this.feed = this.exchange.feed;
     this.exchange.addTickers(json.tickers, json.candles);
     this.initStrategies();
@@ -52,17 +53,33 @@ class Trader {
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
         strategy.portfolio = new Portfolio(this.exchange);
         strategy.portfolio.add(this.fundSymbol, amount);
+        strategy.initSignals(this.feed);
       }
     });
   }
 
 
-  run() {
+  async run() {
     this.feed.run();
+    while (true) {
+      if (this.exchange.dirty) {
+        this.strategies.forEach((strategy) => strategy.tick());
+        this.exchange.dirty = false;
+      }
+
+      if (this.exchange.isBacktesting()) {
+        this.exchange.time += 1000; // add one second per tick in backtest mode
+        if (this.exchange.time > config.scenario.end) {
+          process.exit();
+        }
+      }
+      await xu.sleep(10);
+    }
   }
 
 
   async consider(strategy, orderRequest) {
+    console.log(orderRequest);
   }
 
 

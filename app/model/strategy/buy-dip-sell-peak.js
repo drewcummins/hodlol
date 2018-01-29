@@ -5,7 +5,7 @@ const JumpThreshold = require('../signal/jump-threshold');
 
 class BuyDipSellPeak extends strat.Strategy {
   constructor(params={}, weight=-1) {
-    super(weight);
+    super(params, weight);
     this.title = "BDSP";
     this.filename = "buy-dip-sell-peak";
     this.threshold = params.threshold;
@@ -20,7 +20,7 @@ class BuyDipSellPeak extends strat.Strategy {
 
 
   async tick() {
-    let sells = await this.peak.tick();
+    let sells = this.peak.tick();
 
     sells.forEach((sell) => {
       let ticker = this.feed.tickers[sell];
@@ -31,7 +31,7 @@ class BuyDipSellPeak extends strat.Strategy {
       }
     });
 
-    let buys = await this.dive.tick();
+    let buys = this.dive.tick();
     //
     buys.forEach((buy) => {
       let ticker = this.feed.tickers[buy];

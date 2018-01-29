@@ -22,6 +22,7 @@ class Ticker {
   async step() {
     const tick = await this.exchange.fetchTicker(this.symbol);
     this.series.append(tick);
+    this.exchange.invalidate(this, tick);
   }
 
   async sleep(timeout) {
@@ -90,7 +91,7 @@ class Feed {
     // probably all the feeds for a while
     let tickers = Type == Ticker ? this.tickers : this.candles;
     symbols.forEach((symbol) => {
-      const ticker = new Type(exchange, symbol, exchange.isRecording());
+      const ticker = new Type(exchange, symbol, exchange.isRecording(), timeout);
       tickers[symbol] = ticker;
     });
   }

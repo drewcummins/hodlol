@@ -21,13 +21,13 @@ class MockAPI {
 
   fetchTicker(pair, time) {
     let series = this.tickers[pair];
-    let last = series.nearest(time);
+    let [last, _] = series.nearest(time);
     return last;
   }
 
   fetchOHLCV(pair, time) {
     let series = this.candles[pair];
-    let last = series.nearest(time);
+    let [last, _] = series.nearest(time);
     // have to format it as the ticker expects it from CCXT
     return series.serializer.outCCXT(last);
   }

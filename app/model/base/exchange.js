@@ -13,6 +13,7 @@ class Exchange {
   constructor(api) {
     this.api = api;
     this.mode = 0;
+    this.dirty = false;
     if (config.record) this.mode |= RECORD;
     if (config.backtest) this.mode = BACKTEST; // let this override for now
     this.name = api.name.toLowerCase();
@@ -26,15 +27,18 @@ class Exchange {
     return (this.mode & RECORD) > 0;
   }
 
+  invalidate(timestamp) {
+    if (this.timestamp > this.time) {
+      this.time = this.timestamp;
+    }
+    this.dirty = true;
+  }
+
   async init() {
     this.feed = new Feed();
     this.markets = await this.loadMarkets();
     if (this.isBacktesting()) this.time = config.scenario.start;
     this.indexMarkets(this.markets);
-  }
-
-  tick() {
-    if (this.isBacktesting()) this.time += 1000; // one second per tick in backtest mode
   }
 
   addTickers(tickers, candles) {
@@ -54,7 +58,7 @@ class Exchange {
     @markets Markets hash returned from exchange API
     @constrainToTickers Only build a map for tracked markets
   */
-  indexMarkets(markets, constrainToTickers=true) {
+  indexMarkets(markets, constrainToTickers=false) {
     this.markets = {symbol: {}, base:{}, quote:{}};
     let [s,b,q] = [this.markets.symbol, this.markets.base, this.markets.quote];
     for (const symbol in markets) {
@@ -84,7 +88,6 @@ class Exchange {
 
   async fetchTicker(pair) {
     if (this.isBacktesting()) {
-      console.log("fetch!", this.time);
       return this.mockAPI.fetchTicker(pair, this.time);
     }
     return await this.api.fetchTicker(pair);

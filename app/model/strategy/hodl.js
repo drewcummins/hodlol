@@ -4,7 +4,7 @@ const strat = require('./index');
 
 class HODL extends strat.Strategy {
   constructor(params={}, weight=-1) {
-    super(weight);
+    super(params, weight);
     this.title = "HODL";
     this.filename = "hodl";
   }

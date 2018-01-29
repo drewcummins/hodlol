@@ -11,7 +11,7 @@ class Signal {
     this.reads = {};
   }
 
-  async tick(time) {
+  tick(time) {
     return NULL;
   }
 
@@ -25,7 +25,6 @@ class Signal {
   }
 
   isTickerUpdated(ticker) {
-    // console.log(ticker.symbol);
     if (!this.reads[ticker.symbol]) {
       this.reads[ticker.symbol] = 0;
     }
