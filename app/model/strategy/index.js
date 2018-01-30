@@ -54,7 +54,7 @@ class Strategy {
       let order = await this.requestHandler(this, request);
     } catch(err) {
       console.log("Error on request order:", request, err.message);
-      // idk, do something lol
+      return {}; // figure out how we want to handle this generic error case
     }
   }
 

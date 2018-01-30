@@ -81,10 +81,40 @@ class CandleTicker extends Ticker {
   }
 }
 
+class OrderTicker extends Ticker {
+  constructor(exchange, orderID, record, timeout=5000) {
+    super(exchange, orderID, record, timeout);
+    this.orderID = this.symbol;
+  }
+
+  async step() {
+    const tick = await this.exchange.fetchOrders(this.orderID);
+    this.series.append(tick);
+    console.log("order tick", tick);
+    this.exchange.invalidate(this, tick);
+  }
+
+  extension() {
+    return 'order';
+  }
+}
+
 class Feed {
   constructor() {
     this.tickers = {};
     this.candles = {};
+    this.orders = {};
+  }
+
+  addOrder(exchange, orderID) {
+    let timeout = exchange.isBacktesting() ? 1 : 5000;
+    let ticker = new OrderTicker(exchange, orderID, exchange.isRecording(), timeout);
+    this.orders[ticker.orderID] = ticker;
+    ticker.run();
+  }
+
+  removeOrder(orderID) {
+    delete this.orders[orderID];
   }
 
   addTickers(exchange, symbols, Type=Ticker, timeout=5000) {

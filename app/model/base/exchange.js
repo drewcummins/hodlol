@@ -4,6 +4,7 @@ const Feed = require('./feed');
 const MockAPI = require('./mock-api');
 const Series = require('./series');
 const config = require('../../../config');
+const xu = require('../../util/exchange');
 
 const RECORD = 1;
 const BACKTEST = 2;
@@ -18,6 +19,7 @@ class Exchange {
     if (config.record) this.mode |= RECORD;
     if (config.backtest) this.mode = BACKTEST | FAKE; // let this override for now
     if (config.fakeOrders) this.mode |= FAKE;
+    this.timeout = this.requiresMock() ? 1 : 15000;
     this.name = api.name.toLowerCase();
   }
 
@@ -121,17 +123,27 @@ class Exchange {
   }
 
   async createLimitBuyOrder(request) {
+    console.log("ordering", request)
+    let order = null;
     if (this.isFaked()) {
-      return this.mockAPI.createLimitBuyOrder(request.market, request.amount, request.price);
+      order = this.mockAPI.createLimitBuyOrder(request);
+    } else {
+      order = await this.api.createLimitBuyOrder(request.market, request.amount, request.price);
     }
-    return await this.api.createLimitBuyOrder(request.market, request.amount, request.price);
+    console.log(order)
+    this.feed.addOrder(this, order.id);
+    return order;
   }
 
   async createLimitSellOrder(request) {
+    let order = null;
     if (this.isFaked()) {
-      return this.mockAPI.createLimitSellOrder(request.market, request.amount, request.price);
+      order = this.mockAPI.createLimitSellOrder(request);
+    } else {
+      order = await this.api.createLimitSellOrder(request.market, request.amount, request.price);
     }
-    return await this.api.createLimitSellOrder(request.market, request.amount, request.price);
+    this.feed.addOrder(this, order.id);
+    return order;
   }
 
   async fetchOrders(symbol=undefined, since=undefined, limit=undefined) {

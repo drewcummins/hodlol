@@ -1,0 +1,18 @@
+{
+  "name": "lowball",
+  "exchange": "binance",
+  "strategies": [
+    {
+      "id": "ridiculous-buy",
+      "weight": 1
+    }
+  ],
+  "tickers": [
+    "ETH/BTC", "BTC/USDT"
+  ],
+  "candles": [
+    "ETH/BTC", "BTC/USDT"
+  ],
+  "record": true,
+  "execution_rate": 10
+}

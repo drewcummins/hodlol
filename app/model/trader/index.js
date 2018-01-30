@@ -93,13 +93,15 @@ class Trader {
     if (orderRequest.type == strat.REQ_LIMIT_BUY) {
       if (portfolio.hasBuyFunds(orderRequest)) {
         portfolio.reserveForBuy(orderRequest);
-        return await this.exchange.createLimitBuyOrder(orderRequest);
+        let order = await this.exchange.createLimitBuyOrder(orderRequest);
+        return order;
       }
       throw new Error("Insufficient funds.", orderRequest);
     } else if (orderRequest.type == strat.REQ_LIMIT_SELL) {
       if (portfolio.hasSellFunds(orderRequest)) {
         portfolio.reserveForSell(orderRequest);
-        return await this.exchange.createLimitSellOrder(orderRequest);
+        let order = await this.exchange.createLimitSellOrder(orderRequest);
+        return order;
       }
       throw new Error("Insufficient funds.", orderRequest);
     }

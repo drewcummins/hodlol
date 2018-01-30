@@ -37,6 +37,12 @@ class CandleSerializer extends Serializer {
   }
 }
 
+class OrderSerializer extends Serializer {
+  constructor() {
+    super(["id", "timestamp", "status", "symbol", "type", "side","price", "amount", "filled", "remaining"]);
+  }
+}
+
 
 
 class Series {
@@ -114,6 +120,10 @@ class Series {
 
   static FromCandle(ticker) {
     return new Series(ticker.filepath(), new CandleSerializer(), ticker.record);
+  }
+
+  static FromOrder(ticker) {
+    return new Series(ticker.filepath(), new OrderSerializer(), ticker.record);
   }
 }
 
