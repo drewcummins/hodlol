@@ -42,6 +42,10 @@ class Trader {
     this.fundAmount = params.amount;
     this.feed = this.exchange.feed;
     this.exchange.addTickers(json.tickers, json.candles);
+    if (!(await this.exchange.isValid(params.symbol, params.amount))) {
+      throw new Error("Insufficient Trader Funds.", params);
+    }
+
     if (this.exchange.isBacktesting()) this.exchange.time = config.scenario.start;
     this.initStrategies();
   }

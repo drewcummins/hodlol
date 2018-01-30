@@ -133,6 +133,11 @@ class MockAPI {
       return true;
     });
   }
+
+  fetchBalance() {
+    // let the dummy exchange check fill it in
+    return {free:{}};
+  }
 }
 
 module.exports = MockAPI;

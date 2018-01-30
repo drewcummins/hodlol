@@ -23,8 +23,15 @@ const opts = commandLineArgs(optionDefinitions);
     backtest: opts.backtest,
     fakeOrders: opts.fake
   };
-  let trader = await Trader.deserialize(opts.trader, params);
-  console.log("Trader initialized.");
+
+  let trader = null;
+  try {
+    trader = await Trader.deserialize(opts.trader, params);
+  } catch(err) {
+    console.log("Error:", err);
+    process.exit();
+  }
+  console.log("Trader initialized.", params);
   await xu.sleep(1000);
   trader.run(); // start tickers/candles
 })();

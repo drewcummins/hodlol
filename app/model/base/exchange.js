@@ -33,6 +33,10 @@ class Exchange {
     return (this.mode & FAKE) > 0;
   }
 
+  requiresMock() {
+    return (this.mode & (FAKE | BACKTEST)) > 0;
+  }
+
   invalidate(timestamp) {
     if (this.timestamp > this.time) {
       this.time = this.timestamp;
@@ -40,20 +44,28 @@ class Exchange {
     this.dirty = true;
   }
 
+  async isValid(symbol, amount) {
+    let balance = await this.fetchBalance();
+    if (this.isFaked()) {
+      balance.free[symbol] = amount;
+    }
+    return (balance.free != undefined) && (balance.free[symbol] != undefined) && (balance.free[symbol] >= amount);
+  }
+
   async init() {
     this.feed = new Feed();
     this.markets = await this.loadMarkets();
     if (this.isBacktesting()) this.time = config.scenario.start;
-    // this.indexMarkets(this.markets);
   }
 
   addTickers(tickers, candles) {
     this.feed.addTickers(this, tickers, Feed.Ticker, config.backtest ? 1 : 5000);
     this.feed.addTickers(this, candles, Feed.CandleTicker, config.backtest ? 1 : 35000);
     this.indexMarkets(this.markets);
-    if (this.isBacktesting()) {
+    if (this.requiresMock()) {
       this.mockAPI = new MockAPI(this.feed);
-      this.mockAPI.read();
+      // only read local files if we're backtesting
+      if (this.isBacktesting()) this.mockAPI.read();
       this.mockAPI.run();
     }
   }
@@ -130,6 +142,13 @@ class Exchange {
       return this.mockAPI.fetchOrders(symbol, since, limit);
     }
     return await this.api.fetchOrders(symbol, since, limit);
+  }
+
+  async fetchBalance() {
+    if (this.isFaked()) {
+      return this.mockAPI.fetchBalance();
+    }
+    return await this.api.fetchBalance();
   }
 
   // Gets market for @symbol

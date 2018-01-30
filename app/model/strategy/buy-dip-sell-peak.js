@@ -22,25 +22,25 @@ class BuyDipSellPeak extends strat.Strategy {
   async tick() {
     let sells = this.peak.tick();
 
-    sells.forEach((sell) => {
+    sells.forEach(async (sell) => {
       let ticker = this.feed.tickers[sell];
       let last = ticker.last();
       let balance = this.portfolio.balanceByMarket(sell, "base");
       if (balance.free > 0) {
-        this.requestOrder(strat.REQ_LIMIT_SELL, sell, balance.free, last.bid);
+        await this.requestOrder(strat.REQ_LIMIT_SELL, sell, balance.free, last.bid);
       }
     });
 
     let buys = this.dive.tick();
     //
-    buys.forEach((buy) => {
+    buys.forEach(async (buy) => {
       let ticker = this.feed.tickers[buy];
       let last = ticker.last();
       let balance = this.portfolio.balanceByMarket(buy);
       if (balance.free > 0) {
         // greedily use up funds
         let maxAmount = balance.free/last.ask;
-        this.requestOrder(strat.REQ_LIMIT_BUY, buy, maxAmount, last.ask);
+        await this.requestOrder(strat.REQ_LIMIT_BUY, buy, maxAmount, last.ask);
       }
     });
   }

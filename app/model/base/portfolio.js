@@ -41,7 +41,7 @@ class Portfolio {
 
   hasSellFunds(request) {
     let balance = this.balanceByMarket(request.market, "base");
-    return balance.free >= request.cost();
+    return balance.free >= request.amount;
   }
 
   reserve(symbol, amount) {
