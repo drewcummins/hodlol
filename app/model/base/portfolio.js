@@ -2,6 +2,9 @@
 
 const uuid = require('uuid/v4');
 
+const FREE = "free";
+const RESERVED = "reserved";
+
 class Portfolio {
   constructor(exchange) {
     this.id = uuid();
@@ -9,11 +12,11 @@ class Portfolio {
     this.balances = {};
   }
 
-  add(symbol, amount) {
+  add(symbol, amount, pool=FREE) {
     if (!this.balances[symbol]) {
-      this.balances[symbol] = 0;
+      this.balances[symbol] = {free: 0, reserved: 0};
     }
-    this.balances[symbol] += amount;
+    this.balances[symbol][pool] += amount;
   }
 
   remove(symbol, amount) {
@@ -21,48 +24,58 @@ class Portfolio {
   }
 
   balance(symbol) {
-    if (!this.balances[symbol]) return 0;
+    if (!this.balances[symbol]) return {free: 0, reserved: 0};
     return this.balances[symbol];
   }
 
   balanceByMarket(symbol, side="quote") {
     let market = this.exchange.sym(symbol);
-    if (!market) return 0;
+    if (!market) return {free: 0, reserved: 0};
     return this.balance(market[side]);
   }
 
-  canAffordBuy(order) {
-    let balance = this.balanceByMarket(order.market);
-    return balance >= order.cost();
+  hasBuyFunds(request) {
+    let balance = this.balanceByMarket(request.market);
+    return balance.free >= request.cost();
   }
 
-  canAffordSell(order) {
-    let balance = this.balanceByMarket(order.market, "base");
-    return balance >= order.cost();
+  hasSellFunds(request) {
+    let balance = this.balanceByMarket(request.market, "base");
+    return balance.free >= request.cost();
   }
 
-  buy(market, amount, cost) {
-    this.add(market.base, amount);
-    this.remove(market.quote, cost);
+  reserve(symbol, amount) {
+    this.remove(symbol, amount);
+    this.add(symbol, amount, RESERVED);
   }
 
-  sell(market, amount, cost) {
-    this.add(market.quote, cost);
-    this.remove(market.base, amount);
+  reserveForBuy(request) {
+    let market = this.exchange.sym(request.market);
+    this.reserve(market.quote, request.cost());
+  }
+
+  reserveForSell(request) {
+    let market = this.exchange.sym(request.market);
+    this.reserve(market.base, request.amount);
   }
 
   async value(quote='USDT') {
-    let value = {total: 0};
+    let value = {free: 0, reserved: 0};
     for (var base in this.balances) {
       if (base == quote) {
-        value.total += this.balances[base];
-        value[base] = this.balances[base];
+        let balance = this.balances[base];
+        value.free += balance.free;
+        value.reserved += balance.reserved;
+        value[base] = {free: balance.free, reserved: balance.reserved};
         continue;
       }
       let rate = await this.exchange.price(base, quote);
-      value[base] = rate * this.balances[base];
-      value.total += value[base];
+      let balance = this.balances[base];
+      value[base] = {free: balance.free * rate, reserved: balance.reserved * rate};
+      value.free += value[base].free;
+      value.reserved += value[base].reserved;
     }
+    value.total = value.free + value.reserved;
     return value;
   }
 }

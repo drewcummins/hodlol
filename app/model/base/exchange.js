@@ -7,6 +7,7 @@ const config = require('../../../config');
 
 const RECORD = 1;
 const BACKTEST = 2;
+const FAKE = 4;
 
 class Exchange {
 
@@ -15,7 +16,8 @@ class Exchange {
     this.mode = 0;
     this.dirty = false;
     if (config.record) this.mode |= RECORD;
-    if (config.backtest) this.mode = BACKTEST; // let this override for now
+    if (config.backtest) this.mode = BACKTEST | FAKE; // let this override for now
+    if (config.fakeOrders) this.mode |= FAKE;
     this.name = api.name.toLowerCase();
   }
 
@@ -25,6 +27,10 @@ class Exchange {
 
   isRecording() {
     return (this.mode & RECORD) > 0;
+  }
+
+  isFaked() {
+    return (this.mode & FAKE) > 0;
   }
 
   invalidate(timestamp) {
@@ -48,6 +54,7 @@ class Exchange {
     if (this.isBacktesting()) {
       this.mockAPI = new MockAPI(this.feed);
       this.mockAPI.read();
+      this.mockAPI.run();
     }
   }
 
@@ -99,6 +106,30 @@ class Exchange {
       return this.mockAPI.fetchOHLCV(symbol, this.time);
     }
     return await this.api.fetchOHLCV(symbol, period, since);
+  }
+
+  async createLimitBuyOrder(request) {
+    if (this.isFaked()) {
+      return this.mockAPI.createLimitBuyOrder(request.market, request.amount, request.price);
+    }
+    return await this.api.createLimitBuyOrder(request.market, request.amount, request.price);
+  }
+
+  async createLimitSellOrder(request) {
+    if (this.isFaked()) {
+      return this.mockAPI.createLimitSellOrder(request.market, request.amount, request.price);
+    }
+    return await this.api.createLimitSellOrder(request.market, request.amount, request.price);
+  }
+
+  async fetchOrders(symbol=undefined, since=undefined, limit=undefined) {
+    if (since == undefined) {
+      since = xu.START_TIME;
+    }
+    if (this.isFaked()) {
+      return this.mockAPI.fetchOrders(symbol, since, limit);
+    }
+    return await this.api.fetchOrders(symbol, since, limit);
   }
 
   // Gets market for @symbol

@@ -26,6 +26,7 @@ class Trader {
       config.dateID = xu.DATE_ID;
       config.record = json.record;
     }
+    config.fakeOrders = params.fakeOrders;
     if (json.record) {
       // make sure we have directories setup if we're going to record
       mkdirp.sync(`./data/${json.exchange}/${config.dateID}`);
@@ -67,7 +68,7 @@ class Trader {
       if (this.exchange.dirty) {
         this.strategies.forEach((strategy) => strategy.tick());
         this.exchange.dirty = false;
-        this.printPerformance();
+        // this.printPerformance();
       }
 
       if (this.exchange.isBacktesting()) {
@@ -86,16 +87,19 @@ class Trader {
   async consider(strategy, orderRequest) {
     let portfolio = strategy.portfolio;
     if (orderRequest.type == strat.REQ_LIMIT_BUY) {
-      if (portfolio.canAffordBuy(orderRequest)) {
-        let market = this.exchange.sym(orderRequest.market);
-        portfolio.buy(market, orderRequest.amount, orderRequest.cost());
+      if (portfolio.hasBuyFunds(orderRequest)) {
+        portfolio.reserveForBuy(orderRequest);
+        return await this.exchange.createLimitBuyOrder(orderRequest);
       }
+      throw new Error("Insufficient funds.", orderRequest);
     } else if (orderRequest.type == strat.REQ_LIMIT_SELL) {
-      if (portfolio.canAffordSell(orderRequest)) {
-        let market = this.exchange.sym(orderRequest.market);
-        portfolio.sell(market, orderRequest.amount, orderRequest.cost());
+      if (portfolio.hasSellFunds(orderRequest)) {
+        portfolio.reserveForSell(orderRequest);
+        return await this.exchange.createLimitSellOrder(orderRequest);
       }
+      throw new Error("Insufficient funds.", orderRequest);
     }
+    throw new Error("Unactionable order type.", orderRequest);
   }
 
 

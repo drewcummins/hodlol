@@ -10,13 +10,19 @@ const optionDefinitions = [
   { name: 'symbol', alias: 's', type: String, defaultValue: "BTC" },
   { name: 'amount', alias: 'a', type: Number },
   { name: 'trader', alias: 't', type: String, defaultOption: true},
-  { name: 'backtest', alias: 'b', type: String}
+  { name: 'backtest', alias: 'b', type: String},
+  { name: 'fake', alias: 'f', type: Boolean, defaultValue: false}
 ];
 
 const opts = commandLineArgs(optionDefinitions);
 
 (async () => {
-  let params = {symbol: opts.symbol, amount: opts.amount, backtest: opts.backtest};
+  let params = {
+    symbol: opts.symbol,
+    amount: opts.amount,
+    backtest: opts.backtest,
+    fakeOrders: opts.fake
+  };
   let trader = await Trader.deserialize(opts.trader, params);
   console.log("Trader initialized.");
   await xu.sleep(1000);

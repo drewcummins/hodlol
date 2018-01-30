@@ -49,7 +49,12 @@ class Strategy {
   }
 
   async requestOrder(type, market, amount, price=null) {
-    let order = this.requestHandler(this, new OrderRequest(type, market, amount, price));
+    try {
+      let order = await this.requestHandler(this, new OrderRequest(type, market, amount, price));
+    } catch(err) {
+      console.log("Error:", err);
+      // idk, do something lol
+    }
   }
 
   basename() {
