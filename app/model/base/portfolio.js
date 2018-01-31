@@ -51,7 +51,6 @@ class Portfolio {
 
   fill(symbol, amount) {
     let market = this.exchange.sym(symbol);
-    
   }
 
   reserveForBuy(request) {
