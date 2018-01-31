@@ -9,6 +9,10 @@ class Portfolio {
   constructor(exchange) {
     this.id = uuid();
     this.exchange = exchange;
+    // i don't like this circular reference but it's easier for now
+    // the exchange calls are just to map from symbol -> market, so
+    // it doesn't actually need an exchange here
+    exchange.portfolios[this.id] = this;
     this.balances = {};
   }
 
@@ -19,8 +23,8 @@ class Portfolio {
     this.balances[symbol][pool] += amount;
   }
 
-  remove(symbol, amount) {
-    this.add(symbol, -amount);
+  remove(symbol, amount, pool=FREE) {
+    this.add(symbol, -amount, pool);
   }
 
   balance(symbol) {
@@ -49,8 +53,10 @@ class Portfolio {
     this.add(symbol, amount, RESERVED);
   }
 
-  fill(symbol, amount) {
-    let market = this.exchange.sym(symbol);
+  fill(order) {
+    let market = this.exchange.sym(order.symbol);
+    this.remove(market.quote, order.cost, RESERVED);
+    this.add(market.base, order.filled);
   }
 
   reserveForBuy(request) {

@@ -85,6 +85,7 @@ class CandleTicker extends Ticker {
 class OrderTicker extends Ticker {
   constructor(exchange, order, record, timeout=5000) {
     super(exchange, order.symbol, record, timeout);
+    this.series = Series.FromOrder(this);
     this.orderID = order.id;
   }
 
@@ -93,14 +94,16 @@ class OrderTicker extends Ticker {
     if (this.hasChanged(tick)) {
       this.series.append(tick);
       this.exchange.invalidate(this, tick);
+      // console.log(tick)
+      console.log(this.series.series)
     }
   }
 
   hasChanged(tick) {
     let last = this.last();
-    if (!last {
-      return true;
-    }
+    if (!last) return true;
+    console.log(last.status, tick.status);
+    console.log(last.filled, tick.filled);
     if (last.status != tick.status) return true;
     if (last.filled != tick.filled) return true;
     return false;
@@ -118,9 +121,10 @@ class Feed {
     this.orders = {};
   }
 
-  addOrder(exchange, order) {
+  addOrder(exchange, order, portfolioID) {
     let timeout = exchange.isBacktesting() ? 1 : 5000;
     let ticker = new OrderTicker(exchange, order, exchange.isRecording(), timeout);
+    ticker.portfolioID = portfolioID;
     this.orders[ticker.orderID] = ticker;
     ticker.run();
   }

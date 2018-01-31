@@ -9,11 +9,12 @@ const REQ_MARKET_BUY = 3;
 const REQ_MARKET_SELL = 4;
 
 class OrderRequest {
-  constructor(type, market, amount, price=null) {
+  constructor(type, market, amount, price=null, portfolioID=null) {
     this.type = type;
     this.market = market;
     this.amount = amount;
     this.price = price;
+    this.portfolioID = portfolioID;
   }
 
   cost() {
@@ -49,7 +50,7 @@ class Strategy {
   }
 
   async requestOrder(type, market, amount, price=null) {
-    let request = new OrderRequest(type, market, amount, price)
+    let request = new OrderRequest(type, market, amount, price, this.portfolio.id);
     try {
       let order = await this.requestHandler(this, request);
     } catch(err) {

@@ -19,6 +19,10 @@ class Serializer {
     });
     return x;
   }
+
+  key(tick) {
+    return tick["timestamp"];
+  }
 }
 
 class TickerSerializer extends Serializer {
@@ -40,6 +44,10 @@ class CandleSerializer extends Serializer {
 class OrderSerializer extends Serializer {
   constructor() {
     super(["id", "timestamp", "status", "symbol", "type", "side","price", "amount", "filled", "remaining"]);
+  }
+
+  key(tick) {
+    return `${tick["timestamp"]}${tick["status"]}`;
   }
 }
 
@@ -69,8 +77,11 @@ class Series {
   }
 
   append(x, lock=false) {
-    if (!this.data[x.timestamp]) {
-      this.data[x.timestamp] = x;
+    let key = this.serializer.key(x);
+    if (!this.data[key]) {
+      // this does a clone of the object when we append it
+      // which is necessary so that order filler can simply update orders
+      this.data[key] = { ... x };
       this.series = Object.values(this.data);
       if (this.autoWrite && !lock) this.write();
     }

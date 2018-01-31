@@ -20,6 +20,7 @@ class Exchange {
     this.api = api;
     this.mode = 0;
     this.dirty = false;
+    this.portfolios = {};
     if (config.record) this.mode |= RECORD;
     if (config.backtest) this.mode = BACKTEST | FAKE; // let this override for now
     if (config.fakeOrders) this.mode |= FAKE;
@@ -56,6 +57,11 @@ class Exchange {
       if (last) {
         if (last.status == ORDER_STATUS_CLOSED || last.status == ORDER_STATUS_CANCELED) {
           order.kill = true;
+          delete this.feed.orders[order.orderID];
+          let portfolio = this.portfolios[order.portfolioID];
+          if (portfolio) {
+            portfolio.fill(order);
+          }
         }
       }
     });
@@ -144,7 +150,7 @@ class Exchange {
     } else {
       order = await this.api.createLimitBuyOrder(request.market, request.amount, request.price);
     }
-    this.feed.addOrder(this, order);
+    this.feed.addOrder(this, order, request.portfolioID);
     return order;
   }
 
@@ -155,7 +161,7 @@ class Exchange {
     } else {
       order = await this.api.createLimitSellOrder(request.market, request.amount, request.price);
     }
-    this.feed.addOrder(this, order);
+    this.feed.addOrder(this, order, request.portfolioID);
     return order;
   }
 
