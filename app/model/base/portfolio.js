@@ -49,6 +49,10 @@ class Portfolio {
     this.add(symbol, amount, RESERVED);
   }
 
+  fill(symbol, amount) {
+    
+  }
+
   reserveForBuy(request) {
     let market = this.exchange.sym(request.market);
     this.reserve(market.quote, request.cost());

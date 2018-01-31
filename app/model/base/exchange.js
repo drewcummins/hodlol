@@ -10,6 +10,10 @@ const RECORD = 1;
 const BACKTEST = 2;
 const FAKE = 4;
 
+const ORDER_STATUS_OPEN = 'open';
+const ORDER_STATUS_CLOSED = 'closed';
+const ORDER_STATUS_CANCELED = 'canceled';
+
 class Exchange {
 
   constructor(api) {
@@ -44,6 +48,17 @@ class Exchange {
       this.time = this.timestamp;
     }
     this.dirty = true;
+  }
+
+  processOrderState() {
+    Object.values(this.feed.orders).forEach((order) => {
+      let last = order.last();
+      if (last) {
+        if (last.status == ORDER_STATUS_CLOSED || last.status == ORDER_STATUS_CANCELED) {
+          order.kill = true;
+        }
+      }
+    });
   }
 
   async isValid(symbol, amount) {
@@ -123,15 +138,13 @@ class Exchange {
   }
 
   async createLimitBuyOrder(request) {
-    console.log("ordering", request)
     let order = null;
     if (this.isFaked()) {
       order = this.mockAPI.createLimitBuyOrder(request);
     } else {
       order = await this.api.createLimitBuyOrder(request.market, request.amount, request.price);
     }
-    console.log(order)
-    this.feed.addOrder(this, order.id);
+    this.feed.addOrder(this, order);
     return order;
   }
 
@@ -142,7 +155,7 @@ class Exchange {
     } else {
       order = await this.api.createLimitSellOrder(request.market, request.amount, request.price);
     }
-    this.feed.addOrder(this, order.id);
+    this.feed.addOrder(this, order);
     return order;
   }
 
@@ -154,6 +167,13 @@ class Exchange {
       return this.mockAPI.fetchOrders(symbol, since, limit);
     }
     return await this.api.fetchOrders(symbol, since, limit);
+  }
+
+  async fetchOrder(orderID, symbol) {
+    if (this.isFaked()) {
+      return this.mockAPI.fetchOrder(orderID);
+    }
+    return await this.api.fetchOrder(orderID, symbol);
   }
 
   async fetchBalance() {

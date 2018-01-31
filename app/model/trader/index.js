@@ -71,6 +71,7 @@ class Trader {
     while (true) {
       if (this.exchange.dirty) {
         this.strategies.forEach((strategy) => strategy.tick());
+        this.exchange.processOrderState();
         this.exchange.dirty = false;
         // this.printPerformance();
       }

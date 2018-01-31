@@ -14,6 +14,7 @@ class Ticker {
 
   async run() {
     while (true) {
+      if (this.kill) break; // give each ticker a simple way to remove themselves
       await this.step();
       await this.sleep();
     }
@@ -82,16 +83,27 @@ class CandleTicker extends Ticker {
 }
 
 class OrderTicker extends Ticker {
-  constructor(exchange, orderID, record, timeout=5000) {
-    super(exchange, orderID, record, timeout);
-    this.orderID = this.symbol;
+  constructor(exchange, order, record, timeout=5000) {
+    super(exchange, order.symbol, record, timeout);
+    this.orderID = order.id;
   }
 
   async step() {
-    const tick = await this.exchange.fetchOrders(this.orderID);
-    this.series.append(tick);
-    console.log("order tick", tick);
-    this.exchange.invalidate(this, tick);
+    const tick = await this.exchange.fetchOrder(this.orderID, this.symbol);
+    if (this.hasChanged(tick)) {
+      this.series.append(tick);
+      this.exchange.invalidate(this, tick);
+    }
+  }
+
+  hasChanged(tick) {
+    let last = this.last();
+    if (!last {
+      return true;
+    }
+    if (last.status != tick.status) return true;
+    if (last.filled != tick.filled) return true;
+    return false;
   }
 
   extension() {
@@ -106,9 +118,9 @@ class Feed {
     this.orders = {};
   }
 
-  addOrder(exchange, orderID) {
+  addOrder(exchange, order) {
     let timeout = exchange.isBacktesting() ? 1 : 5000;
-    let ticker = new OrderTicker(exchange, orderID, exchange.isRecording(), timeout);
+    let ticker = new OrderTicker(exchange, order, exchange.isRecording(), timeout);
     this.orders[ticker.orderID] = ticker;
     ticker.run();
   }

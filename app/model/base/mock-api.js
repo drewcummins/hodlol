@@ -24,6 +24,10 @@ class OrderFiller {
     order.remaining = 0;
   }
 
+  find(orderID) {
+    return this.orders[orderID];
+  }
+
   all() {
     return Object.values(this.orders);
   }
@@ -128,11 +132,14 @@ class MockAPI {
   fetchOrders(symbol=undefined, since=undefined, limit=undefined) {
     let orders = this.orders.all();
     return orders.filter((order) => {
-      console.log(order.symbol, symbol, order.symbol == symbol)
       // if (symbol != undefined && order.symbol != symbol) return false;
       if (since != undefined && order.timestamp < since) return false;
       return true;
     });
+  }
+
+  fetchOrder(orderID) {
+    return this.orders.find(orderID);
   }
 
   fetchBalance() {
