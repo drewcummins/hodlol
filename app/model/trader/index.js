@@ -73,7 +73,7 @@ class Trader {
         this.strategies.forEach((strategy) => strategy.tick());
         this.exchange.processOrderState();
         this.exchange.dirty = false;
-        // this.printPerformance();
+        this.printPerformance();
       }
 
       if (this.exchange.isBacktesting()) {
@@ -84,7 +84,7 @@ class Trader {
           process.exit();
         }
       }
-      await xu.sleep(10);
+      await xu.sleep(1);
     }
   }
 

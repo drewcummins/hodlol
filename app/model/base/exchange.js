@@ -59,9 +59,7 @@ class Exchange {
           order.kill = true;
           delete this.feed.orders[order.orderID];
           let portfolio = this.portfolios[order.portfolioID];
-          if (portfolio) {
-            portfolio.fill(last);
-          }
+          if (portfolio) portfolio.fill(last);
         }
       }
     });

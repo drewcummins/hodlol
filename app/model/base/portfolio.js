@@ -53,13 +53,6 @@ class Portfolio {
     this.add(symbol, amount, RESERVED);
   }
 
-  fill(order) {
-    let market = this.exchange.sym(order.symbol);
-    this.remove(market.quote, order.cost, RESERVED);
-    this.add(market.base, order.filled);
-    console.log(this.balances)
-  }
-
   reserveForBuy(request) {
     let market = this.exchange.sym(request.market);
     this.reserve(market.quote, request.cost());
@@ -68,6 +61,29 @@ class Portfolio {
   reserveForSell(request) {
     let market = this.exchange.sym(request.market);
     this.reserve(market.base, request.amount);
+  }
+
+  fill(order) {
+    // console.log("\n\n =================================================================================")
+    // console.log(this.balances)
+    // console.log("(" + order.side + ") =>")
+    if (order.side == 'buy') this.fillBuyOrder(order);
+    else if (order.side == 'sell') this.fillSellOrder(order);
+    else throw "Invalid order side!";
+    // console.log(this.balances);
+    // console.log("=================================================================================")
+  }
+
+  fillBuyOrder(order) {
+    let market = this.exchange.sym(order.symbol);
+    this.remove(market.quote, order.cost, RESERVED);
+    this.add(market.base, order.filled);
+  }
+
+  fillSellOrder(order) {
+    let market = this.exchange.sym(order.symbol);
+    this.remove(market.base, order.filled, RESERVED);
+    this.add(market.quote, order.cost);
   }
 
   async value(quote='USDT') {

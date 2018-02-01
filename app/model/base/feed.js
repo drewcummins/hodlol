@@ -94,16 +94,12 @@ class OrderTicker extends Ticker {
     if (this.hasChanged(tick)) {
       this.series.append(tick);
       this.exchange.invalidate(this, tick);
-      // console.log(tick)
-      console.log(this.series.series)
     }
   }
 
   hasChanged(tick) {
     let last = this.last();
     if (!last) return true;
-    console.log(last.status, tick.status);
-    console.log(last.filled, tick.filled);
     if (last.status != tick.status) return true;
     if (last.filled != tick.filled) return true;
     return false;
