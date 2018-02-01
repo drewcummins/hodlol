@@ -72,15 +72,9 @@ describe('Exchange private state queries', () => {
       nockBack.setMode('wild'); // none of nock's filtering shit works, will have to look through their code
       let balances = await exchange.fetchBalance();
       expect(balances).to.exist;
+      expect(balances['BTC']).to.exist;
       // return Promise.resolve()
       // .then(nockDone);
     // });
   });
 });
-
-// const ccxt = require('ccxt');
-// const nockBack = require('nock').back;
-// const xu = require('../app/util/exchange-util')
-//
-// nockBack.fixtures = './test/fixtures/';
-// nockBack.setMode('record');
