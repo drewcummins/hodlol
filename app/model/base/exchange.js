@@ -60,7 +60,7 @@ class Exchange {
           delete this.feed.orders[order.orderID];
           let portfolio = this.portfolios[order.portfolioID];
           if (portfolio) {
-            portfolio.fill(order);
+            portfolio.fill(last);
           }
         }
       }

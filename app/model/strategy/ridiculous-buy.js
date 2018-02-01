@@ -22,6 +22,7 @@ class RidiculousBuy extends strat.Strategy {
       let balance = this.portfolio.balanceByMarket(this.lowball);
       if (balance.free > 0) {
         let maxAmount = balance.free/last.ask;
+        // await this.requestOrder(strat.REQ_LIMIT_BUY, this.lowball, maxAmount, last.ask);
         await this.requestOrder(strat.REQ_LIMIT_BUY, this.lowball, maxAmount * 0.5, last.ask*0.3);
       }
     }

@@ -57,6 +57,7 @@ class Portfolio {
     let market = this.exchange.sym(order.symbol);
     this.remove(market.quote, order.cost, RESERVED);
     this.add(market.base, order.filled);
+    console.log(this.balances)
   }
 
   reserveForBuy(request) {

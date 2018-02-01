@@ -103,6 +103,7 @@ class MockAPI {
       side:      'buy',           // 'buy', 'sell'
       price:     request.price,   // float price in quote currency
       amount:    request.amount,  // ordered amount of base currency
+      cost:      request.price * request.amount,
       filled:    0.0,             // filled amount of base currency
       remaining: request.amount,  // remaining amount to fill
       trades:   []
@@ -121,6 +122,7 @@ class MockAPI {
       side:      'sell',           // 'buy', 'sell'
       price:     request.price,   // float price in quote currency
       amount:    request.amount,  // ordered amount of base currency
+      cost:      request.price * request.amount,
       filled:    0.0,             // filled amount of base currency
       remaining: request.amount,  // remaining amount to fill
       trades:   []
