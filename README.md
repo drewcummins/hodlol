@@ -62,6 +62,8 @@ The `date_id` tells the trader where to grab the ticker data from (this is the f
 
     ./index.js your-trader.trader --symbol BTC --amount 0.5 --backtest my-backtest.scenario
 
+It's quite likely that you'll want to just record some data. For this purpse, it's perfectly acceptable to run a trader with no strategies and `record` set to true.
+
 ### Full Paranoia Verification
 Since hodlol accesses sensitive shit like your precious money, I've decided to sign all commits and tags. If there end up being more contributors, you should make sure the commit you're checking out is verified by me/someone you trust. Github puts a little "verified" flag on all such commits; you can also verify a commit locally with `git verify-commit <commit>`.
 
