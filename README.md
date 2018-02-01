@@ -14,6 +14,7 @@ Algo trading platform for cryptocurrencies
 The whole of hodlol is modeled around the idea of a _trader_. A trader implements any number of _strategies_ on the exchange of his choosing and is described by a `.trader` JSON file. Here's an incredibly stupid trader named `dummy` who runs 2 strategies on Binance:
 
 ```javascript
+{
   "name": "dummy",
   "exchange": "binance",
   "strategies": [
