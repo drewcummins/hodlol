@@ -10,10 +10,6 @@
     {
       "id": "hodl",
       "weight": 1
-    },
-    {
-      "id": "ridiculous-buy",
-      "weight": 1
     }
   ],
   "tickers": [

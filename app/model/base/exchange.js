@@ -26,6 +26,7 @@ class Exchange {
     if (config.fakeOrders) this.mode |= FAKE;
     this.timeout = this.requiresMock() ? 1 : 15000;
     this.name = api.name.toLowerCase();
+    this.time = 0;
   }
 
   isBacktesting() {
@@ -45,8 +46,8 @@ class Exchange {
   }
 
   invalidate(timestamp) {
-    if (this.timestamp > this.time) {
-      this.time = this.timestamp;
+    if (timestamp > this.time) {
+      this.time = timestamp;
     }
     this.dirty = true;
   }
