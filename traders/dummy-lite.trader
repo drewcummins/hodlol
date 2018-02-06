@@ -8,11 +8,12 @@
       "indicators": [
         {
           "id": "jump-threshold",
-          "params": {"threshold": 0.0001}
+          "threshold": 0.0005
         },
         {
           "id": "macd",
-          "params": {"periods": [2,5,9], "props": ["close"]}
+          "periods": [2,5,9],
+          "props": ["close"]
         }
       ]
     },

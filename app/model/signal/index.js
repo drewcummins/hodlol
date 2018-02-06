@@ -6,11 +6,11 @@ const SELL = -1;
 
 class Signal {
 
-  constructor(feed, symbol, params={ticker: "tickers"}) {
-    this.params = params;
+  constructor(feed, symbol, json) {
+    this.params = json;
     this.feed = feed;
     this.symbol = symbol;
-    this.ticker = params.ticker;
+    this.ticker = json.ticker;
     this.last = 0;
 
     this.init();
@@ -49,13 +49,17 @@ class Signal {
   }
 }
 
+class MultiSignal extends Signal {
+
+}
+
 module.exports = {
   Signal: Signal,
   BUY: BUY,
   SELL: SELL,
   PASS: PASS,
   deserialize: (sigClass, json, symbol, feed) => {
-    return new sigClass(feed, symbol, json.params);
+    return new sigClass(feed, symbol, json);
   },
   predeserialize: (sig) => {
     if (!sig.ticker) sig.ticker = "tickers";
