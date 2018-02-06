@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "ansicolor": "^1.1.71",
+    "ansicolors": "^0.3.2",
     "as-table": "^1.0.31",
     "ccxt": "^1.10.738",
     "command-line-args": "^5.0.1",
@@ -36,6 +37,7 @@
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
     "technicalindicators": "^1.0.21",
+    "tulind": "^0.8.9",
     "uuid": "^3.1.0"
   }
 }

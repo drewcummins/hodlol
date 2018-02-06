@@ -26,6 +26,7 @@ const opts = commandLineArgs(optionDefinitions);
 
   let trader = null;
   try {
+    console.log("Loading Trader...")
     trader = await Trader.deserialize(opts.trader, params);
   } catch(err) {
     console.log("Error:", err);

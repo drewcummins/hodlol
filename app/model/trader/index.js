@@ -8,6 +8,7 @@ const strat = require('../strategy');
 const mkdirp = require("mkdirp");
 const fs = require("fs");
 const dateFormat = require('dateformat');
+const colors = require('ansicolors');
 
 class Trader {
   constructor(filepath) {
@@ -68,11 +69,16 @@ class Trader {
 
   async run() {
     this.feed.run();
+    let n = 0;
     while (true) {
       if (this.exchange.dirty) {
         this.strategies.forEach((strategy) => strategy.tick());
         this.exchange.processOrderState();
         this.exchange.dirty = false;
+        // this.printPerformance();
+      }
+
+      if (++n % 50 == 0) {
         this.printPerformance();
       }
 
@@ -139,10 +145,12 @@ class Trader {
   async printPerformance() {
     if (this.strategies.length == 0) return;
     console.log('\x1Bc');
+    var date = "";
     if (this.exchange.isBacktesting()) {
-      let dateStart = dateFormat(config.scenario.start, "mmm d, h:MM:ssTT");
-      let dateEnd = dateFormat(config.scenario.end, "mmm d, h:MM:ssTT");
-      console.log(`Backtesting from ${dateStart} to ${dateEnd}\n`);
+      let dateStart = colors.magenta(dateFormat(config.scenario.start, "mmm d, h:MM:ssTT"));
+      let dateEnd = colors.magenta(dateFormat(config.scenario.end, "mmm d, h:MM:ssTT"));
+      date = colors.magenta(dateFormat(this.exchange.time, "h:MM:ssTT"));
+      console.log(` | Backtesting from ${dateStart} to ${dateEnd}\n`);
     }
     for (var i = 0; i < this.strategies.length; i++) {
       let strategy = this.strategies[i];
@@ -154,6 +162,8 @@ class Trader {
         console.log("Error calculating value");
       }
     }
+    console.log("");
+    console.log(` | [${date}]`);
     console.log("\n");
   }
 }

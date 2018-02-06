@@ -110,6 +110,17 @@ class Series {
     });
   }
 
+  transpose(props) {
+    let transpose = {};
+    this.series.forEach((x) => {
+      props.forEach((prop) => {
+        if (!transpose[prop]) transpose[prop] = [];
+        transpose[prop].push(x[prop]);
+      });
+    });
+    return Object.values(transpose);
+  }
+
   length() {
     return this.series.length;
   }
