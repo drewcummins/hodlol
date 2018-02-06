@@ -50,17 +50,25 @@ class Signal {
 }
 
 class MultiSignal extends Signal {
+  init() {
+    this.subsignals = this.params.subsignals.map((sub) => {
+      let sigClass = require(`./${sub.id}`);
+      return deserialize(sigClass, sub, this.symbol, this.feed);
+    });
+  }
+}
 
+let deserialize = (sigClass, json, symbol, feed) => {
+  return new sigClass(feed, symbol, json);
 }
 
 module.exports = {
   Signal: Signal,
+  MultiSignal: MultiSignal,
   BUY: BUY,
   SELL: SELL,
   PASS: PASS,
-  deserialize: (sigClass, json, symbol, feed) => {
-    return new sigClass(feed, symbol, json);
-  },
+  deserialize: deserialize,
   predeserialize: (sig) => {
     if (!sig.ticker) sig.ticker = "tickers";
   }

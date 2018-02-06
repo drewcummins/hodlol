@@ -2,15 +2,12 @@
 
 const sig = require('./index')
 
-class Any extends sig.Signal {
+class Any extends sig.MultiSignal {
 
   init() {
     this.filename = "any";
     this.title = "Any";
-    this.subsignals = params.subsignals.map((sub) => {
-      let sigClass = require(`./${sub.id}`);
-      return sig.deserialize(sigClass, sub, symbol, feed);
-    });
+    super.init();
   }
 
   async evaluate(ticker) {
@@ -25,4 +22,4 @@ class Any extends sig.Signal {
 
 }
 
-module.exports = JumpThreshold;
+module.exports = Any;

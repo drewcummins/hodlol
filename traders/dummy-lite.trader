@@ -7,8 +7,17 @@
       "weight": 1,
       "indicators": [
         {
-          "id": "jump-threshold",
-          "threshold": 0.0005
+          "id": "any",
+          "subsignals": [
+            {
+              "id": "jump-threshold",
+              "threshold": 0.0005
+            },
+            {
+              "id": "jump-threshold",
+              "threshold": -0.0005
+            }
+          ]
         },
         {
           "id": "macd",
