@@ -24,12 +24,20 @@ class OrderRequest {
 }
 
 class Strategy {
-  constructor(params={}, weight=-1) {
-    this.weight = weight;
+  constructor(json) {
+    this.params = json.params || {};
+    this.weight = json.weight || 1;
     this.id = uuid();
+    this.pendingIndicators = json.indicators || [];
     this.indicators = [];
     this.portfolio = null;
-    this.title = "Strategy";
+    this.title = json.displayName || "Strategy";
+
+    this.init();
+  }
+
+  init() {
+    // no default
   }
 
   register(fundSymbol, fundAmount, requestHandler, feed) {
@@ -40,8 +48,15 @@ class Strategy {
     this.initIndicators(feed);
   }
 
-  initIndicators(feeds) {
-    //
+  // default to instaniating any signals explicitly listed in the trader file
+  initIndicators(feed) {
+    this.pendingIndicators.forEach((signal) => {
+      sig.predeserialize(signal);
+      let sigClass = require(`../signal/${signal.id}`);
+      Object.keys(feed[signal.ticker]).forEach((symbol) => {
+        this.indicators.push(sig.deserialize(sigClass, signal, symbol, feed));
+      });
+    });
   }
 
   // vanilla strategy is to ask all indicators for buy/sell signals and request
@@ -91,7 +106,12 @@ class Strategy {
   }
 
   serialize() {
-    return {id: this.basename(), weight: this.weight, params: {}};
+    return {
+      id: this.basename(),
+      weight: this.weight,
+      params: {},
+      indicators: this.indicators.map((indicator) => indicator.serialize())
+    };
   }
 }
 
@@ -100,5 +120,8 @@ module.exports = {
   REQ_LIMIT_BUY: REQ_LIMIT_BUY,
   REQ_LIMIT_SELL: REQ_LIMIT_SELL,
   REQ_MARKET_BUY: REQ_MARKET_BUY,
-  REQ_MARKET_SELL: REQ_MARKET_SELL
+  REQ_MARKET_SELL: REQ_MARKET_SELL,
+  deserialize: (stratClass, json) => {
+    return new stratClass(json);
+  }
 };

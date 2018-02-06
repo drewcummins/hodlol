@@ -3,13 +3,15 @@
 const sig = require('./index')
 
 class JumpThreshold extends sig.Signal {
-  // @threshold percent growth over previous step
-  // e.g. t1 = 10, t2 = 12 represents 20% growth or 0.2
-  // t1 = 10, t2 = 8 represents -20% growth or -0.2
-  constructor(feed, symbol, threshold) {
-    super(feed, symbol);
-    this.threshold = threshold;
-    this.sig = threshold < 0 ? sig.BUY : sig.SELL;
+
+  init() {
+    // @threshold percent growth over previous step
+    // e.g. t1 = 10, t2 = 12 represents 20% growth or 0.2
+    // t1 = 10, t2 = 8 represents -20% growth or -0.2
+    this.title = "Jump Threshold";
+    this.filename = "jump-threshold";
+    this.threshold = this.params.threshold;
+    this.sig = this.threshold < 0 ? sig.BUY : sig.SELL;
   }
 
   evaluate(ticker) {

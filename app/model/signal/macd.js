@@ -5,10 +5,11 @@ const tulind = require('tulind');
 
 class MACD extends sig.Signal {
 
-  constructor(feed, symbol, props=["close"], periods=[2,5,9]) {
-    super(feed, symbol);
-    this.props = props;
-    this.periods = periods;
+  init() {
+    this.filename = "macd";
+    this.title = "Moving Average Convergence Divergence";
+    this.props = this.params.props;
+    this.periods = this.params.periods;
   }
 
   async evaluate(ticker) {
@@ -17,7 +18,7 @@ class MACD extends sig.Signal {
       let slice = series.transpose(this.props, this.props[2]); // this grabs the desired properties from the series
       let last = series.last();
       // [macd, macd signal, macd histogram]
-      let [_, __, histo] = await tulind.indicators.macd.indicator(slice, this.periods);
+      let [foo, bar, histo] = await tulind.indicators.macd.indicator(slice, this.periods);
       if (this.hasBuySignal(histo)) return sig.BUY;
       else if (this.hasSellSignal(histo)) return sig.SELL;
     }

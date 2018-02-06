@@ -32,9 +32,11 @@ class Trader {
       // make sure we have directories setup if we're going to record
       mkdirp.sync(`./data/${json.exchange}/${config.dateID}`);
     }
-    this.strategies = json.strategies.map((strat) => {
-      let stratClass = require(`../strategy/${strat.id}`);
-      return new stratClass(strat.params, strat.weight);
+    this.strategies = json.strategies.map((strategy) => {
+      let stratClass = strat.Strategy;
+      // if we have an explicitly defined strategy
+      if (strategy.id) stratClass = require(`../strategy/${strategy.id}`);
+      return strat.deserialize(stratClass, strategy);
     });
     let api = xu.getExchange(json.exchange);
     this.exchange = await Exchange.FromAPI(api);

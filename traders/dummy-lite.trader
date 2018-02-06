@@ -3,18 +3,22 @@
   "exchange": "binance",
   "strategies": [
     {
-      "id": "buy-dip-sell-peak",
+      "displayName": "Dummy",
       "weight": 1,
-      "params": {"threshold": 0.0005}
+      "indicators": [
+        {
+          "id": "jump-threshold",
+          "params": {"threshold": 0.0001}
+        },
+        {
+          "id": "macd",
+          "params": {"periods": [2,5,9], "props": ["close"]}
+        }
+      ]
     },
     {
-      "id": "macd",
       "weight": 1,
-      "params": {"periods": [2, 5, 9]}
-    },
-    {
-      "id": "hodl",
-      "weight": 1
+      "id": "hodl"
     }
   ],
   "tickers": [
