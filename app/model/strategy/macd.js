@@ -15,7 +15,7 @@ class MACDStrat extends strat.Strategy {
       this.props = ["close"];
     }
     if (!params.periods) {
-      this.periods = [20,50,100];
+      this.periods = [2,5,9];
     }
   }
 

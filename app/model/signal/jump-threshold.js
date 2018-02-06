@@ -12,7 +12,7 @@ class JumpThreshold extends sig.Signal {
     this.sig = threshold < 0 ? sig.BUY : sig.SELL;
   }
 
-  async evaluate(ticker) {
+  evaluate(ticker) {
     return this.exceedsThreshold(ticker) ? this.sig : sig.PASS;
   }
 
