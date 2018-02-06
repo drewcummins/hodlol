@@ -6,24 +6,14 @@ class JumpThreshold extends sig.Signal {
   // @threshold percent growth over previous step
   // e.g. t1 = 10, t2 = 12 represents 20% growth or 0.2
   // t1 = 10, t2 = 8 represents -20% growth or -0.2
-  constructor(feed, threshold) {
-    super(feed);
+  constructor(feed, symbol, threshold) {
+    super(feed, symbol);
     this.threshold = threshold;
+    this.sig = threshold < 0 ? sig.BUY : sig.SELL;
   }
 
-  tick() {
-    const tickers = this.feed.tickers;
-    let moves = [];
-    for (var symbol in tickers) {
-      const ticker = tickers[symbol];
-      if (this.isTickerUpdated(ticker)) {
-        this.markTickerRead(ticker);
-        if (this.exceedsThreshold(ticker)) {
-          moves.push(symbol);
-        }
-      }
-    }
-    return moves;
+  async evaluate(ticker) {
+    return this.exceedsThreshold(ticker) ? this.sig : sig.PASS;
   }
 
   exceedsThreshold(ticker) {

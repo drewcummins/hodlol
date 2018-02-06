@@ -8,6 +8,10 @@
       "params": {"threshold": 0.0005}
     },
     {
+      "id": "macd",
+      "weight": 1
+    },
+    {
       "id": "hodl",
       "weight": 1
     }

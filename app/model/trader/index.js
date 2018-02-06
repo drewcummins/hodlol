@@ -61,7 +61,7 @@ class Trader {
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
         strategy.portfolio = new Portfolio(this.exchange);
         strategy.portfolio.add(this.fundSymbol, amount);
-        strategy.initSignals(this.feed);
+        strategy.initIndicators(this.feed);
       }
     });
   }
@@ -72,10 +72,9 @@ class Trader {
     let n = 0;
     while (true) {
       if (this.exchange.dirty) {
-        this.strategies.forEach((strategy) => strategy.tick());
+        this.strategies.forEach(async (strategy) => await strategy.tick());
         this.exchange.processOrderState();
         this.exchange.dirty = false;
-        // this.printPerformance();
       }
 
       if (++n % 50 == 0) {

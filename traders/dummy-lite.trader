@@ -5,7 +5,12 @@
     {
       "id": "buy-dip-sell-peak",
       "weight": 1,
-      "params": {"threshold": 0.0001}
+      "params": {"threshold": 0.0005}
+    },
+    {
+      "id": "macd",
+      "weight": 1,
+      "params": {"periods": [3, 9, 20]}
     },
     {
       "id": "hodl",

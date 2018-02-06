@@ -1,5 +1,6 @@
 'use strict';
 
+const sig = require('../signal');
 const uuid = require('uuid/v4');
 const path = require('path');
 
@@ -26,7 +27,7 @@ class Strategy {
   constructor(params={}, weight=-1) {
     this.weight = weight;
     this.id = uuid();
-    this.signals = [];
+    this.indicators = [];
     this.portfolio = null;
     this.title = "Strategy";
   }
@@ -36,16 +37,42 @@ class Strategy {
     this.fundAmount = fundAmount;
     this.requestHandler = requestHandler;
     this.feed = feed;
-    this.initSignals(feed);
+    this.initIndicators(feed);
   }
 
-  initSignals(feeds) {
+  initIndicators(feeds) {
     //
   }
 
-  tick() {
-    this.signals.forEach((signal) => {
-      signal.tick();
+  // vanilla strategy is to ask all indicators for buy/sell signals and request
+  // that trader order accordingly
+  async tick() {
+    await this.indicators.forEach(async (indicator) => {
+      let signal = await indicator.tick();
+      if (signal == sig.PASS) return;
+
+      let ticker = this.feed.tickers[indicator.symbol];
+      let last = ticker.last();
+      if (signal == sig.BUY) {
+        let balance = this.portfolio.balanceByMarket(indicator.symbol);
+        if (balance.free > 0) {
+          // greedily use up funds
+          let maxAmount = balance.free/last.ask;
+          while (maxAmount * last.ask > balance.free) {
+            // fix floating point error
+            // not sure the actual way to do this
+            maxAmount *= 0.999;
+          }
+          await this.requestOrder(REQ_LIMIT_BUY, indicator.symbol, maxAmount, last.ask);
+        }
+      } else if (signal == sig.SELL) {
+        let balance = this.portfolio.balanceByMarket(indicator.symbol, "base");
+        if (balance.free > 0) {
+          await this.requestOrder(REQ_LIMIT_SELL, indicator.symbol, balance.free, last.bid);
+        }
+      } else {
+        throw new Error("Invalid signal from", indicator);
+      }
     });
   }
 

@@ -1,38 +1,40 @@
 'use strict';
 
 const BUY = 1;
-const NULL = 0;
+const PASS = 0;
 const SELL = -1;
 
 class Signal {
 
-  constructor(feed) {
+  constructor(feed, symbol, ticker="tickers") {
     this.feed = feed;
-    this.reads = {};
+    this.symbol = symbol;
+    this.ticker = ticker;
+    this.last = 0;
   }
 
-  tick(time) {
-    return NULL;
+  async tick(time) {
+    const tickers = this.feed.tickers;
+    const ticker = tickers[this.symbol];
+    if (this.isTickerUpdated(ticker)) {
+      this.markTickerRead(ticker);
+      return await this.evaluate(ticker);
+    }
+    return PASS;
+  }
+
+  async evaluate(ticker) {
+    return PASS;
   }
 
   markTickerRead(ticker) {
     const last = ticker.last();
-    if (last) {
-      this.reads[ticker.symbol] = last.timestamp;
-    } else {
-      this.reads[ticker.symbol] = 0;
-    }
+    if (last) this.last = last.timestamp;
   }
 
   isTickerUpdated(ticker) {
-    if (!this.reads[ticker.symbol]) {
-      this.reads[ticker.symbol] = 0;
-    }
     const last = ticker.last();
-    if (last) {
-      return last.timestamp > this.reads[ticker.symbol];
-    }
-    return false;
+    return last && last.timestamp > this.last;
   }
 }
 
@@ -40,5 +42,5 @@ module.exports = {
   Signal: Signal,
   BUY: BUY,
   SELL: SELL,
-  NULL: NULL
+  PASS: PASS
 };
