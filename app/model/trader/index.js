@@ -44,7 +44,7 @@ class Trader {
     this.fundSymbol = params.symbol;
     this.fundAmount = params.amount;
     this.feed = this.exchange.feed;
-    this.exchange.addTickers(json.tickers, json.candles);
+    this.exchange.addTickers(json.tickers);
     if (!(await this.exchange.isValid(params.symbol, params.amount))) {
       throw new Error("Insufficient Trader Funds.", params);
     }
@@ -84,7 +84,7 @@ class Trader {
       }
 
       if (this.exchange.isBacktesting()) {
-        this.exchange.time += 1000; // add one second per tick in backtest mode
+        this.exchange.time += 10000; // add 10 seconds per tick in backtest mode
         if (this.exchange.time > config.scenario.end) {
           await xu.sleep(1000); // let everything wrap up!
           console.log("Ended backtest");
@@ -123,7 +123,6 @@ class Trader {
       name: this.name,
       strategies: this.strategies.map((strat) => strat.serialize()),
       tickers: Object.keys(this.feed.tickers),
-      candles: Object.keys(this.feed.candles),
       executionRate: this.executionRate,
       record: config.record
     };

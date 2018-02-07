@@ -23,11 +23,8 @@ class JumpThreshold extends sig.Signal {
       return false;
     }
 
-    if (this.threshold > 0) {
-      let growth = ticker.getAt(-1).bid / ticker.getAt(-2).bid;
-      return growth - 1 >= this.threshold;
-    }
-    let growth = ticker.getAt(-1).ask / ticker.getAt(-2).ask;
+    let growth = ticker.getAt(-1).close / ticker.getAt(-2).close;
+    if (this.threshold > 0) return growth - 1 >= this.threshold;
     return growth - 1 <= this.threshold;
   }
 

@@ -9,7 +9,6 @@ class OBV extends sig.Signal {
     this.filename = "obv";
     this.title = "On Balance Volume";
     this.props = ["close", "volume"];
-    this.ticker = "candles";
   }
 
   async evaluate(ticker) {

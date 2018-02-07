@@ -64,14 +64,9 @@ class Portfolio {
   }
 
   fill(order) {
-    // console.log("\n\n =================================================================================")
-    // console.log(this.balances)
-    // console.log("(" + order.side + ") =>")
     if (order.side == 'buy') this.fillBuyOrder(order);
     else if (order.side == 'sell') this.fillSellOrder(order);
     else throw "Invalid order side!";
-    // console.log(this.balances);
-    // console.log("=================================================================================")
   }
 
   fillBuyOrder(order) {

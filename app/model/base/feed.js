@@ -73,6 +73,7 @@ class CandleTicker extends Ticker {
     tick.forEach((candlestick) => {
       let cs = candlestick.join(",");
       this.series.append(this.series.serializer.in(cs), true);
+      this.exchange.invalidate(this, tick);
     });
     if (this.series.autoWrite) this.series.write();
   }
@@ -113,7 +114,6 @@ class OrderTicker extends Ticker {
 class Feed {
   constructor() {
     this.tickers = {};
-    this.candles = {};
     this.orders = {};
   }
 
@@ -130,8 +130,7 @@ class Feed {
   }
 
   addTickers(exchange, symbols, Type=Ticker, timeout=5000) {
-    // probably all the feeds for a while
-    let tickers = Type == Ticker ? this.tickers : this.candles;
+    let tickers = this.tickers;
     symbols.forEach((symbol) => {
       const ticker = new Type(exchange, symbol, exchange.isRecording(), timeout);
       tickers[symbol] = ticker;
@@ -139,12 +138,7 @@ class Feed {
   }
 
   run() {
-    for (const symbol in this.tickers) {
-      this.tickers[symbol].run();
-    }
-    for (const symbol in this.candles) {
-      this.candles[symbol].run();
-    }
+    Object.values(this.tickers).forEach((ticker) => ticker.run());
   }
 
 }

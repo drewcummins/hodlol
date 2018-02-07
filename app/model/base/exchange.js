@@ -80,9 +80,8 @@ class Exchange {
     if (this.isBacktesting()) this.time = config.scenario.start;
   }
 
-  addTickers(tickers, candles) {
-    this.feed.addTickers(this, tickers, Feed.Ticker, config.backtest ? 1 : 5000);
-    this.feed.addTickers(this, candles, Feed.CandleTicker, config.backtest ? 1 : 35000);
+  addTickers(tickers) {
+    this.feed.addTickers(this, tickers, Feed.CandleTicker, config.backtest ? 1 : 35000);
     this.indexMarkets(this.markets);
     if (this.requiresMock()) {
       this.mockAPI = new MockAPI(this.feed);
@@ -128,12 +127,13 @@ class Exchange {
     return await this.api.loadMarkets();
   }
 
-  async fetchTicker(pair) {
-    if (this.isBacktesting()) {
-      return this.mockAPI.fetchTicker(pair, this.time);
-    }
-    return await this.api.fetchTicker(pair);
-  }
+  // going to try with only candlestick data
+  // async fetchTicker(pair) {
+  //   if (this.isBacktesting()) {
+  //     return this.mockAPI.fetchTicker(pair, this.time);
+  //   }
+  //   return await this.api.fetchTicker(pair);
+  // }
 
   async fetchOHLCV(symbol, period="1m", since=undefined) {
     if (this.isBacktesting()) {
@@ -218,10 +218,10 @@ class Exchange {
         let ticker = this.feed.tickers[pair];
         if (ticker && ticker.length() > 0) {
           let tick = ticker.last(); // last here means most recent tick
-          price *= tick.last; // last here means most recent price
+          price *= tick.close;
         } else {
-          let tick = await this.fetchTicker(pair);
-          price *= tick.last;
+          let tick = await this.fetchOHLCV(pair);
+          price *= tick.close;
         }
       }
       return price;

@@ -4,3 +4,4 @@ prod.env
 fixtures
 *.ticker
 *.ohlcv
+*.order

@@ -22,8 +22,5 @@
   "tickers": [
     "ETH/BTC", "BTC/USDT"
   ],
-  "candles": [
-    "ETH/BTC", "BTC/USDT"
-  ],
   "record": true
 }

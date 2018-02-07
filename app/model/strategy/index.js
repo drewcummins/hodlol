@@ -51,9 +51,8 @@ class Strategy {
   // default to instaniating any signals explicitly listed in the trader file
   initIndicators(feed) {
     this.pendingIndicators.forEach((signal) => {
-      sig.predeserialize(signal);
       let sigClass = require(`../signal/${signal.id}`);
-      Object.keys(feed[signal.ticker]).forEach((symbol) => {
+      Object.keys(feed.tickers).forEach((symbol) => {
         this.indicators.push(sig.deserialize(sigClass, signal, symbol, feed));
       });
     });
@@ -72,18 +71,18 @@ class Strategy {
         let balance = this.portfolio.balanceByMarket(indicator.symbol);
         if (balance.free > 0) {
           // greedily use up funds
-          let maxAmount = balance.free/last.ask;
-          while (maxAmount * last.ask > balance.free) {
+          let maxAmount = balance.free/last.close;
+          while (maxAmount * last.close > balance.free) {
             // fix floating point error
             // not sure the actual way to do this
             maxAmount *= 0.999;
           }
-          await this.requestOrder(REQ_LIMIT_BUY, indicator.symbol, maxAmount, last.ask);
+          await this.requestOrder(REQ_LIMIT_BUY, indicator.symbol, maxAmount, last.close);
         }
       } else if (signal == sig.SELL) {
         let balance = this.portfolio.balanceByMarket(indicator.symbol, "base");
         if (balance.free > 0) {
-          await this.requestOrder(REQ_LIMIT_SELL, indicator.symbol, balance.free, last.bid);
+          await this.requestOrder(REQ_LIMIT_SELL, indicator.symbol, balance.free, last.close);
         }
       } else {
         throw new Error("Invalid signal from", indicator);
