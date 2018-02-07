@@ -31,6 +31,12 @@ class JumpThreshold extends sig.Signal {
     return growth - 1 <= this.threshold;
   }
 
+  serialize() {
+    let json = super.serialize();
+    json.threshold = this.threshold;
+    return json;
+  }
+
 }
 
 module.exports = JumpThreshold;

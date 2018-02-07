@@ -113,7 +113,9 @@ class Series {
 
   transpose(props, a=0) {
     let transpose = {};
-    this.series.slice(a).forEach((x) => {
+    let series = this.series;
+    if (series.length > a) series = series.slice(a);
+    series.forEach((x) => {
       props.forEach((prop) => {
         if (!transpose[prop]) transpose[prop] = [];
         transpose[prop].push(x[prop]);

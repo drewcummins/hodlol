@@ -79,7 +79,7 @@ class Trader {
         this.exchange.dirty = false;
       }
 
-      if (++n % 50 == 0) {
+      if (++n % 100 == 0) {
         this.printPerformance();
       }
 
@@ -119,7 +119,7 @@ class Trader {
 
   serialize() {
     let json = {
-      exchange: this.api.name.toLowerCase(),
+      exchange: this.exchange.name,
       name: this.name,
       strategies: this.strategies.map((strat) => strat.serialize()),
       tickers: Object.keys(this.feed.tickers),
@@ -129,6 +129,7 @@ class Trader {
     };
     return JSON.stringify(json);
   }
+
 
 
   static async deserialize(filepath, params) {

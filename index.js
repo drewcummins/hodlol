@@ -32,7 +32,9 @@ const opts = commandLineArgs(optionDefinitions);
     console.log("Error:", err);
     process.exit();
   }
-  console.log("Trader initialized.", params);
+  console.log("Trader initialized.", JSON.parse(trader.serialize()));
+  // console.log(JSON.parse(trader.serialize()));
+  // process.exit();
   await xu.sleep(1000);
   trader.run(); // start tickers/candles
 })();

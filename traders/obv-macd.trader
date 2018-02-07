@@ -1,26 +1,16 @@
 {
-  "name": "dummy",
+  "name": "obv-macd",
   "exchange": "binance",
   "strategies": [
     {
-      "displayName": "Dummy",
+      "displayName": "OBV-MACD",
       "weight": 1,
       "indicators": [
         {
-          "id": "any",
+          "id": "all",
           "subsignals": [
-            {
-              "id": "jump-threshold",
-              "threshold": 0.0005
-            },
-            {
-              "id": "jump-threshold",
-              "threshold": -0.0005
-            }
+            {"id": "obv", "id": "macd"}
           ]
-        },
-        {
-          "id": "obv"
         }
       ]
     },

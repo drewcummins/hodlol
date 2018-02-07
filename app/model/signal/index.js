@@ -10,7 +10,7 @@ class Signal {
     this.params = json;
     this.feed = feed;
     this.symbol = symbol;
-    this.ticker = json.ticker;
+    this.ticker = json.ticker || "tickers";
     this.last = 0;
 
     this.init();
@@ -21,7 +21,7 @@ class Signal {
   }
 
   async tick(time) {
-    const tickers = this.feed.tickers;
+    const tickers = this.feed[this.ticker];
     const ticker = tickers[this.symbol];
     if (this.isTickerUpdated(ticker)) {
       this.markTickerRead(ticker);
@@ -55,6 +55,12 @@ class MultiSignal extends Signal {
       let sigClass = require(`./${sub.id}`);
       return deserialize(sigClass, sub, this.symbol, this.feed);
     });
+  }
+
+  serialize() {
+    let json = super.serialize();
+    json.subsignals = this.subsignals.map((subsignal) => subsignal.serialize());
+    return json;
   }
 }
 

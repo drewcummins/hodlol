@@ -106,12 +106,16 @@ class Strategy {
   }
 
   serialize() {
-    return {
-      id: this.basename(),
-      weight: this.weight,
-      params: {},
-      indicators: this.indicators.map((indicator) => indicator.serialize())
-    };
+    let cache = {};
+    this.indicators.forEach((indicator) => {
+      let json = indicator.serialize();
+      let hash = JSON.stringify(json);
+      if (!cache[hash]) cache[hash] = json;
+    });
+    let json = {id: this.basename(), weight: this.weight}
+    let indicators = Object.values(cache);
+    if (indicators.length > 0) json.indicators = indicators;
+    return json;
   }
 }
 
