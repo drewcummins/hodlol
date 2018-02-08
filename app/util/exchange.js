@@ -22,6 +22,8 @@ module.exports.getExchange = (name) => {
   }
 }
 
+module.exports.dateFormat = (time) => dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
+
 module.exports.START_TIME = +new Date();
 module.exports.DATE_ID = dateFormat(module.exports.START_TIME, "mmmm-d-yyyy-h:MM:ss-TT");
 console.log("Date tag:", module.exports.DATE_ID);

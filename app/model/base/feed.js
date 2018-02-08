@@ -68,7 +68,7 @@ class CandleTicker extends Ticker {
 
   async step() {
     let last = this.last();
-    let since = last ? last.timestamp : undefined;
+    let since = last ? last.timestamp : this.exchange.time;
     const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     tick.forEach((candlestick) => {
       let cs = candlestick.join(",");

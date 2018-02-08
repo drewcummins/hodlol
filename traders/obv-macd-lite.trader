@@ -1,0 +1,26 @@
+{
+  "name": "obv-macd",
+  "exchange": "binance",
+  "strategies": [
+    {
+      "displayName": "OBV-MACD",
+      "weight": 1,
+      "indicators": [
+        {
+          "id": "all",
+          "subsignals": [
+            {"id": "obv", "id": "macd"}
+          ]
+        }
+      ]
+    },
+    {
+      "weight": 2,
+      "id": "hodl"
+    }
+  ],
+  "tickers": [
+    "ETH/BTC", "BTC/USDT"
+  ],
+  "record": true
+}

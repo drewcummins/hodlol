@@ -86,7 +86,10 @@ class Exchange {
     if (this.requiresMock()) {
       this.mockAPI = new MockAPI(this.feed);
       // only read local files if we're backtesting
-      if (this.isBacktesting()) this.mockAPI.read();
+      if (this.isBacktesting()) {
+        
+        this.mockAPI.read();
+      }
       this.mockAPI.run();
     }
   }
@@ -127,13 +130,12 @@ class Exchange {
     return await this.api.loadMarkets();
   }
 
-  // going to try with only candlestick data
-  // async fetchTicker(pair) {
-  //   if (this.isBacktesting()) {
-  //     return this.mockAPI.fetchTicker(pair, this.time);
-  //   }
-  //   return await this.api.fetchTicker(pair);
-  // }
+  async fetchTicker(pair) {
+    if (this.isBacktesting()) {
+      return this.mockAPI.fetchTicker(pair, this.time);
+    }
+    return await this.api.fetchTicker(pair);
+  }
 
   async fetchOHLCV(symbol, period="1m", since=undefined) {
     if (this.isBacktesting()) {

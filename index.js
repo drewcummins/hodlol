@@ -4,6 +4,9 @@
 const commandLineArgs = require("command-line-args");
 const Trader = require("./app/model/trader");
 const xu = require('./app/util/exchange');
+const rs = require('readline-sync');
+const chrono = require('chrono-node');
+const Backfiller = require("./app/model/base/backfiller");
 
 const optionDefinitions = [
   { name: 'help', alias: 'h', type: Boolean },
@@ -17,6 +20,21 @@ const optionDefinitions = [
 const opts = commandLineArgs(optionDefinitions);
 
 (async () => {
+  // if we're asking to backtest without providing a scenario file,
+  // we need to go grab the backtest data
+  if (opts.backtest === null) {
+    let dateInput = rs.question("What time range? (This can be written naturally, e.g. 'Saturday 4pm to Monday 9am'): ");
+    let [parsed] = chrono.parse(dateInput);
+    let start = parsed.start.date();
+    let end = parsed.end.date();
+    let name = rs.question("Give this backtest a name (default is data start date): ");
+    if (!name || name.length < 1) name = xu.dateFormat(+start);
+    let backfiller = new Backfiller(opts.trader);
+    await backfiller.run(name, +start, +end);
+    opts.backtest = backfiller.scenarioPath;
+  }
+
+
   let params = {
     symbol: opts.symbol,
     amount: opts.amount,
@@ -33,8 +51,6 @@ const opts = commandLineArgs(optionDefinitions);
     process.exit();
   }
   console.log("Trader initialized.", JSON.parse(trader.serialize()));
-  // console.log(JSON.parse(trader.serialize()));
-  // process.exit();
   await xu.sleep(1000);
   trader.run(); // start tickers/candles
 })();

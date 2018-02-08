@@ -104,6 +104,14 @@ class Strategy {
     return this.filename;
   }
 
+  prettyTitle() {
+    let title = this.title + ":";
+    while (title.length < 20) {
+      title += " ";
+    }
+    return title;
+  }
+
   serialize() {
     let cache = {};
     this.indicators.forEach((indicator) => {

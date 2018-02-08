@@ -1,9 +1,0 @@
-{
-  "name": "recorder",
-  "exchange": "binance",
-  "strategies": [],
-  "tickers": [
-    "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/BTC", "ARK/BTC", "VEN/BTC", "LTC/BTC", "BNB/BTC", "ZRX/BTC", "OMG/BTC", "IOTA/BTC", "SUB/BTC", "REQ/BTC", "ENJ/BTC", "ENJ/ETH", "ZEC/BTC", "ICX/BTC"
-  ],
-  "record": true
-}

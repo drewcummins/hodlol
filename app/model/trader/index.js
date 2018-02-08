@@ -9,6 +9,7 @@ const mkdirp = require("mkdirp");
 const fs = require("fs");
 const dateFormat = require('dateformat');
 const colors = require('ansicolors');
+const columnify = require('columnify')
 
 class Trader {
   constructor(filepath) {
@@ -57,7 +58,7 @@ class Trader {
     const sum = this.sumWeight();
     // this normalizes the weights in all provided strategies and
     // divvies up the trader's total funds accordingly
-    this.strategies.forEach((strategy) => {
+    this.strategies.forEach(async (strategy) => {
       const amount = this.fundAmount * strategy.weight / sum;
       if (amount > 0) {
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
@@ -71,7 +72,9 @@ class Trader {
 
   async stepExchange() {
     if (this.exchange.dirty) {
-      await this.strategies.forEach(async (strategy) => await strategy.tick());
+      this.strategies.forEach(async (strategy) => {
+        await strategy.tick();
+      })
       this.exchange.processOrderState();
       this.exchange.dirty = false;
     }
@@ -84,7 +87,7 @@ class Trader {
     while (true) {
       await this.stepExchange();
 
-      if (++n % 100 == 0) {
+      if (n++ % 100 == 0) {
         this.printPerformance();
       }
 
@@ -160,21 +163,29 @@ class Trader {
     if (this.exchange.isBacktesting()) {
       let dateStart = colors.magenta(dateFormat(config.scenario.start, "mmm d, h:MM:ssTT"));
       let dateEnd = colors.magenta(dateFormat(config.scenario.end, "mmm d, h:MM:ssTT"));
-      date = colors.magenta(dateFormat(this.exchange.time, "h:MM:ssTT"));
+      date = colors.magenta(dateFormat(Math.min(this.exchange.time, config.scenario.end), "mmm d, h:MM:ssTT"));
       console.log(` | Backtesting from ${dateStart} to ${dateEnd}\n`);
     }
+    let columns = [];
     for (var i = 0; i < this.strategies.length; i++) {
       let strategy = this.strategies[i];
       try {
         let value = await strategy.portfolio.value("USDT");
-        console.log(" |=> " + strategy.title + ": $" + value.total.toFixed(2));
+        if(!strategy.originalValue) strategy.originalValue = value;
+        let valstr = colors.green("$" + value.total.toFixed(2));
+        let ovalstr = colors.green("$" + strategy.originalValue.total.toFixed(2));
+        columns.push({strategy: colors.blue(strategy.title), value: valstr, "original value": ovalstr});
+        // console.log(" |=> " + strategy.prettyTitle(), valstr + ", original value:", ovalstr);
       } catch(err) {
         throw err;
         console.log("Error calculating value");
       }
     }
+    let table = columnify(columns, {minWidth: 20});
+    table = table.split("\n").join("\n | ");
+    console.log(" | " + table);
     console.log("");
-    console.log(` | [${date}]`);
+    console.log(` | ${date}`);
     console.log("\n");
   }
 }

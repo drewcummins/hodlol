@@ -102,7 +102,7 @@ class Series {
   }
 
   read() {
-    console.log("Reading", this.filepath);
+    console.log("Reading", this.filepath.split("/").pop());
     let file = fs.readFileSync(this.filepath, "utf8");
     file.split("\n").forEach((line) => {
       if (line.length > 0) {
