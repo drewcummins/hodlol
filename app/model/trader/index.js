@@ -69,27 +69,36 @@ class Trader {
   }
 
 
+  async stepExchange() {
+    if (this.exchange.dirty) {
+      await this.strategies.forEach(async (strategy) => await strategy.tick());
+      this.exchange.processOrderState();
+      this.exchange.dirty = false;
+    }
+  }
+
+
   async run() {
     this.feed.run();
     let n = 0;
     while (true) {
-      if (this.exchange.dirty) {
-        this.strategies.forEach(async (strategy) => await strategy.tick());
-        this.exchange.processOrderState();
-        this.exchange.dirty = false;
-      }
+      await this.stepExchange();
 
       if (++n % 100 == 0) {
         this.printPerformance();
       }
 
       if (this.exchange.isBacktesting()) {
-        this.exchange.time += 10000; // add 10 seconds per tick in backtest mode
+
         if (this.exchange.time > config.scenario.end) {
+          await this.stepExchange();
           await xu.sleep(1000); // let everything wrap up!
+          await this.printPerformance();
           console.log("Ended backtest");
           process.exit();
         }
+
+        this.exchange.time += 10000; // add 10 seconds per tick in backtest mode
       }
       await xu.sleep(1);
     }
@@ -97,6 +106,7 @@ class Trader {
 
 
   async consider(strategy, orderRequest) {
+    // console.log(this.exchange.feed.tickers[orderRequest.market].last().timestamp);
     let portfolio = strategy.portfolio;
     if (orderRequest.type == strat.REQ_LIMIT_BUY) {
       if (portfolio.hasBuyFunds(orderRequest)) {

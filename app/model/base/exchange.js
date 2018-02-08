@@ -46,9 +46,9 @@ class Exchange {
   }
 
   invalidate(timestamp) {
-    if (timestamp > this.time) {
-      this.time = timestamp;
-    }
+    // if (timestamp > this.time) {
+    //   this.time = timestamp;
+    // }
     this.dirty = true;
   }
 
@@ -77,7 +77,7 @@ class Exchange {
   async init() {
     this.feed = new Feed();
     this.markets = await this.loadMarkets();
-    if (this.isBacktesting()) this.time = config.scenario.start;
+    if (this.isBacktesting()) this.time = config.scenario.start - 61000;
   }
 
   addTickers(tickers) {
