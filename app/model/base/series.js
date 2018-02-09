@@ -82,7 +82,7 @@ class Series {
       // this does a clone of the object when we append it
       // which is necessary so that order filler can simply update orders
       this.data[key] = { ... x };
-      this.series = Object.values(this.data);
+      this.series.push(x);
       if (this.autoWrite && !lock) this.write();
     }
   }
@@ -114,7 +114,7 @@ class Series {
   transpose(props, a=0) {
     let transpose = {};
     let series = this.series;
-    if (series.length > a) series = series.slice(a);
+    if (series.length > a) series = series.slice(-a);
     series.forEach((x) => {
       props.forEach((prop) => {
         if (!transpose[prop]) transpose[prop] = [];

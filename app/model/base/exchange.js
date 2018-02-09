@@ -46,9 +46,9 @@ class Exchange {
   }
 
   invalidate(timestamp) {
-    // if (timestamp > this.time) {
-    //   this.time = timestamp;
-    // }
+    if (timestamp > this.time) {
+      this.time = timestamp;
+    }
     this.dirty = true;
   }
 
@@ -87,7 +87,7 @@ class Exchange {
       this.mockAPI = new MockAPI(this.feed);
       // only read local files if we're backtesting
       if (this.isBacktesting()) {
-        
+
         this.mockAPI.read();
       }
       this.mockAPI.run();

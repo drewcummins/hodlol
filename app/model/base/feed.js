@@ -73,7 +73,7 @@ class CandleTicker extends Ticker {
     tick.forEach((candlestick) => {
       let cs = candlestick.join(",");
       this.series.append(this.series.serializer.in(cs), true);
-      this.exchange.invalidate(this, tick);
+      this.exchange.invalidate(this, tick.timestamp);
     });
     if (this.series.autoWrite) this.series.write();
   }

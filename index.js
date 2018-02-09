@@ -27,6 +27,9 @@ const opts = commandLineArgs(optionDefinitions);
     let [parsed] = chrono.parse(dateInput);
     let start = parsed.start.date();
     let end = parsed.end.date();
+    // console.log(end.toString())
+    // console.log(xu.dateFormat(+start), xu.dateFormat(+end), +end, +new Date()*1000, +end > +new Date() * 1000)
+    // process.exit();
     let name = rs.question("Give this backtest a name (default is data start date): ");
     if (!name || name.length < 1) name = xu.dateFormat(+start);
     let backfiller = new Backfiller(opts.trader);
