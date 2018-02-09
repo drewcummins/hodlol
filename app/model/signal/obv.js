@@ -14,7 +14,7 @@ class OBV extends sig.Signal {
   async evaluate(ticker) {
     let series = ticker.series;
     if (series && series.length() > 0) {
-      let slice = series.transpose(this.props, 10);
+      let slice = series.transpose(this.props, 50);
       let last = series.last();
       let obv = await tulind.indicators.obv.indicator(slice, []);
       if (this.hasBuySignal(obv[0])) return sig.BUY;
@@ -25,12 +25,12 @@ class OBV extends sig.Signal {
 
   hasBuySignal(obv) {
     let slice = obv.slice(-3);
-    return slice[0] < 0 && slice[1];
+    return slice[1] < 0 && slice[2];
   }
 
   hasSellSignal(obv) {
     let slice = obv.slice(-3);
-    return slice[0] > 0 && slice[1];
+    return slice[1] > 0 && slice[2];
   }
 
 }
