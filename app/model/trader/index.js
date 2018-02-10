@@ -64,7 +64,6 @@ class Trader {
         strategy.portfolio = new Portfolio(this.exchange);
         strategy.portfolio.add(this.fundSymbol, amount);
         strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
-        // strategy.initIndicators(this.feed);
         await strategy.open();
       }
     }
@@ -93,7 +92,7 @@ class Trader {
       }
 
       if (this.exchange.isBacktesting()) {
-
+        this.exchange.time += 25000; // add 25 seconds per tick in backtest mode
         if (this.exchange.time > config.scenario.end) {
           await this.stepExchange();
           await xu.sleep(1000); // let everything wrap up!
@@ -101,8 +100,6 @@ class Trader {
           console.log("Ended backtest");
           process.exit();
         }
-
-        this.exchange.time += 25000; // add 10 seconds per tick in backtest mode
       }
       await xu.sleep(1);
     }
@@ -110,7 +107,6 @@ class Trader {
 
 
   async consider(strategy, orderRequest) {
-    // console.log(this.exchange.feed.tickers[orderRequest.market].last().timestamp);
     let portfolio = strategy.portfolio;
     if (orderRequest.type == strat.REQ_LIMIT_BUY) {
       if (portfolio.hasBuyFunds(orderRequest)) {
