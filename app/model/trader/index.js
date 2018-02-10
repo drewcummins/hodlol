@@ -51,30 +51,31 @@ class Trader {
     }
 
     if (this.exchange.isBacktesting()) this.exchange.time = config.scenario.start;
-    this.initStrategies();
+    await this.initStrategies();
   }
 
-  initStrategies() {
+  async initStrategies() {
     const sum = this.sumWeight();
     // this normalizes the weights in all provided strategies and
     // divvies up the trader's total funds accordingly
-    this.strategies.forEach(async (strategy) => {
+    for (let strategy of this.strategies) {
       const amount = this.fundAmount * strategy.weight / sum;
       if (amount > 0) {
-        strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
         strategy.portfolio = new Portfolio(this.exchange);
         strategy.portfolio.add(this.fundSymbol, amount);
-        strategy.initIndicators(this.feed);
+        strategy.register(this.fundSymbol, amount, this.consider.bind(this), this.feed);
+        // strategy.initIndicators(this.feed);
+        await strategy.open();
       }
-    });
+    }
   }
 
 
   async stepExchange() {
     if (this.exchange.dirty) {
-      this.strategies.forEach(async (strategy) => {
-        await strategy.tick();
-      })
+      for (let strategy of this.strategies) {
+        await strategy.tick(this.exchange.time);
+      }
       this.exchange.processOrderState();
       this.exchange.dirty = false;
     }
@@ -101,7 +102,7 @@ class Trader {
           process.exit();
         }
 
-        this.exchange.time += 10000; // add 10 seconds per tick in backtest mode
+        this.exchange.time += 25000; // add 10 seconds per tick in backtest mode
       }
       await xu.sleep(1);
     }

@@ -12,8 +12,8 @@ class All extends sig.MultiSignal {
 
   async evaluate(ticker) {
     let current = null;
-    for (var i = 0; i < this.subsignals.length; i++) {
-      let signal = await this.subsignals[i].tick();
+    for (let subsignal of this.subsignals) {
+      let signal = await subsignal.tick();
       if (current == null) current = signal;
       else if (signal != current) return sig.PASS;
     }

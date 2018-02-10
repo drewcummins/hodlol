@@ -27,6 +27,10 @@ class Portfolio {
     this.add(symbol, -amount, pool);
   }
 
+  market(symbol) {
+    return this.exchange.sym(symbol);
+  }
+
   balance(symbol) {
     if (!this.balances[symbol]) return {free: 0, reserved: 0};
     return this.balances[symbol];

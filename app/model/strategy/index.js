@@ -3,6 +3,7 @@
 const sig = require('../signal');
 const uuid = require('uuid/v4');
 const path = require('path');
+const mu = require('../../util/math');
 
 const REQ_LIMIT_BUY = 1;
 const REQ_LIMIT_SELL = 2;
@@ -48,6 +49,10 @@ class Strategy {
     this.initIndicators(feed);
   }
 
+  async open() {
+    // this gets called before everything kicks off, which allows for any orders
+  }
+
   // default to instaniating any signals explicitly listed in the trader file
   initIndicators(feed) {
     this.pendingIndicators.forEach((signal) => {
@@ -60,8 +65,8 @@ class Strategy {
 
   // vanilla strategy is to ask all indicators for buy/sell signals and request
   // that trader order accordingly
-  async tick() {
-    await this.indicators.forEach(async (indicator) => {
+  async tick(time) {
+    for (let indicator of this.indicators) {
       let signal = await indicator.tick();
       if (signal == sig.PASS) return;
 
@@ -71,23 +76,31 @@ class Strategy {
         let balance = this.portfolio.balanceByMarket(indicator.symbol);
         if (balance.free > 0) {
           // greedily use up funds
-          let maxAmount = balance.free/last.close;
-          while (maxAmount * last.close > balance.free) {
-            // fix floating point error
-            // not sure the actual way to do this
-            maxAmount *= 0.999;
-          }
-          await this.requestOrder(REQ_LIMIT_BUY, indicator.symbol, maxAmount, last.close);
+          await this.placeLimitBuyOrder(indicator.symbol, balance.free, last.close);
         }
       } else if (signal == sig.SELL) {
         let balance = this.portfolio.balanceByMarket(indicator.symbol, "base");
         if (balance.free > 0) {
-          await this.requestOrder(REQ_LIMIT_SELL, indicator.symbol, balance.free, last.close);
+          await this.placeLimitSellOrder(indicator.symbol, balance.free, last.close);
         }
       } else {
         throw new Error("Invalid signal from", indicator);
       }
-    });
+    };
+  }
+
+  async placeLimitBuyOrder(symbol, budget, close) {
+    let amount = budget / close;
+    while (amount * close > budget) {
+      // fix floating point error
+      // not sure the actual way to do this
+      amount *= 0.999;
+    }
+    return await this.requestOrder(REQ_LIMIT_BUY, symbol, amount, close);
+  }
+
+  async placeLimitSellOrder(symbol, budget, close) {
+    return await this.requestOrder(REQ_LIMIT_SELL, symbol, budget, close);
   }
 
   async requestOrder(type, market, amount, price=null) {
@@ -102,14 +115,6 @@ class Strategy {
 
   basename() {
     return this.filename;
-  }
-
-  prettyTitle() {
-    let title = this.title + ":";
-    while (title.length < 20) {
-      title += " ";
-    }
-    return title;
   }
 
   serialize() {

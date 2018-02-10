@@ -11,11 +11,9 @@ class Any extends sig.MultiSignal {
   }
 
   async evaluate(ticker) {
-    for (var i = 0; i < this.subsignals.length; i++) {
-      let signal = await this.subsignals[i].tick();
-      if (signal != sig.PASS) {
-        return signal;
-      }
+    for (let subsignal of this.subsignals) {
+      let signal = await subsignal.tick();
+      if (signal != sig.PASS) return signal;
     }
     return sig.PASS;
   }

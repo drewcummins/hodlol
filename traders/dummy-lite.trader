@@ -3,16 +3,8 @@
   "exchange": "binance",
   "strategies": [
     {
-      "displayName": "Dummy",
-      "weight": 1,
-      "indicators": [
-        {
-          "id": "all",
-          "subsignals": [
-            {"id": "obv", "id": "macd"}
-          ]
-        }
-      ]
+      "id": "sell-best-buy-worst",
+      "weight": 1
     },
     {
       "weight": 1,
