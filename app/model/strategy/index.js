@@ -33,6 +33,7 @@ class Strategy {
     this.indicators = [];
     this.portfolio = null;
     this.title = json.displayName || "Strategy";
+    this.orders = {};
 
     this.init();
   }
@@ -66,6 +67,7 @@ class Strategy {
   // vanilla strategy is to ask all indicators for buy/sell signals and request
   // that trader order accordingly
   async tick(time) {
+    // Object.values(this.orders).forEach((order) => console.log("current:", order));
     for (let indicator of this.indicators) {
       let signal = await indicator.tick();
       if (signal == sig.PASS) return;
@@ -76,12 +78,14 @@ class Strategy {
         let balance = this.portfolio.balanceByMarket(indicator.symbol);
         if (balance.free > 0) {
           // greedily use up funds
-          await this.placeLimitBuyOrder(indicator.symbol, balance.free, last.close);
+          const order = await this.placeLimitBuyOrder(indicator.symbol, balance.free, last.close);
+          this.orders[order.id] = order;
         }
       } else if (signal == sig.SELL) {
         let balance = this.portfolio.balanceByMarket(indicator.symbol, "base");
         if (balance.free > 0) {
-          await this.placeLimitSellOrder(indicator.symbol, balance.free, last.close);
+          const order = await this.placeLimitSellOrder(indicator.symbol, balance.free, last.close);
+          this.orders[order.id] = order;
         }
       } else {
         throw new Error("Invalid signal from", indicator);
@@ -107,6 +111,7 @@ class Strategy {
     let request = new OrderRequest(type, market, amount, price, this.portfolio.id);
     try {
       let order = await this.requestHandler(this, request);
+      return order;
     } catch(err) {
       console.log("Error on request order:", request, err.message);
       return {}; // figure out how we want to handle this generic error case

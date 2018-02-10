@@ -46,9 +46,9 @@ class Exchange {
   }
 
   invalidate(timestamp) {
-    if (timestamp > this.time) {
-      this.time = timestamp;
-    }
+    // if (timestamp > this.time) {
+    //   this.time = timestamp;
+    // }
     this.dirty = true;
   }
 

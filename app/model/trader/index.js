@@ -16,43 +16,6 @@ class Trader {
     this.filepath = filepath;
   }
 
-  async init(params) {
-    const json = JSON.parse(fs.readFileSync(this.filepath));
-    if (params.backtest) {
-      let scenario = JSON.parse(fs.readFileSync(params.backtest));
-      config.backtest = true;
-      config.scenario = scenario;
-      config.dateID = scenario.date_id;
-      config.record = false; // don't let recording happen if we're backtesting
-    } else {
-      config.dateID = xu.DATE_ID;
-      config.record = json.record;
-    }
-    config.fakeOrders = params.fakeOrders;
-    if (json.record) {
-      // make sure we have directories setup if we're going to record
-      mkdirp.sync(`./data/${json.exchange}/${config.dateID}`);
-    }
-    this.strategies = json.strategies.map((strategy) => {
-      let stratClass = strat.Strategy;
-      // if we have an explicitly defined strategy
-      if (strategy.id) stratClass = require(`../strategy/${strategy.id}`);
-      return strat.deserialize(stratClass, strategy);
-    });
-    let api = xu.getExchange(json.exchange);
-    this.exchange = await Exchange.FromAPI(api);
-    this.executionRate = json.executionRate;
-    this.fundSymbol = params.symbol;
-    this.fundAmount = params.amount;
-    this.feed = this.exchange.feed;
-    this.exchange.addTickers(json.tickers);
-    if (!(await this.exchange.isValid(params.symbol, params.amount))) {
-      throw new Error("Insufficient Trader Funds.", params);
-    }
-
-    if (this.exchange.isBacktesting()) this.exchange.time = config.scenario.start;
-    await this.initStrategies();
-  }
 
   async initStrategies() {
     const sum = this.sumWeight();
@@ -72,17 +35,19 @@ class Trader {
 
   async stepExchange() {
     if (this.exchange.dirty) {
+      this.exchange.processOrderState();
       for (let strategy of this.strategies) {
         await strategy.tick(this.exchange.time);
       }
-      this.exchange.processOrderState();
       this.exchange.dirty = false;
     }
   }
 
 
   async run() {
+    // async on its own
     this.feed.run();
+
     let n = 0;
     while (true) {
       await this.stepExchange();
@@ -185,6 +150,47 @@ class Trader {
     console.log(` | ${date}`);
     console.log("\n");
   }
+
+
+  async init(params) {
+    const json = JSON.parse(fs.readFileSync(this.filepath));
+    if (params.backtest) {
+      let scenario = JSON.parse(fs.readFileSync(params.backtest));
+      config.backtest = true;
+      config.scenario = scenario;
+      config.dateID = scenario.date_id;
+      config.record = false; // don't let recording happen if we're backtesting
+    } else {
+      config.dateID = xu.DATE_ID;
+      config.record = json.record;
+    }
+    config.fakeOrders = params.fakeOrders;
+    if (json.record) {
+      // make sure we have directories setup if we're going to record
+      mkdirp.sync(`./data/${json.exchange}/${config.dateID}`);
+    }
+    this.strategies = json.strategies.map((strategy) => {
+      let stratClass = strat.Strategy;
+      // if we have an explicitly defined strategy
+      if (strategy.id) stratClass = require(`../strategy/${strategy.id}`);
+      return strat.deserialize(stratClass, strategy);
+    });
+    let api = xu.getExchange(json.exchange);
+    this.exchange = await Exchange.FromAPI(api);
+    this.executionRate = json.executionRate;
+    this.fundSymbol = params.symbol;
+    this.fundAmount = params.amount;
+    this.feed = this.exchange.feed;
+    this.exchange.addTickers(json.tickers);
+    if (!(await this.exchange.isValid(params.symbol, params.amount))) {
+      throw new Error("Insufficient Trader Funds.", params);
+    }
+
+    if (this.exchange.isBacktesting()) this.exchange.time = config.scenario.start;
+    await this.initStrategies();
+  }
+
+
 }
 
 module.exports = Trader;
