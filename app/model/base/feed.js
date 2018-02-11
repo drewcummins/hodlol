@@ -87,6 +87,7 @@ class OrderTicker extends Ticker {
   constructor(exchange, order, record, timeout=5000) {
     super(exchange, order.symbol, record, timeout);
     this.series = Series.FromOrder(this);
+    this.order = order;
     this.orderID = order.id;
   }
 
@@ -94,6 +95,7 @@ class OrderTicker extends Ticker {
     const tick = await this.exchange.fetchOrder(this.orderID, this.symbol);
     if (this.hasChanged(tick)) {
       this.series.append(tick);
+      this.order.status = tick.status;
       this.exchange.invalidate(this, tick);
     }
   }

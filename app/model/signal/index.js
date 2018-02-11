@@ -68,10 +68,10 @@ let deserialize = (sigClass, json, symbol, feed) => {
 }
 
 module.exports = {
-  Signal: Signal,
-  MultiSignal: MultiSignal,
-  BUY: BUY,
-  SELL: SELL,
-  PASS: PASS,
-  deserialize: deserialize
+  Signal,
+  MultiSignal,
+  BUY,
+  SELL,
+  PASS,
+  deserialize
 };

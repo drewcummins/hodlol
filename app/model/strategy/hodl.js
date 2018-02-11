@@ -1,8 +1,8 @@
 'use strict';
 
-const strat = require('./index');
+const { Strategy } = require('./index');
 
-class HODL extends strat.Strategy {
+class HODL extends Strategy {
   init() {
     this.title = "HODL";
     this.filename = "hodl";

@@ -67,7 +67,6 @@ class Strategy {
   // vanilla strategy is to ask all indicators for buy/sell signals and request
   // that trader order accordingly
   async tick(time) {
-    // Object.values(this.orders).forEach((order) => console.log("current:", order));
     for (let indicator of this.indicators) {
       let signal = await indicator.tick();
       if (signal == sig.PASS) return;
@@ -79,13 +78,11 @@ class Strategy {
         if (balance.free > 0) {
           // greedily use up funds
           const order = await this.placeLimitBuyOrder(indicator.symbol, balance.free, last.close);
-          this.orders[order.id] = order;
         }
       } else if (signal == sig.SELL) {
         let balance = this.portfolio.balanceByMarket(indicator.symbol, "base");
         if (balance.free > 0) {
           const order = await this.placeLimitSellOrder(indicator.symbol, balance.free, last.close);
-          this.orders[order.id] = order;
         }
       } else {
         throw new Error("Invalid signal from", indicator);
@@ -111,11 +108,28 @@ class Strategy {
     let request = new OrderRequest(type, market, amount, price, this.portfolio.id);
     try {
       let order = await this.requestHandler(this, request);
+      this.orders[order.id] = order;
       return order;
     } catch(err) {
       console.log("Error on request order:", request, err.message);
       return {}; // figure out how we want to handle this generic error case
     }
+  }
+
+  async createBuyOrderChain(sellOrder, market, amount, price=null) {
+    // find a path from what we're selling to what we want to buy
+    let [_, ...path] = this.portfolio.path(sellOrder.market, market);
+    let symbol = null;
+    while (symbol != market) {
+      [symbol, ...path] = path;
+      
+    }
+  }
+
+  async orderComplete(order) {
+    // default to removing it from open orders
+    delete this.orders[order.id];
+    if (order.next) await this.requestOrder(next.type, next.market, next.amount, next.price);
   }
 
   basename() {
@@ -137,11 +151,11 @@ class Strategy {
 }
 
 module.exports = {
-  Strategy: Strategy,
-  REQ_LIMIT_BUY: REQ_LIMIT_BUY,
-  REQ_LIMIT_SELL: REQ_LIMIT_SELL,
-  REQ_MARKET_BUY: REQ_MARKET_BUY,
-  REQ_MARKET_SELL: REQ_MARKET_SELL,
+  Strategy,
+  REQ_LIMIT_BUY,
+  REQ_LIMIT_SELL,
+  REQ_MARKET_BUY,
+  REQ_MARKET_SELL,
   deserialize: (stratClass, json) => {
     return new stratClass(json);
   }

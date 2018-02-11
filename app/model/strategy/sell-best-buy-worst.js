@@ -1,9 +1,9 @@
 'use strict';
 
-const strat = require('./index');
+const { Strategy, REQ_LIMIT_BUY, REQ_LIMIT_SELL } = require('./index');
 const mu = require('../../util/math');
 
-class SellBestBuyWorst extends strat.Strategy {
+class SellBestBuyWorst extends Strategy {
   init() {
     this.title = "Sell Best Buy Worst";
     this.filename = "sell-best-buy-worst";
@@ -28,7 +28,6 @@ class SellBestBuyWorst extends strat.Strategy {
   }
 
 
-
   async tick(time) {
     if (this.time < 0) {
       this.time = time;
@@ -51,7 +50,8 @@ class SellBestBuyWorst extends strat.Strategy {
         if (best != null && worst != null) break;
       }
       let bestAmount = this.portfolio.balance(best.symbol).free;
-      await this.placeLimitSellOrder(best.symbol, bestAmount, best.close);
+      let order = await this.placeLimitSellOrder(best.symbol, bestAmount, best.close);
+      order.next = {type:REQ_LIMIT_BUY, symbol: worst.symbol, amount: 1, price: worst.close};
       delete this.current[best.symbol];
 
       // let worstAmount = this.portfolio.balance(worst.symbol).free;
