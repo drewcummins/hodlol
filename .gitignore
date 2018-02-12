@@ -5,3 +5,4 @@ fixtures
 *.ticker
 *.ohlcv
 *.order
+.DS_Store
