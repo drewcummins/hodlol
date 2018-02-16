@@ -1,6 +1,8 @@
 const uuid = require('uuid/v4');
-import { Balance, Marketplace, Market, Num, OrderRequest, BN, OrderType, Order, OrderSide } from './types'
-import { BigNumber } from "bignumber.js"
+import { Balance, Num, BN } from './types';
+import { Order, OrderRequest, OrderSide, OrderType } from './order';
+import { Marketplace } from './market';
+import { BigNumber } from "bignumber.js";
 import { InsufficientFundsError } from '../errors/exchange-error';
 
 export class Portfolio {
@@ -53,6 +55,7 @@ export class Portfolio {
     } else if (request.type == OrderType.LIMIT_SELL) {
       return base.free.isGreaterThanOrEqualTo(request.amount);
     }
+    return false;
   }
 
 
@@ -102,7 +105,7 @@ export class Portfolio {
 
       case OrderSide.SELL:
         this.removeReserved(market.base, order.filled);
-        this.addReserved(market.quote, order.cost);
+        this.addFree(market.quote, order.cost);
         break;
     
       default:

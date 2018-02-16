@@ -1,4 +1,4 @@
-import { OrderRequest } from "../models/types";
+import { OrderRequest } from "../models/order";
 
 export class InvalidMarketSymbolError extends Error {
   constructor(symbol:string) {
