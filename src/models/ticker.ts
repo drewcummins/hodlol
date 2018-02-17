@@ -11,10 +11,16 @@ export class Ticker {
     this.series = new Series(this.filepath(), this.generateSerializer(), record);
   }
 
+  /** 
+   * Tells the series to get reading
+  */
   public async read() {
     return this.series.read();
   }
   
+  /** 
+   * Kicks off the ticker process. This runs asynchronously
+  */
   public async run() {
     while (true) {
       if (this.kill) break;
@@ -23,24 +29,41 @@ export class Ticker {
     }
   }
 
-  public async step() {
+  protected async step() {
     const tick = await this.exchange.fetchTicker(this.symbol);
     this.series.append(tick);
     this.exchange.invalidate();
   }
 
-  public async sleep() {
+  protected async sleep() {
     await sleep(this.timeout);
   }
 
+  /** 
+   * Gets the length of the series
+   * 
+   * @returns series length
+  */
   public length():number {
     return this.series.length();
   }
 
+  /**
+   * Gets the tick at @idx
+   * 
+   * @param idx index of tick to grab
+   * 
+   * @returns tick 
+   */
   public getAt(idx:number):Tick {
     return this.series.getAt(idx);
   }
 
+  /** 
+   * Gets the last tick
+   * 
+   * @returns the last tick in the series
+  */
   public last():Tick {
     return this.series.last();
   }
@@ -61,7 +84,7 @@ export class Ticker {
     return 'ticker';
   }
 
-  public generateSerializer():Serializer {
+  protected generateSerializer():Serializer {
     return new TickerSerializer();
   }
 }
@@ -71,7 +94,7 @@ export class CandleTicker extends Ticker {
     super(exchange, symbol, record, timeout);
   }
 
-  public async step() {
+  protected async step() {
     let last:Tick = this.last();
     let since:number = last ? Number(last.timestamp) : this.exchange.time;
     const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
@@ -83,11 +106,11 @@ export class CandleTicker extends Ticker {
     if (this.series.autowrite) this.series.write();
   }
 
-  public extension():string {
+  protected extension():string {
     return 'ohlcv';
   }
 
-  public generateSerializer():Serializer {
+  protected generateSerializer():Serializer {
     return new CandleSerializer();
   }
 }
@@ -99,7 +122,7 @@ export class OrderTicker extends Ticker {
     this.orderID = order.id;
   }
 
-  public async step() {
+  protected async step() {
     const tick = await this.exchange.fetchOrder(this.orderID, this.symbol);
     if (this.hasChanged(tick)) {
       this.series.append(tick);
@@ -108,7 +131,7 @@ export class OrderTicker extends Ticker {
     }
   }
 
-  public hasChanged(tick:Tick):boolean {
+  private hasChanged(tick:Tick):boolean {
     let last:Tick = this.last();
     if (!last) return true;
     if (last.status != tick.status) return true;
@@ -116,11 +139,11 @@ export class OrderTicker extends Ticker {
     return false;
   }
 
-  public extension():string {
+  protected extension():string {
     return 'order';
   }
 
-  public generateSerializer():Serializer {
+  protected generateSerializer():Serializer {
     return new OrderSerializer();
   }
 }

@@ -45,6 +45,10 @@ export class BitfieldState {
     return mask;
   }
 
+  public createMaskFromSet(bitstates:BitState[]):BitState {
+    return bitstates.reduce((mem, state) => mem | state, 0);
+  }
+
   public set(mask:number):void {
     this.state |= mask;
   }

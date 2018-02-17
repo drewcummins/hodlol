@@ -20,30 +20,61 @@ export class Exchange {
     this.dirty = this.state.add(false, false);
   }
 
+  /** 
+   * Marks the exchange to process a change in ticker/order state
+  */
   public invalidate():void {
     this.state.set(this.dirty);
   }
 
+  /** 
+   * Opposite of invalidate
+  */
   public clean():void {
     this.state.kill(this.dirty);
   }
 
+  /** 
+   * Gets the name of the current API being used
+   * 
+   * e.g. "binance"
+   * 
+   * @returns name of API
+  */
   public name():string {
     return this.api.name.toLowerCase();
   }
 
+  /** 
+   * Indicates whether markets have been downloaded yet
+   * 
+   * @returns boolean
+  */
   public hasMarkets():boolean {
     return this.state.isSet(this.marketsLoaded);
   }
 
+  /** 
+   * Indicates whether feeds have been initialized yet
+   * 
+   * @returns boolean
+  */
   public hasFeeds():boolean {
     return this.state.isSet(this.feedsLoaded);
   }
 
+  /** 
+   * Indicates whether all things have been initalized
+   * 
+   * @returns true if feeds and markets are loaded, false otherwise
+  */
   public isLoaded():boolean {
     return this.state.isComplete();
   }
 
+  /** 
+   * Grabs marketplace from API
+  */
   public async loadMarketplace() {
     if (!this.state.isSet(this.marketsLoaded)) {
       let marketMap = await this.loadMarkets();
@@ -52,6 +83,11 @@ export class Exchange {
     }
   }
 
+  /**
+   * Loads all given tickers
+   * 
+   * @param tickers tickers for feed to load
+   */
   public async loadFeeds(tickers:string[]) {
     if (!this.state.isSet(this.feedsLoaded)) {
       for (const symbol of tickers) {
@@ -64,6 +100,9 @@ export class Exchange {
     }
   }
 
+  /** 
+   * Cleans up order tickers when status has changed to closed or cancelled
+  */
   private processOrderState():void {
     Array.from(this.feed.orders.values()).forEach((ticker) => {
       const last = ticker.last();
@@ -78,39 +117,95 @@ export class Exchange {
     })
   }
 
+  /** 
+   * Gets the given exchange API's markets
+   * 
+   * @returns markets
+  */
   public async loadMarkets() {
     return await this.api.loadMarkets();
   }
 
+  /**
+   * Gets ticker data for given pair
+   * 
+   * @param pair market pair to grab ticker info for
+   * 
+   * @returns ticker data
+   */
   public async fetchTicker(pair:string) {
     return await this.api.fetchTicker(pair);
   }
 
+  /**
+   * Gets candlestick (open, high, low, close, volume) data for @symbol
+   * 
+   * @param symbol market symbol to grab
+   * @param period timescale to build candlesticks from
+   * @param since start time to grab data from
+   * 
+   * @returns candlestick data
+   */
   public async fetchOHLCV(symbol:string, period:string="1m", since:number|undefined=undefined) {
     return await this.api.fetchOHLCV(symbol, period, since);
   }
 
+  /**
+   * Gets an order by given ID
+   * 
+   * @param orderID ID of order to grab
+   * @param symbol symbol associated with that order (don't know why exchanges operate like this)
+   * 
+   * @return requested order if it exists
+   */
   public async fetchOrder(orderID:string|number, symbol:string) {
     return await this.api.fetchOrder(orderID, symbol);
   }
 
+  /** 
+   * Gets exchange balance
+   * 
+   * @returns balance hash
+  */
   public async fetchBalance() {
     return await this.api.fetchBalance();
   }
 
+  /**
+   * Creates a new candlestick ticker for @symbol
+   * 
+   * @param symbol market symbol to track candlestick data for
+   * 
+   * @returns the candleticker
+   */
   public addCandlestick(symbol:string):CandleTicker {
     const ticker = new CandleTicker(this, symbol);
     this.feed.candles.set(symbol, ticker);
     return ticker;
   }
 
+  /**
+   * Creates a ticker to follow an order
+   * 
+   * @param order order to track
+   * 
+   * @returns the OrderTicker
+   */
   public addOrder(order:Order):OrderTicker {
     const ticker = new OrderTicker(this, order);
     this.feed.orders.set(order.id, ticker);
     return ticker;
   }
 
-  public async price(base:string, quote:string) {
+  /**
+   * Calculates price for @base in @quote units
+   * 
+   * @param base base symbol
+   * @param quote quote symbol
+   * 
+   * @returns price value
+   */
+  public async price(base:string, quote:string):Promise<number> {
     let path = this.path(base, quote);
     if (path) {
       let price = 1;
@@ -131,7 +226,15 @@ export class Exchange {
     }
   }
 
-  public path(a:string, b:string):string[] {
+  /**
+   * Calculates a market path from market a to market b
+   * 
+   * @param a symbol to start from
+   * @param b symbol to go to
+   * 
+   * @returns the path if one exists, null otherwise
+   */
+  public path(a:string, b:string):string[] | null {
     let path = this._path(a, b);
     if (!path) {
       path = this._path(b, a);
