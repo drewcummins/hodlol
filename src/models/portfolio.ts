@@ -9,7 +9,7 @@ export class Portfolio {
   readonly id:string;
   private balances: { [symbol:string]:Balance; };
 
-  constructor(public markets:Marketplace, readonly fundSymbol:string='BTC', readonly fundAmount:Num=10) {
+  constructor(private markets:Marketplace, readonly fundSymbol:string='BTC', readonly fundAmount:Num=10) {
     this.id = uuid();
     this.balances = {};
     this.balances[fundSymbol] = { free:BN(fundAmount), reserved:BN(0) };

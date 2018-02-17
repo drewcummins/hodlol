@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import { bnearest } from "../utils";
 
-type Tick = { [property:string]:number | string } | undefined;
+export type Tick = { [property:string]:number | string } | undefined;
 
-class Serializer {
+export class Serializer {
   protected props:string[];
   constructor(props:string[]) {
     this.props = props;
@@ -149,6 +149,17 @@ export class Series {
   }
 
   /**
+   * Appends a tick in CSV format to the series
+   * 
+   * @param tick tick to add to series
+   * @param lock whether to ignore autowrite regardless
+   */
+  public appendFromCSV(csv:string, lock:boolean=false):void {
+    let tick:Tick = this.serializer.fromCSV(csv);
+    this.append(tick, lock);
+  }
+
+  /**
    * Transforms a list of Tick objects into an ordered list of given values.
    * This is useful for passing to indicator functions.
    * 
@@ -205,11 +216,13 @@ export class Series {
    * Reads series from file
   */
   public read():void {
-    let file = fs.readFileSync(this.filepath, "utf8");
-    file.split("\n").forEach((line:string) => {
-      if (line.length > 0) {
-        this.append(this.serializer.fromCSV(line));
-      }
-    });
+    if (fs.existsSync(this.filepath)) {
+      let file = fs.readFileSync(this.filepath, "utf8");
+      file.split("\n").forEach((line:string) => {
+        if (line.length > 0) {
+          this.append(this.serializer.fromCSV(line));
+        }
+      });
+    }
   }
 }

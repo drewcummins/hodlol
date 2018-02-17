@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js"
-import { BN, Num } from "./types"
+import { BN, Num, ID } from "./types"
 
 export enum OrderType {
   LIMIT_BUY,
@@ -48,7 +48,7 @@ export class OrderRequest {
 
 export interface Order {
   side:OrderSide,
-  id:string,
+  id:ID,
   symbol:string,
   status:OrderStatus,
   cost:Num,
