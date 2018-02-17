@@ -28,7 +28,7 @@ describe('Series tests', async () => {
 
   let [tick0, tick1] = [
     {"timestamp": +new Date(), "open": 5, "high": 10, "low": 2, "close": 7, "volume": 100},
-    {"timestamp": +new Date() + 1, "open": 7, "high": 11, "low": 4, "close": 8, "volume": 200}
+    {"timestamp": +new Date() + 5, "open": 7, "high": 11, "low": 4, "close": 8, "volume": 200}
   ];
 
   it('should add tick to candles', () => {
@@ -69,5 +69,29 @@ describe('Series tests', async () => {
     // the series file is always one behind the in-memory series
     expect(reader.length()).to.equal(1);
     expect(reader.last()).to.eql(tick0);
+  });
+
+  it('should find closest ticks for given timestamps', () => {
+    let [tick2, tick3] = [
+      {"timestamp": tick1.timestamp+3, "open": tick1.close, "high": 10, "low": 2, "close": 10, "volume": 100},
+      {"timestamp": tick1.timestamp+5, "open": 10, "high": 11, "low": 4, "close": 8, "volume": 200}
+    ];
+    candles.append(tick2);
+    candles.append(tick3);
+    let [nearest,idx] = candles.nearest(tick1.timestamp);
+    expect(nearest).to.equal(tick1);
+    expect(idx).to.equal(1);
+    [nearest,idx] = candles.nearest(tick1.timestamp+1);
+    expect(nearest).to.equal(tick1);
+    expect(idx).to.equal(1);
+    [nearest,idx] = candles.nearest(tick1.timestamp+2);
+    expect(nearest).to.equal(tick2);
+    expect(idx).to.equal(2);
+    [nearest,idx] = candles.nearest(tick0.timestamp-100);
+    expect(nearest).to.equal(tick0);
+    expect(idx).to.equal(0);
+    [nearest,idx] = candles.nearest(tick3.timestamp+100);
+    expect(nearest).to.equal(tick3);
+    expect(idx).to.equal(3);
   });
 });

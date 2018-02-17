@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { bnearest } from "../utils";
 
 type Tick = { [property:string]:number | string } | undefined;
 
@@ -138,7 +139,7 @@ export class Series {
    * @param tick tick to add to series
    * @param lock whether to ignore autowrite regardless
    */
-  append(tick:Tick, lock:boolean=false):void {
+  public append(tick:Tick, lock:boolean=false):void {
     let key:string = this.serializer.key(tick);
     if (!this.map[key]) {
       this.map[key] = true;
@@ -159,7 +160,7 @@ export class Series {
    * 
    * @returns the requested values
    */
-  transpose(props:string[], tail:number=0):Number[][] {
+  public transpose(props:string[], tail:number=0):Number[][] {
     let transpose = new Map<string, number[]>();
     let series = this.list;
     if (series.length > tail) series = series.slice(-tail);
@@ -170,6 +171,17 @@ export class Series {
       });
     });
     return Array.from(transpose.values());
+  }
+
+  /**
+   * Finds the closest tick to the given timestamp
+   * 
+   * @param timestamp Timestamp to find closest tick to
+   * 
+   * @returns tuple of closest tick and that tick's index in the list
+   */
+  public nearest(timestamp:number):[Tick, number] {
+    return bnearest(this.list, timestamp, (x) => timestamp - x.timestamp);
   }
 
   /** 
