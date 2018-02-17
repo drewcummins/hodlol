@@ -17,7 +17,7 @@ const market:IMarket = {
   taker:0.01
 }
 
-describe('Appropriately reflect portfolio state', () => {
+describe('Portfolio tests', () => {
   const json = {};
   json[market.symbol] = market;
   let marketplace = new Marketplace(json);

@@ -29,7 +29,7 @@ class Serializer {
   public fromCSV(csv:string):Tick {
     let tick:Tick = {};
     csv.split(",").forEach((value:number | string, i:number) => {
-      tick[this.props[i]] = value;
+      tick[this.props[i]] = this.cast(value);
     })
     return tick;
   }
@@ -43,6 +43,10 @@ class Serializer {
    */
   public key(tick:Tick):string {
     return tick.timestamp.toString();
+  }
+
+  protected cast(value:number | string):number | string {
+    return value;
   }
 }
 
@@ -65,6 +69,11 @@ export class CandleSerializer extends Serializer {
   public toCCXT(tick:Tick):string[][] {
     return [this.toCSV(tick).split(",")];
   }
+
+  protected cast(value:number | string):number | string {
+    // all candlestick data are numbers
+    return Number(value);
+  }
 }
 
 export class OrderSerializer extends Serializer {
@@ -85,13 +94,11 @@ export class OrderSerializer extends Serializer {
 }
 
 export class Series {
-  private map:{ [idx:string]:boolean };
-  private list:Tick[];
-  private lastWrite:number;
+  private map:{ [idx:string]:boolean } = {};
+  private list:Tick[] = [];
+  private lastWrite:number = 0;
 
-  constructor(readonly filepath:string, private serializer:Serializer, readonly autowrite:boolean=false) {
-    this.lastWrite = 0;
-  }
+  constructor(readonly filepath:string, private serializer:Serializer, readonly autowrite:boolean=false) {}
 
   /** 
    * Gets the current length of the series
@@ -186,7 +193,6 @@ export class Series {
    * Reads series from file
   */
   public read():void {
-    console.log("Reading", this.filepath.split("/").pop());
     let file = fs.readFileSync(this.filepath, "utf8");
     file.split("\n").forEach((line:string) => {
       if (line.length > 0) {
