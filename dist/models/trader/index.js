@@ -20,8 +20,9 @@ class Trader {
             await utils_1.sleep(1000);
         }
         while (true) {
-            let price = await this.exchange.price("XMR", "USDT");
-            console.log(price);
+            // let price = await this.exchange.price("XMR", "USDT");
+            let tick = this.exchange.feed.candles.get("ETH/BTC");
+            console.log(tick.last());
             await utils_1.sleep(2000);
         }
     }

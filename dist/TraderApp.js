@@ -16,25 +16,7 @@ const optionDefinitions = [
 ];
 const opts = commandLineArgs(optionDefinitions);
 (async () => {
-    let params = {
-        symbol: opts.symbol,
-        amount: opts.amount,
-        backtest: opts.backtest,
-        fakeOrders: opts.fake
-    };
     let traderJSON = JSON.parse(fs.readFileSync(opts.trader).toString());
-    let trader = new trader_1.Trader(traderJSON, params);
-    trader.run();
-    // let trader = null;
-    // try {
-    //   console.log("Loading Trader...")
-    //   trader = await Trader.deserialize(opts.trader, params);
-    // } catch(err) {
-    //   console.log("Error:", err);
-    //   process.exit();
-    // }
-    // console.log("Trader initialized.", JSON.parse(trader.serialize()));
-    // await xu.sleep(1000);
-    // trader.run(); // start tickers/candles
+    new trader_1.Trader(traderJSON, opts).run();
 })();
 //# sourceMappingURL=TraderApp.js.map

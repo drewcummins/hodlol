@@ -39,8 +39,9 @@ export class Trader {
       await sleep(1000);
     }
     while (true) {
-      let price = await this.exchange.price("XMR", "USDT");
-      console.log(price);
+      // let price = await this.exchange.price("XMR", "USDT");
+      let tick = this.exchange.feed.candles.get("ETH/BTC");
+      console.log(tick.last());
       await sleep(2000);
     }
   }

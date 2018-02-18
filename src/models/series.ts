@@ -1,7 +1,11 @@
 import * as fs from "fs";
 import { bnearest } from "../utils";
 
-export type Tick = { [property:string]:number | string } | undefined;
+type TickProp = { [property:string]:number | string } | undefined;
+interface ITick {
+  timestamp:number;
+}
+export type Tick = TickProp & ITick; //{ [property:string]:number | string } | undefined;
 
 export class Serializer {
   protected props:string[];
@@ -28,7 +32,7 @@ export class Serializer {
    * @returns Tick
    */
   public fromCSV(csv:string):Tick {
-    let tick:Tick = {};
+    let tick:Tick = {timestamp:0};
     csv.split(",").forEach((value:number | string, i:number) => {
       tick[this.props[i]] = this.cast(value);
     })

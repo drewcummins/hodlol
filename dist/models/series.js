@@ -24,7 +24,7 @@ class Serializer {
      * @returns Tick
      */
     fromCSV(csv) {
-        let tick = {};
+        let tick = { timestamp: 0 };
         csv.split(",").forEach((value, i) => {
             tick[this.props[i]] = this.cast(value);
         });

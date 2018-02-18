@@ -6,7 +6,7 @@ import { ID } from "./types";
 
 export class Ticker {
   public kill:boolean = false;
-  protected series:Series;
+  readonly series:Series;
   constructor(protected exchange:Exchange, readonly symbol:string, readonly record:boolean=false, readonly timeout:number=5000) {
     this.series = new Series(this.filepath(), this.generateSerializer(), record);
   }
@@ -96,7 +96,7 @@ export class CandleTicker extends Ticker {
 
   protected async step() {
     let last:Tick = this.last();
-    let since:number = last ? Number(last.timestamp) : this.exchange.time;
+    let since:number = last ? last.timestamp : this.exchange.time;
     const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     tick.forEach((candlestick:Array<number>) => {
       let csv:string = candlestick.join(",");

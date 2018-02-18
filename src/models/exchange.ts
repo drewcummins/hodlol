@@ -4,7 +4,7 @@ import { Marketplace, Market } from "./market";
 import { CandleTicker, OrderTicker } from "./ticker";
 import { Order, OrderStatus } from "./order";
 
-type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
+export type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
 
 export class Exchange {
   private markets:Marketplace;
