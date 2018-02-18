@@ -11,3 +11,9 @@ export class InsufficientFundsError extends Error {
     super(`Insufficient funds for request: ${request}`);
   }
 }
+
+export class InvalidExchangeNameError extends Error {
+  constructor(name:string) {
+    super(`Invalid exchange name error: ${name}. No such exchange exists on CCXT.`);
+  }
+}

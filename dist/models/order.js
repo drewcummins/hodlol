@@ -33,6 +33,11 @@ class OrderRequest {
             this.side = OrderSide.SELL;
         }
     }
+    /**
+     * Calculates the cost of the order
+     *
+     * @returns cost
+    */
     cost() {
         let amount = new bignumber_js_1.BigNumber(this.amount);
         let price = new bignumber_js_1.BigNumber(this.price);

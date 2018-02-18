@@ -12,4 +12,10 @@ class InsufficientFundsError extends Error {
     }
 }
 exports.InsufficientFundsError = InsufficientFundsError;
+class InvalidExchangeNameError extends Error {
+    constructor(name) {
+        super(`Invalid exchange name error: ${name}. No such exchange exists on CCXT.`);
+    }
+}
+exports.InvalidExchangeNameError = InvalidExchangeNameError;
 //# sourceMappingURL=exchange-error.js.map

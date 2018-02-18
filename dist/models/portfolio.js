@@ -94,7 +94,7 @@ class Portfolio {
                 break;
             case order_1.OrderSide.SELL:
                 this.removeReserved(market.base, order.filled);
-                this.addReserved(market.quote, order.cost);
+                this.addFree(market.quote, order.cost);
                 break;
             default:
                 break;

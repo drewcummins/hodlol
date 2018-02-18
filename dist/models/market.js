@@ -34,8 +34,18 @@ class Marketplace {
      * @returns appropriate market
      */
     getWithBase(base, quote) {
-        let map = this.getMarketMap(this.baseMap, base);
-        return this.getMarket(map, quote);
+        let markets = this.getMarketsWithBase(base);
+        return this.getMarket(markets, quote);
+    }
+    /**
+     * Gets markets by base
+     *
+     * @param base Base symbol of pair
+     *
+     * @returns matching markets
+     */
+    getMarketsWithBase(base) {
+        return this.getMarketMap(this.baseMap, base);
     }
     /**
      * Gets market by base and quote symbols
@@ -46,8 +56,18 @@ class Marketplace {
      * @returns appropriate market
      */
     getWithQuote(quote, base) {
-        let map = this.getMarketMap(this.quoteMap, quote);
-        return this.getMarket(map, base);
+        let markets = this.getMarketsWithQuote(quote);
+        return this.getMarket(markets, base);
+    }
+    /**
+     * Gets markets by quote
+     *
+     * @param quote Quote symbol of pair
+     *
+     * @returns matching markets
+     */
+    getMarketsWithQuote(quote) {
+        return this.getMarketMap(this.quoteMap, quote);
     }
     getMarket(map, symbol) {
         let market = this.symbolMap[symbol];
