@@ -42,16 +42,19 @@ class Portfolio {
      * @param request OrderRequest to verify funds for
      *
      * @returns whethere there are sufficient funds or not
+     * @throws InvalidOrderSideError if request.side not set correctly
      */
     hasSufficientFunds(request) {
         let [base, quote] = this.balanceByMarket(request.marketSymbol);
-        if (request.type == order_1.OrderType.LIMIT_BUY) {
+        if (request.side == order_1.OrderSide.BUY) {
             return quote.free.isGreaterThanOrEqualTo(request.cost());
         }
-        else if (request.type == order_1.OrderType.LIMIT_SELL) {
+        else if (request.side == order_1.OrderSide.SELL) {
             return base.free.isGreaterThanOrEqualTo(request.amount);
         }
-        return false;
+        else {
+            throw new exchange_error_1.InvalidOrderSideError(request);
+        }
     }
     /**
      * Reserves the appropriate funds necessary to make the given request.

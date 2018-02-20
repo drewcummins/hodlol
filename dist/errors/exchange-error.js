@@ -18,4 +18,22 @@ class InvalidExchangeNameError extends Error {
     }
 }
 exports.InvalidExchangeNameError = InvalidExchangeNameError;
+class InvalidSignalError extends Error {
+    constructor(indicator, signal) {
+        super(`Invalid signal from ${indicator}: ${signal}`);
+    }
+}
+exports.InvalidSignalError = InvalidSignalError;
+class InvalidOrderTypeError extends Error {
+    constructor(orderRequest) {
+        super(`Invalid order type: ${orderRequest}`);
+    }
+}
+exports.InvalidOrderTypeError = InvalidOrderTypeError;
+class InvalidOrderSideError extends Error {
+    constructor(orderRequest) {
+        super(`Invalid order side: ${orderRequest}`);
+    }
+}
+exports.InvalidOrderSideError = InvalidOrderSideError;
 //# sourceMappingURL=exchange-error.js.map

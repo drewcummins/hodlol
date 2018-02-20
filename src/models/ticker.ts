@@ -90,7 +90,7 @@ export class Ticker {
 }
 
 export class CandleTicker extends Ticker {
-  constructor(exchange:Exchange, symbol:string, record:boolean=false, timeout:number=35000, private period:string="1m") {
+  constructor(exchange:Exchange, symbol:string, record:boolean=false, timeout:number=5000, private period:string="1m") {
     super(exchange, symbol, record, timeout);
   }
 

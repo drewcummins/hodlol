@@ -31,4 +31,5 @@ class MACD extends _1.Signal {
         return slice[0] > 0 && slice[1] < 0 && slice[2] < slice[1] * 10;
     }
 }
+exports.MACD = MACD;
 //# sourceMappingURL=macd.js.map

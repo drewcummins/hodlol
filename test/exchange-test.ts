@@ -4,7 +4,7 @@ const ccxt = require('ccxt');
 import { expect } from 'chai';
 import 'mocha';
 
-describe('Series tests', async () => {
+describe('Exchange tests', async () => {
 
   let state = new BitfieldState();
   it('should init state masks correctly', () => {

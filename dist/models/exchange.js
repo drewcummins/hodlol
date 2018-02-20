@@ -4,6 +4,7 @@ const types_1 = require("./types");
 const market_1 = require("./market");
 const ticker_1 = require("./ticker");
 const order_1 = require("./order");
+const exchange_error_1 = require("../errors/exchange-error");
 class Exchange {
     constructor(api) {
         this.api = api;
@@ -60,6 +61,14 @@ class Exchange {
         return this.state.isComplete();
     }
     /**
+     * Indicates whether the exchange needs an update call
+     *
+     * @returns true if exchange dirty
+    */
+    isDirty() {
+        return this.state.isSet(this.dirty);
+    }
+    /**
      * Grabs marketplace from API
     */
     async loadMarketplace() {
@@ -83,6 +92,17 @@ class Exchange {
                 ticker.run();
             }
             this.state.set(this.feedsLoaded);
+        }
+    }
+    /**
+     * Kills all feeds so we can exit
+    */
+    killFeeds() {
+        if (this.state.isSet(this.feedsLoaded)) {
+            for (const [_, ticker] of this.feed.candles) {
+                ticker.kill = true;
+            }
+            this.state.kill(this.feedsLoaded);
         }
     }
     /**
@@ -149,6 +169,29 @@ class Exchange {
     */
     async fetchBalance() {
         return await this.api.fetchBalance();
+    }
+    /**
+     * Creates an order according to the given OrderRequest
+     *
+     * @param request Order request
+     *
+     * @returns the newly created order
+     * @throws InvalidOrderTypeError if an invalid order type is set
+     */
+    async createOrder(request) {
+        let order = null;
+        switch (request.type) {
+            case order_1.OrderType.LIMIT_BUY:
+                order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
+                break;
+            case order_1.OrderType.LIMIT_SELL:
+                order = await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price);
+                break;
+            default:
+                throw new exchange_error_1.InvalidOrderTypeError(request);
+        }
+        this.addOrder(order);
+        return order;
     }
     /**
      * Creates a new candlestick ticker for @symbol

@@ -25,7 +25,7 @@ export class MACD extends Signal {
       let slice = series.transpose(this.props, this.periods[2] * 5); // this grabs the desired properties from the series
       let last = series.last();
       // [macd, macd signal, macd histogram]
-      let [foo, bar, histo] = await tulind.indicators.macd.indicator(slice, this.periods);
+      let [, , histo] = await tulind.indicators.macd.indicator(slice, this.periods);
       if (this.hasBuySignal(histo)) return SignalCode.BUY;
       else if (this.hasSellSignal(histo)) return SignalCode.SELL;
     }

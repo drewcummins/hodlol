@@ -3,7 +3,7 @@ import { Balance, Num, BN } from './types';
 import { Order, OrderRequest, OrderSide, OrderType } from './order';
 import { Marketplace } from './market';
 import { BigNumber } from "bignumber.js";
-import { InsufficientFundsError } from '../errors/exchange-error';
+import { InsufficientFundsError, InvalidOrderSideError } from '../errors/exchange-error';
 
 export class Portfolio {
   readonly id:string;
@@ -47,15 +47,17 @@ export class Portfolio {
    * @param request OrderRequest to verify funds for
    * 
    * @returns whethere there are sufficient funds or not
+   * @throws InvalidOrderSideError if request.side not set correctly
    */
   public hasSufficientFunds(request:OrderRequest):Boolean {
     let [base,quote] = this.balanceByMarket(request.marketSymbol);
-    if (request.type == OrderType.LIMIT_BUY) {
+    if (request.side == OrderSide.BUY) {
       return quote.free.isGreaterThanOrEqualTo(request.cost());
-    } else if (request.type == OrderType.LIMIT_SELL) {
+    } else if (request.side == OrderSide.SELL) {
       return base.free.isGreaterThanOrEqualTo(request.amount);
+    } else {
+      throw new InvalidOrderSideError(request);
     }
-    return false;
   }
 
 

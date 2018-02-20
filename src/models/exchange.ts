@@ -1,13 +1,14 @@
-import { API, BitState, BitfieldState } from "./types";
+import { BN, API, BitState, BitfieldState } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { CandleTicker, OrderTicker } from "./ticker";
-import { Order, OrderStatus } from "./order";
+import { Order, OrderStatus, OrderRequest, OrderType } from "./order";
+import { InvalidOrderSideError, InvalidOrderTypeError } from "../errors/exchange-error";
 
 export type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
 
 export class Exchange {
-  private markets:Marketplace;
+  public markets:Marketplace;
   readonly feed:Feed = { candles:new Map<string,CandleTicker>(), orders:new Map<string,OrderTicker>() };
   readonly time:number = 0;
   private state:BitfieldState = new BitfieldState(); 
@@ -17,7 +18,7 @@ export class Exchange {
   
   constructor(private api:API) {
     [this.marketsLoaded, this.feedsLoaded] = this.state.init(2);
-    this.dirty = this.state.add(false, false);
+    this.dirty = this.state.add();
   }
 
   /** 
@@ -73,6 +74,15 @@ export class Exchange {
   }
 
   /** 
+   * Indicates whether the exchange needs an update call
+   * 
+   * @returns true if exchange dirty
+  */
+  public isDirty():boolean {
+    return this.state.isSet(this.dirty);
+  }
+
+  /** 
    * Grabs marketplace from API
   */
   public async loadMarketplace() {
@@ -101,9 +111,21 @@ export class Exchange {
   }
 
   /** 
+   * Kills all feeds so we can exit
+  */
+  public killFeeds() {
+    if (this.state.isSet(this.feedsLoaded)) {
+      for (const [_, ticker] of this.feed.candles) {
+        ticker.kill = true;
+      }
+      this.state.kill(this.feedsLoaded);
+    }
+  }
+
+  /** 
    * Cleans up order tickers when status has changed to closed or cancelled
   */
-  private processOrderState():void {
+  public processOrderState():void {
     Array.from(this.feed.orders.values()).forEach((ticker) => {
       const last = ticker.last();
       if (last) {
@@ -169,6 +191,31 @@ export class Exchange {
   */
   public async fetchBalance() {
     return await this.api.fetchBalance();
+  }
+
+  /**
+   * Creates an order according to the given OrderRequest
+   * 
+   * @param request Order request
+   * 
+   * @returns the newly created order
+   * @throws InvalidOrderTypeError if an invalid order type is set
+   */
+  public async createOrder(request:OrderRequest):Promise<Order> {
+    let order:Order = null;
+    switch (request.type) {
+      case OrderType.LIMIT_BUY:
+        order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
+        break;
+      case OrderType.LIMIT_SELL:
+        order = await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price);
+        break;
+    
+      default:
+        throw new InvalidOrderTypeError(request);
+    }
+    this.addOrder(order);
+    return order;
   }
 
   /**

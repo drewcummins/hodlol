@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js"
-import { OrderRequest } from "./order";
+import { OrderRequest, Order } from "./order";
 
 export function BN(x: Num):BigNumber {
   return new BigNumber(x);
@@ -7,20 +7,20 @@ export function BN(x: Num):BigNumber {
 
 export type ID = string;
 
-export type Num = number | BigNumber;
+export type Num = BigNumber | number | string;
 
 export interface Balance {
   free: BigNumber;
   reserved: BigNumber;
 }
-
+// (request.market, request.amount, request.price);
 export interface API {
   readonly name:string;
   loadMarkets():Promise<any>;
   fetchTicker(pair:string):Promise<any>;
   fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<any>;
-  createLimitBuyOrder(request:OrderRequest):Promise<any>;
-  createLimitSellOrder(request:OrderRequest):Promise<any>;
+  createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<Order>;
+  createLimitSellOrder(market:string, amount:Num, price:Num):Promise<Order>;
   fetchOrders(symbol:string, since:number, limit:number):Promise<any>;
   fetchOrder(orderID:string|number, symbol:string):Promise<any>;
   fetchBalance():Promise<any>;
@@ -34,12 +34,11 @@ export class BitfieldState {
   private completionMask:number=0;
 
   public init(n:number):number[] {
-    return Array.from({length:n}, () => this.add());
+    return Array.from({length:n}, () => this.add(true));
   }
   
-  public add(setOn:boolean=false, addToCompletionMask:boolean=true):number {
+  public add(addToCompletionMask:boolean=false):number {
     const mask:number = 1 << this.last;
-    if (setOn) this.set(mask);
     if (addToCompletionMask) this.completionMask |= mask;
     this.last++;
     return mask;
@@ -62,6 +61,6 @@ export class BitfieldState {
   }
 
   public isComplete():boolean {
-    return (this.state & this.completionMask) == this.completionMask;
+    return this.isSet(this.completionMask);
   }
 }
