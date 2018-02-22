@@ -37,6 +37,14 @@ export class Strategy {
     this.init(source);
   } 
 
+  public async before() {
+    console.log(`Strategy ${this.title} before called.`);
+  }
+
+  public async after() {
+    console.log(`Strategy ${this.title} after called.`);
+  }
+
   protected init(source:StrategyJSON) {
     const feed = this.tsi.feed;
     if (source.indicators) {

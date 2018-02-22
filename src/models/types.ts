@@ -9,6 +9,8 @@ export type ID = string;
 
 export type Num = BigNumber | number | string;
 
+export type HashMap<T> = Map<string, T>;
+
 export interface Balance {
   free: BigNumber;
   reserved: BigNumber;
@@ -22,7 +24,7 @@ export interface API {
   createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<Order>;
   createLimitSellOrder(market:string, amount:Num, price:Num):Promise<Order>;
   fetchOrders(symbol:string, since:number, limit:number):Promise<any>;
-  fetchOrder(orderID:string|number, symbol:string):Promise<any>;
+  fetchOrder(orderID:string, symbol:string):Promise<any>;
   fetchBalance():Promise<any>;
 }
 

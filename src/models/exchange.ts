@@ -2,7 +2,7 @@ import { BN, API, BitState, BitfieldState } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { CandleTicker, OrderTicker } from "./ticker";
-import { Order, OrderStatus, OrderRequest, OrderType } from "./order";
+import { Order, OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
 import { InvalidOrderSideError, InvalidOrderTypeError } from "../errors/exchange-error";
 
 export type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
@@ -15,9 +15,10 @@ export class Exchange {
   private dirty:BitState;
   readonly marketsLoaded:BitState;
   readonly feedsLoaded:BitState;
+  readonly tickersRunning:BitState;
   
-  constructor(private api:API) {
-    [this.marketsLoaded, this.feedsLoaded] = this.state.init(2);
+  constructor(readonly api:API) {
+    [this.marketsLoaded, this.feedsLoaded, this.tickersRunning] = this.state.init(3);
     this.dirty = this.state.add();
   }
 
@@ -65,6 +66,15 @@ export class Exchange {
   }
 
   /** 
+   * Indicates whether tickers have kicked off
+   * 
+   * @returns boolean
+  */
+  public areTickersRunning():boolean {
+    return this.state.isSet(this.tickersRunning);
+  }
+
+  /** 
    * Indicates whether all things have been initalized
    * 
    * @returns true if feeds and markets are loaded, false otherwise
@@ -98,28 +108,21 @@ export class Exchange {
    * 
    * @param tickers tickers for feed to load
    */
-  public async loadFeeds(tickers:string[]) {
+  public loadFeeds(tickers:string[]):void {
     if (!this.state.isSet(this.feedsLoaded)) {
       for (const symbol of tickers) {
         const ticker = this.addCandlestick(symbol);
-        // if backtest
-        await ticker.read();
-        ticker.run();
       }
       this.state.set(this.feedsLoaded);
     }
   }
 
   /** 
-   * Kills all feeds so we can exit
+   * Runs all tickers (each in their own "thread")
   */
-  public killFeeds() {
-    if (this.state.isSet(this.feedsLoaded)) {
-      for (const [_, ticker] of this.feed.candles) {
-        ticker.kill = true;
-      }
-      this.state.kill(this.feedsLoaded);
-    }
+  public runTickers():void {
+    this.feed.candles.forEach((candle) => candle.run());
+    this.state.set(this.tickersRunning);
   }
 
   /** 
@@ -130,7 +133,7 @@ export class Exchange {
       const last = ticker.last();
       if (last) {
         if (last.status == OrderStatus.CLOSED || last.status == OrderStatus.CANCELLED) {
-          ticker.kill = true;
+          ticker.kill();
           this.feed.orders.delete(ticker.orderID);
           // let portfolio = this.portfolios[order.portfolioID];
           // if (portfolio) portfolio.fill(last);
@@ -180,7 +183,7 @@ export class Exchange {
    * 
    * @return requested order if it exists
    */
-  public async fetchOrder(orderID:string|number, symbol:string) {
+  public async fetchOrder(orderID:string, symbol:string) {
     return await this.api.fetchOrder(orderID, symbol);
   }
 
@@ -203,16 +206,16 @@ export class Exchange {
    */
   public async createOrder(request:OrderRequest):Promise<Order> {
     let order:Order = null;
-    switch (request.type) {
-      case OrderType.LIMIT_BUY:
+    switch (request.side) {
+      case OrderSide.BUY:
         order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
         break;
-      case OrderType.LIMIT_SELL:
+      case OrderSide.SELL:
         order = await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price);
         break;
     
       default:
-        throw new InvalidOrderTypeError(request);
+        throw new InvalidOrderSideError(request);
     }
     this.addOrder(order);
     return order;

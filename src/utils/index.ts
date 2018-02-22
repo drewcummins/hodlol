@@ -1,3 +1,6 @@
+import { ID } from "../models/types";
+
+const uuid = require('uuid/v4');
 
 export function sleep(ms:number):Promise<NodeJS.Timer> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -37,4 +40,30 @@ export function bnearest(list:Array<any>, value:number, compare:Compare, state:S
   if (diff > 0) state.min = Math.min(mid + 1, state.max);
   else state.max = Math.max(mid - 1, state.min);
   return bnearest(list, value, compare, state);
+}
+
+export class Thread {
+  private static threads:Map<ID,Thread> = new Map<ID,Thread>();
+  private running:boolean=true;
+  private id:ID;
+  constructor() {
+    this.id = uuid();
+    Thread.threads.set(this.id, this);
+  }
+  public async sleep(time:number) {
+    let next:number = +new Date() + time;
+    while (this.running && +new Date() < next) await sleep(1);
+  }
+  public async kill() {
+    console.log(`kill called on ${this.id}`)
+    this.running = false;
+    await sleep(1);
+    Thread.threads.delete(this.id);
+  }
+  public isRunning() {
+    return this.running;
+  }
+  public static killAll() {
+    Thread.threads.forEach((thread) => thread.kill());
+  }
 }

@@ -1,31 +1,25 @@
 import { Exchange } from "./exchange";
 import { Series, Tick, Serializer, TickerSerializer, CandleSerializer, OrderSerializer } from "./series";
-import { sleep } from "../utils";
+import { sleep, Thread } from "../utils";
 import { Order } from "./order";
 import { ID } from "./types";
 
 export class Ticker {
-  public kill:boolean = false;
+  protected _kill:boolean = false;
   readonly series:Series;
+  protected thread:Thread;
   constructor(protected exchange:Exchange, readonly symbol:string, readonly record:boolean=false, readonly timeout:number=5000) {
     this.series = new Series(this.filepath(), this.generateSerializer(), record);
-  }
-
-  /** 
-   * Tells the series to get reading
-  */
-  public async read() {
-    return this.series.read();
+    this.thread = new Thread();
   }
   
   /** 
    * Kicks off the ticker process. This runs asynchronously
   */
   public async run() {
-    while (true) {
-      if (this.kill) break;
+    while (this.thread.isRunning()) {
       await this.step();
-      await this.sleep();
+      await this.thread.sleep(this.timeout);
     }
   }
 
@@ -33,10 +27,6 @@ export class Ticker {
     const tick = await this.exchange.fetchTicker(this.symbol);
     this.series.append(tick);
     this.exchange.invalidate();
-  }
-
-  protected async sleep() {
-    await sleep(this.timeout);
   }
 
   /** 
@@ -68,6 +58,10 @@ export class Ticker {
     return this.series.last();
   }
 
+  public kill():void {
+    this.thread.kill();
+  }
+
   protected filename():string {
     return `${this.symbol.replace("/", "-")}.${this.extension()}`;
   }
@@ -86,6 +80,10 @@ export class Ticker {
 
   protected generateSerializer():Serializer {
     return new TickerSerializer();
+  }
+
+  public seriesFromTicker() {
+    return new Series(this.filepath(), this.generateSerializer());
   }
 }
 

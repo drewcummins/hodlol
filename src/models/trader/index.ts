@@ -1,11 +1,12 @@
 import { Exchange } from "../exchange";
 import { ID, API } from "../types";
 import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors/exchange-error";
-import { sleep } from "../../utils";
+import { sleep, Thread } from "../../utils";
 import { Strategy, TraderStrategyInterface, StrategyJSON } from "../strategy";
 import { OrderRequest, OrderType, OrderSide } from "../order";
 import { request } from "https";
 import { Portfolio } from "../portfolio";
+import { MockAPI } from "../mock-api";
 const ccxt = require('ccxt');
 
 export interface TraderJSON {
@@ -19,17 +20,20 @@ export interface TraderParams {
   symbol: string,
   amount: number,
   backtest: string,
-  fake: boolean
+  mock: boolean
 }
 
 export class Trader {
   protected exchange:Exchange;
   protected strategies:Strategy[] = [];
+  private thread:Thread;
 
   constructor(protected source:TraderJSON, protected params:TraderParams) {
     let apiClass = ccxt[source.exchange];
     if (!apiClass) throw new InvalidExchangeNameError(source.exchange);
     let api:API = new apiClass();
+    if (params.mock) api = new MockAPI(api);
+    this.thread = new Thread();
     this.exchange = new Exchange(api);
   }
 
@@ -66,17 +70,34 @@ export class Trader {
   }
 
   public async run() {
-    await this.exchange.loadMarketplace();
     await this.exchange.loadFeeds(this.source.tickers);
+    await this.exchange.loadMarketplace();
     await this.initStrategies();
-    while (this.exchange.isLoaded()) {
+
+    if (this.params.mock) {
+      let api:MockAPI = this.exchange.api as MockAPI;
+      // kick off the "server" if we're mocking
+      api.run(this.exchange.feed);
+    }
+    
+    this.exchange.runTickers();
+
+    for (const strategy of this.strategies) {
+      await strategy.before();
+    }
+
+    while (this.thread.isRunning()) {
       await this.stepExchange();
-      await sleep(10);
+      await this.thread.sleep(10);
+    }
+
+    for (const strategy of this.strategies) {
+      await strategy.after();
     }
   }
 
   public kill():void {
-    this.exchange.killFeeds();
+    this.thread.kill();
   }
 
   public async consider(strategy:Strategy, orderRequest:OrderRequest) {

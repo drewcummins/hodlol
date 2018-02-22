@@ -9,7 +9,7 @@ import { OrderRequest, OrderSide, OrderStatus } from '../src/models/order';
 
 import { expect } from 'chai';
 import 'mocha';
-import { sleep } from '../src/utils';
+import { sleep, Thread } from '../src/utils';
 
 const BTC:string = "BTC";
 const amount:Num = 10;
@@ -18,7 +18,7 @@ let opts:TraderParams = {
   symbol: BTC,
   amount: amount,
   backtest: undefined,
-  fake: true
+  mock: false
 }
 
 let json:TraderJSON = {
@@ -43,11 +43,11 @@ let trader:Trader = new Trader(json, opts);
 
 describe('Trader tests', async () => {
   after(() => {
-    trader.kill();
+    Thread.killAll();
   })
 
   it('should', async () => {
     trader.run();
-    await sleep(2000);
+    await sleep(1500);
   }).timeout(10000)
 });

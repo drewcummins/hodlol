@@ -103,7 +103,7 @@ export class Series {
   private list:Tick[] = [];
   private lastWrite:number = 0;
 
-  constructor(readonly filepath:string, private serializer:Serializer, readonly autowrite:boolean=false) {}
+  constructor(readonly filepath:string, readonly serializer:Serializer, readonly autowrite:boolean=false) {}
 
   /** 
    * Gets the current length of the series

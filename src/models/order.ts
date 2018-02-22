@@ -1,16 +1,15 @@
 import { BigNumber } from "bignumber.js"
 import { BN, Num, ID } from "./types"
-
-export enum OrderType {
-  LIMIT_BUY,
-  LIMIT_SELL,
-  MARKET_BUY,
-  MARKET_SELL
-}
+import { InvalidOrderTypeError } from "../errors/exchange-error";
 
 export enum OrderSide {
-  BUY,
-  SELL
+  BUY='buy',
+  SELL='sell'
+}
+
+export enum OrderType {
+  MARKET='market',
+  LIMIT='limit'
 }
 
 export enum OrderStatus {
@@ -20,19 +19,14 @@ export enum OrderStatus {
 }
 
 export class OrderRequest {
-  readonly side:OrderSide;
+  
   constructor(
     readonly type:OrderType,
+    readonly side:OrderSide,
     readonly marketSymbol:string, 
     readonly amount:Num, 
     readonly price:Num, 
-    readonly portfolioID:string) {
-    if (type == OrderType.LIMIT_BUY || type == OrderType.MARKET_BUY) {
-      this.side = OrderSide.BUY;
-    } else {
-      this.side = OrderSide.SELL;
-    }
-  }
+    readonly portfolioID:string) {}
 
   /** 
    * Calculates the cost of the order
@@ -47,10 +41,35 @@ export class OrderRequest {
 }
 
 export interface Order {
+  type:OrderType
   side:OrderSide,
   id:ID,
+  timestamp: number,
   symbol:string,
   status:OrderStatus,
   cost:Num,
-  filled:Num
+  filled:Num,
+  price:Num,
+  amount:Num,
+  remaining:Num,
+  trades?:any[]
 }
+
+/*
+let order = {
+      id:        uuid(),
+      timestamp: +new Date(),   // Unix timestamp in milliseconds
+      status:    'open',          // 'open', 'closed', 'canceled'
+      symbol:    request.market,  // symbol
+      type:      'limit',         // 'market', 'limit'
+      side:      'buy',           // 'buy', 'sell'
+      price:     request.price,   // float price in quote currency
+      amount:    request.amount,  // ordered amount of base currency
+      cost:      request.price * request.amount,
+      filled:    0.0,             // filled amount of base currency
+      remaining: request.amount,  // remaining amount to fill
+      trades:   []
+    };
+    this.orders.add(order);
+    return order;
+*/
