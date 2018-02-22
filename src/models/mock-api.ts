@@ -1,4 +1,4 @@
-import { API, Num, BN, Balance } from "./types";
+import { API, Num, BN, Balance, Scenario } from "./types";
 import { Order, OrderType, OrderSide, OrderStatus } from "./order"
 import { Feed } from "./exchange";
 import { Series, Tick, CandleSerializer } from "./series";
@@ -8,7 +8,6 @@ const uuid = require('uuid/v4');
 
 export class MockAPI implements API {
   public name:string;
-  public time:number;
   private thread:Thread;
   protected candles:Map<string, Series> = new Map<string, Series>();
   protected orders:Map<string, Order> = new Map<string, Order>();
@@ -16,7 +15,7 @@ export class MockAPI implements API {
     this.name = api.name;
   }
 
-  protected async loadTickers(feed:Feed) {
+  public async loadTickers(feed:Feed) {
     for (const candle of feed.candles.values()) {
       let series = candle.seriesFromTicker();
       await series.read();
@@ -24,8 +23,7 @@ export class MockAPI implements API {
     }
   }
 
-  public async run(feed:Feed) {
-    await this.loadTickers(feed);
+  public async run() {
     this.thread = new Thread();
     while (this.thread.isRunning()) {
       await this.thread.sleep(1);
@@ -51,7 +49,7 @@ export class MockAPI implements API {
 
   public async fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<any> {
     let series = this.candles.get(symbol);
-    let [tick] = series.nearest(this.time);
+    let [tick] = series.nearest(Scenario.getInstance().time);
     let serializer = series.serializer as CandleSerializer;
     return Promise.resolve(serializer.toCCXT(tick));
   }

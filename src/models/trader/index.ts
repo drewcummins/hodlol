@@ -1,5 +1,5 @@
 import { Exchange } from "../exchange";
-import { ID, API } from "../types";
+import { ID, API, Scenario } from "../types";
 import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors/exchange-error";
 import { sleep, Thread } from "../../utils";
 import { Strategy, TraderStrategyInterface, StrategyJSON } from "../strategy";
@@ -19,7 +19,7 @@ export interface TraderJSON {
 export interface TraderParams {
   symbol: string,
   amount: number,
-  backtest: string,
+  backtest?: string,
   mock: boolean
 }
 
@@ -29,6 +29,7 @@ export class Trader {
   private thread:Thread;
 
   constructor(protected source:TraderJSON, protected params:TraderParams) {
+    if (params.backtest) Scenario.create(params.backtest);
     let apiClass = ccxt[source.exchange];
     if (!apiClass) throw new InvalidExchangeNameError(source.exchange);
     let api:API = new apiClass();
@@ -76,8 +77,9 @@ export class Trader {
 
     if (this.params.mock) {
       let api:MockAPI = this.exchange.api as MockAPI;
+      await api.loadTickers(this.exchange.feed);
       // kick off the "server" if we're mocking
-      api.run(this.exchange.feed);
+      api.run();
     }
     
     this.exchange.runTickers();
@@ -88,6 +90,7 @@ export class Trader {
 
     while (this.thread.isRunning()) {
       await this.stepExchange();
+      if (this.params.backtest) Scenario.getInstance().time += 10000;
       await this.thread.sleep(10);
     }
 
@@ -104,8 +107,7 @@ export class Trader {
     let portfolio = strategy.portfolio;
     if (portfolio.hasSufficientFunds(orderRequest)) {
       portfolio.reserve(orderRequest);
-      return;
-      // return this.exchange.createOrder(orderRequest);
+      return this.exchange.createOrder(orderRequest);
     } else {
       throw new InsufficientFundsError(orderRequest);
     }

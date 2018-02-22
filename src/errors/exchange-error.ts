@@ -36,3 +36,21 @@ export class InvalidOrderSideError extends Error {
     super(`Invalid order side: ${orderRequest}`);
   }
 }
+
+export class FileMissingError extends Error {
+  constructor(filename:string, type:string) {
+    super(`No ${type} file found when attempting to read ${filename}`);
+  }
+}
+
+export class BacktestFileMissingError extends FileMissingError {
+  constructor(filename:string) {
+    super(filename, 'backtest');
+  }
+}
+
+export class ScenarioFileMissingError extends FileMissingError {
+  constructor(filename:string) {
+    super(filename, 'scenario');
+  }
+}

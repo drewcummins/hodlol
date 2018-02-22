@@ -1,5 +1,7 @@
 import { BigNumber } from "bignumber.js"
 import { OrderRequest, Order } from "./order";
+import * as fs from "fs";
+import { ScenarioFileMissingError } from "../errors/exchange-error";
 
 export function BN(x: Num):BigNumber {
   return new BigNumber(x);
@@ -64,5 +66,63 @@ export class BitfieldState {
 
   public isComplete():boolean {
     return this.isSet(this.completionMask);
+  }
+}
+
+interface IScenario {
+  id: ID,
+  start: number,
+  end: number
+}
+
+export enum ScenarioMode {
+  PLAYBACK,
+  RECORD
+}
+
+export class Scenario implements IScenario {
+  readonly id:ID;
+  readonly start:number;
+  readonly end:number;
+
+  public time:number;
+  public mode:ScenarioMode;
+
+  private static instance:Scenario = null;
+
+  private constructor(filepath:string | IScenario) {
+    let json:IScenario = null;
+    if (typeof filepath === "string") {
+      if (fs.existsSync(filepath as string)) {
+        json = JSON.parse(fs.readFileSync(filepath as string, 'utf8'));
+        this.mode = ScenarioMode.PLAYBACK;
+      } else {
+        throw new ScenarioFileMissingError(filepath as string);
+      }
+    } else {
+      json = filepath as IScenario;
+      this.mode = ScenarioMode.RECORD;
+    }
+    this.id = json.id;
+    this.start = Number(json.start);
+    this.end = Number(json.end);
+
+    this.time = this.start;
+  }
+
+  public static getInstance():Scenario {
+    return Scenario.instance;
+  }
+
+  public static create(filepath:string):void {
+    if (!Scenario.instance) {
+      Scenario.instance = new Scenario(filepath);
+    }
+  }
+
+  public static createWithName(name:string, start:number, end:number):void {
+    if (!Scenario.instance) {
+      Scenario.instance = new Scenario({id:name, start:start, end:end});
+    }
   }
 }

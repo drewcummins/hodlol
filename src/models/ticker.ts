@@ -2,15 +2,17 @@ import { Exchange } from "./exchange";
 import { Series, Tick, Serializer, TickerSerializer, CandleSerializer, OrderSerializer } from "./series";
 import { sleep, Thread } from "../utils";
 import { Order } from "./order";
-import { ID } from "./types";
+import { ID, Scenario, ScenarioMode } from "./types";
 
 export class Ticker {
   protected _kill:boolean = false;
   readonly series:Series;
   protected thread:Thread;
-  constructor(protected exchange:Exchange, readonly symbol:string, readonly record:boolean=false, readonly timeout:number=5000) {
+  protected timeout:number;
+  constructor(protected exchange:Exchange, readonly symbol:string, readonly record:boolean=false) {
     this.series = new Series(this.filepath(), this.generateSerializer(), record);
     this.thread = new Thread();
+    this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 5000;
   }
   
   /** 
@@ -67,7 +69,7 @@ export class Ticker {
   }
 
   protected subdir():string {
-    return ""; //`${config.dateID}`
+    return Scenario.getInstance().id;
   }
 
   protected filepath():string {
@@ -88,8 +90,9 @@ export class Ticker {
 }
 
 export class CandleTicker extends Ticker {
-  constructor(exchange:Exchange, symbol:string, record:boolean=false, timeout:number=5000, private period:string="1m") {
-    super(exchange, symbol, record, timeout);
+  constructor(exchange:Exchange, symbol:string, record:boolean=false, private period:string="1m") {
+    super(exchange, symbol, record);
+    this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 35000;
   }
 
   protected async step() {
@@ -115,8 +118,8 @@ export class CandleTicker extends Ticker {
 
 export class OrderTicker extends Ticker {
   readonly orderID:ID;
-  constructor(exchange:Exchange, readonly order:Order, record:boolean=false, timeout:number=5000) {
-    super(exchange, order.symbol, record, timeout);
+  constructor(exchange:Exchange, readonly order:Order, record:boolean=false) {
+    super(exchange, order.symbol, record);
     this.orderID = order.id;
   }
 

@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import { bnearest } from "../utils";
+import { BacktestFileMissingError } from "../errors/exchange-error";
 
 type TickProp = { [property:string]:number | string } | undefined;
 interface ITick {
@@ -217,7 +218,7 @@ export class Series {
   }
 
   /** 
-   * Reads series from file
+   * Reads series from file--this only applies to mocking
   */
   public read():void {
     if (fs.existsSync(this.filepath)) {
@@ -227,6 +228,8 @@ export class Series {
           this.append(this.serializer.fromCSV(line));
         }
       });
+    } else {
+      throw new BacktestFileMissingError(this.filepath);
     }
   }
 }

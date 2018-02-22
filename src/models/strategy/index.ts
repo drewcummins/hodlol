@@ -1,7 +1,7 @@
 import { SignalJSON, Signal, SignalCode } from "../signal";
 import { ID, Num, BN } from "../types";
 import { Portfolio } from "../portfolio";
-import { OrderRequest, Order, OrderType } from "../order";
+import { OrderRequest, Order, OrderType, OrderSide } from "../order";
 import { Feed } from "../exchange";
 import { MACD } from "../signal/macd";
 import { CandleTicker } from "../ticker";
@@ -20,7 +20,7 @@ export interface StrategyJSON {
 export interface TraderStrategyInterface {
   fundSymbol: string,
   fundAmount: number,
-  requestOrderHandler: (request:OrderRequest) => Order,
+  requestOrderHandler: (strategy:Strategy, request:OrderRequest) => Order,
   feed: Feed
 }
 
@@ -86,17 +86,17 @@ export class Strategy {
 
   protected async placeLimitBuyOrder(symbol:string, budget:Num, close:Num):Promise<Order> {
     let amount = BN(budget).dividedBy(BN(close));
-    return await this.requestOrder(OrderType.LIMIT_BUY, symbol, amount, close);
+    return await this.requestOrder(OrderType.LIMIT, OrderSide.BUY, symbol, amount, close);
   }
 
   protected async placeLimitSellOrder(symbol:string, budget:Num, close:Num):Promise<Order> {
-    return await this.requestOrder(OrderType.LIMIT_SELL, symbol, budget, close);
+    return await this.requestOrder(OrderType.LIMIT, OrderSide.SELL, symbol, budget, close);
   }
 
-  protected async requestOrder(type:OrderType, market:string, amount:Num, price:Num=null):Promise<Order> {
-    let request = new OrderRequest(type, market, amount, price, this.portfolio.id);
+  protected async requestOrder(type:OrderType, side:OrderSide, market:string, amount:Num, price:Num=null):Promise<Order> {
+    let request = new OrderRequest(type, side, market, amount, price, this.portfolio.id);
     try {
-      let order = await this.tsi.requestOrderHandler(request);
+      let order = await this.tsi.requestOrderHandler(this, request);
       this.orders.set(order.id, order);
       return order;
     } catch(err) {

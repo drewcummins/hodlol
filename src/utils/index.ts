@@ -55,7 +55,6 @@ export class Thread {
     while (this.running && +new Date() < next) await sleep(1);
   }
   public async kill() {
-    console.log(`kill called on ${this.id}`)
     this.running = false;
     await sleep(1);
     Thread.threads.delete(this.id);

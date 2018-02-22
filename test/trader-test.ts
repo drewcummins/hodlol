@@ -17,8 +17,8 @@ const amount:Num = 10;
 let opts:TraderParams = {
   symbol: BTC,
   amount: amount,
-  backtest: undefined,
-  mock: false
+  backtest: "./scenarios/market-crash.scenario",
+  mock: true
 }
 
 let json:TraderJSON = {
@@ -48,6 +48,6 @@ describe('Trader tests', async () => {
 
   it('should', async () => {
     trader.run();
-    await sleep(1500);
-  }).timeout(10000)
+    await sleep(15000);
+  }).timeout(20000)
 });
