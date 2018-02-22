@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import { bnearest } from "../utils";
 import { BacktestFileMissingError } from "../errors/exchange-error";
+import { OrderSide, OrderType } from "./order";
 
-type TickProp = { [property:string]:number | string } | undefined;
+type TickProp = { [property:string]:number | string | OrderSide | OrderType } | undefined;
 interface ITick {
   timestamp:number;
 }

@@ -118,7 +118,7 @@ export class CandleTicker extends Ticker {
 
 export class OrderTicker extends Ticker {
   readonly orderID:ID;
-  constructor(exchange:Exchange, readonly order:Order, record:boolean=false) {
+  constructor(exchange:Exchange, readonly order:Order, readonly portfolioID:ID, record:boolean=false) {
     super(exchange, order.symbol, record);
     this.orderID = order.id;
   }

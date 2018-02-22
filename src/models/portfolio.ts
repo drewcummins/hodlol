@@ -1,9 +1,10 @@
 const uuid = require('uuid/v4');
-import { Balance, Num, BN } from './types';
+import { Balance, Num, BN, ID } from './types';
 import { Order, OrderRequest, OrderSide, OrderType } from './order';
 import { Marketplace } from './market';
 import { BigNumber } from "bignumber.js";
 import { InsufficientFundsError, InvalidOrderSideError } from '../errors/exchange-error';
+import { Tick } from './series';
 
 export class Portfolio {
   readonly id:string;
@@ -97,15 +98,17 @@ export class Portfolio {
    * 
    * @param order Order to fill
    */
-  public fill(order:Order):void {
-    let market = this.markets.getWithSymbol(order.symbol);
+  public fill(order:Tick):void {
+    let market = this.markets.getWithSymbol(order.symbol as string);
     switch (order.side) {
       case OrderSide.BUY:
+        console.log("buy filled")
         this.removeReserved(market.quote, order.cost);
         this.addFree(market.base, order.filled);
         break;
 
       case OrderSide.SELL:
+        console.log("sell filled")
         this.removeReserved(market.base, order.filled);
         this.addFree(market.quote, order.cost);
         break;

@@ -63,9 +63,11 @@ export class Trader {
       const amount = tsi.fundAmount * stratJSON.weight / sum;
       if (amount > 0) {
         let portfolio = new Portfolio(this.exchange.markets, tsi.fundSymbol, amount);
+        this.exchange.registerPortfolio(portfolio);
         const strat = await import(`../strategy/${stratJSON.fileName}`);
         const stratClass = strat[stratJSON.className];
-        this.strategies.push(new stratClass(portfolio, stratJSON, tsi));
+        let strategy:Strategy = new stratClass(portfolio, stratJSON, tsi);
+        this.strategies.push(strategy);
       }
     }
   }
@@ -104,12 +106,7 @@ export class Trader {
   }
 
   public async consider(strategy:Strategy, orderRequest:OrderRequest) {
-    let portfolio = strategy.portfolio;
-    if (portfolio.hasSufficientFunds(orderRequest)) {
-      portfolio.reserve(orderRequest);
-      return this.exchange.createOrder(orderRequest);
-    } else {
-      throw new InsufficientFundsError(orderRequest);
-    }
+    // just create an order!
+    return this.exchange.createOrder(orderRequest);
   }
 }

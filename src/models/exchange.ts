@@ -1,15 +1,17 @@
-import { BN, API, BitState, BitfieldState } from "./types";
+import { ID, BN, API, BitState, BitfieldState } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { CandleTicker, OrderTicker } from "./ticker";
 import { Order, OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
 import { InvalidOrderSideError, InvalidOrderTypeError } from "../errors/exchange-error";
+import { Portfolio } from "./portfolio";
 
 export type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
 
 export class Exchange {
   public markets:Marketplace;
   readonly feed:Feed = { candles:new Map<string,CandleTicker>(), orders:new Map<string,OrderTicker>() };
+  private portfolios:Map<ID,Portfolio> = new Map<ID,Portfolio>();
   readonly time:number = 0;
   private state:BitfieldState = new BitfieldState(); 
   private dirty:BitState;
@@ -20,6 +22,15 @@ export class Exchange {
   constructor(readonly api:API) {
     [this.marketsLoaded, this.feedsLoaded, this.tickersRunning] = this.state.init(3);
     this.dirty = this.state.add();
+  }
+
+  /**
+   * Registers a portfolio for the exchange to mutate
+   * 
+   * @param portfolio Portfolio to register
+   */
+  public registerPortfolio(portfolio:Portfolio):void {
+    this.portfolios.set(portfolio.id, portfolio);
   }
 
   /** 
@@ -129,14 +140,14 @@ export class Exchange {
    * Cleans up order tickers when status has changed to closed or cancelled
   */
   public processOrderState():void {
-    Array.from(this.feed.orders.values()).forEach((ticker) => {
+    this.feed.orders.forEach((ticker) => {
       const last = ticker.last();
       if (last) {
         if (last.status == OrderStatus.CLOSED || last.status == OrderStatus.CANCELLED) {
           ticker.kill();
           this.feed.orders.delete(ticker.orderID);
-          // let portfolio = this.portfolios[order.portfolioID];
-          // if (portfolio) portfolio.fill(last);
+          let portfolio:Portfolio = this.portfolios.get(ticker.portfolioID);
+          if (portfolio) portfolio.fill(last);
         }
       }
     })
@@ -206,6 +217,8 @@ export class Exchange {
    */
   public async createOrder(request:OrderRequest):Promise<Order> {
     let order:Order = null;
+    let portfolio = this.portfolios.get(request.portfolioID);
+    portfolio.reserve(request);
     switch (request.side) {
       case OrderSide.BUY:
         order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
@@ -217,7 +230,7 @@ export class Exchange {
       default:
         throw new InvalidOrderSideError(request);
     }
-    this.addOrder(order);
+    this.addOrder(order, portfolio.id);
     return order;
   }
 
@@ -241,9 +254,10 @@ export class Exchange {
    * 
    * @returns the OrderTicker
    */
-  public addOrder(order:Order):OrderTicker {
-    const ticker = new OrderTicker(this, order);
+  public addOrder(order:Order, portfolioID:ID):OrderTicker {
+    const ticker = new OrderTicker(this, order, portfolioID);
     this.feed.orders.set(order.id, ticker);
+    ticker.run();
     return ticker;
   }
 
