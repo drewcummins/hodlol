@@ -1,10 +1,20 @@
-import { BitState, BitfieldState } from '../src/models/types';
+import { BitState, BitfieldState, Scenario } from '../src/models/types';
 import { Exchange } from '../src/models/exchange';
 const ccxt = require('ccxt');
 import { expect } from 'chai';
 import 'mocha';
+import { Thread } from '../src/utils';
 
 describe('Exchange tests', async () => {
+
+  before(() => {
+    Scenario.create("./scenarios/market-crash.scenario");
+  })
+
+  after(() => {
+    Scenario.kill();
+    Thread.killAll();
+  })
 
   let state = new BitfieldState();
   it('should init state masks correctly', () => {
@@ -41,15 +51,23 @@ describe('Exchange tests', async () => {
     expect(exchange.hasMarkets()).to.be.false;
     expect(exchange.hasFeeds()).to.be.false;
     expect(exchange.isLoaded()).to.be.false;
+    expect(exchange.areTickersRunning()).to.be.false;
     await exchange.loadMarketplace();
     expect(exchange.hasMarkets()).to.be.true;
     expect(exchange.hasFeeds()).to.be.false;
     expect(exchange.isLoaded()).to.be.false;
+    expect(exchange.areTickersRunning()).to.be.false;
     await exchange.loadFeeds(["XMR/BTC", "BTC/USDT"]);
     expect(exchange.hasMarkets()).to.be.true;
     expect(exchange.hasFeeds()).to.be.true;
+    expect(exchange.areTickersRunning()).to.be.false;
+    expect(exchange.isLoaded()).to.be.false;
+    await exchange.runTickers();
+    expect(exchange.hasMarkets()).to.be.true;
+    expect(exchange.hasFeeds()).to.be.true;
+    expect(exchange.areTickersRunning()).to.be.true;
     expect(exchange.isLoaded()).to.be.true;
-  });
+  }).timeout(15000);
 
   it('should calculate path from XMR -> USDT', () => {
     let path = exchange.path("XMR", "USDT");

@@ -3,7 +3,7 @@ import { bnearest } from "../utils";
 import { BacktestFileMissingError } from "../errors/exchange-error";
 import { OrderSide, OrderType } from "./order";
 
-type TickProp = { [property:string]:number | string | OrderSide | OrderType } | undefined;
+type TickProp = { [property:string]:any } | undefined;
 interface ITick {
   timestamp:number;
 }
@@ -52,7 +52,7 @@ export class Serializer {
     return tick.timestamp.toString();
   }
 
-  protected cast(value:number | string):number | string {
+  protected cast(value:any):number | string {
     return value;
   }
 }

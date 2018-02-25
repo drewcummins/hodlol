@@ -147,7 +147,7 @@ export class Exchange {
           ticker.kill();
           this.feed.orders.delete(ticker.orderID);
           let portfolio:Portfolio = this.portfolios.get(ticker.portfolioID);
-          if (portfolio) portfolio.fill(last);
+          if (portfolio) portfolio.fill(last as Order);
         }
       }
     })

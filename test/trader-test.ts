@@ -1,6 +1,6 @@
 import { Strategy, StrategyJSON, TraderStrategyInterface } from '../src/models/strategy';
 const ccxt = require('ccxt');
-import { Num } from '../src/models/types';
+import { Num, Scenario } from '../src/models/types';
 import { IMarket, Marketplace } from '../src/models/market';
 import { Portfolio } from '../src/models/portfolio';
 import { Exchange } from '../src/models/exchange';
@@ -39,11 +39,15 @@ let json:TraderJSON = {
   ]
 }
 
-let trader:Trader = new Trader(json, opts);
+let trader:Trader = null;
 
 describe('Trader tests', async () => {
+  before(() => {
+    trader = new Trader(json, opts);
+  })
   after(() => {
     Thread.killAll();
+    Scenario.kill();
   })
 
   it('should', async () => {

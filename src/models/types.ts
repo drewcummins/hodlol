@@ -3,6 +3,8 @@ import { OrderRequest, Order } from "./order";
 import * as fs from "fs";
 import { ScenarioFileMissingError } from "../errors/exchange-error";
 
+BigNumber.config({ DECIMAL_PLACES:5 });
+
 export function BN(x: Num):BigNumber {
   return new BigNumber(x);
 }
@@ -14,8 +16,8 @@ export type Num = BigNumber | number | string;
 export type HashMap<T> = Map<string, T>;
 
 export interface Balance {
-  free: BigNumber;
-  reserved: BigNumber;
+  free: Num;
+  reserved: Num;
 }
 // (request.market, request.amount, request.price);
 export interface API {
@@ -124,5 +126,9 @@ export class Scenario implements IScenario {
     if (!Scenario.instance) {
       Scenario.instance = new Scenario({id:name, start:start, end:end});
     }
+  }
+
+  public static kill():void {
+    Scenario.instance = null;
   }
 }

@@ -53,9 +53,9 @@ export class Portfolio {
   public hasSufficientFunds(request:OrderRequest):Boolean {
     let [base,quote] = this.balanceByMarket(request.marketSymbol);
     if (request.side == OrderSide.BUY) {
-      return quote.free.isGreaterThanOrEqualTo(request.cost());
+      return BN(quote.free).isGreaterThanOrEqualTo(request.cost());
     } else if (request.side == OrderSide.SELL) {
-      return base.free.isGreaterThanOrEqualTo(request.amount);
+      return BN(base.free).isGreaterThanOrEqualTo(request.amount);
     } else {
       throw new InvalidOrderSideError(request);
     }
@@ -98,17 +98,15 @@ export class Portfolio {
    * 
    * @param order Order to fill
    */
-  public fill(order:Tick):void {
+  public fill(order:Order):void {
     let market = this.markets.getWithSymbol(order.symbol as string);
     switch (order.side) {
       case OrderSide.BUY:
-        console.log("buy filled")
         this.removeReserved(market.quote, order.cost);
         this.addFree(market.base, order.filled);
         break;
 
       case OrderSide.SELL:
-        console.log("sell filled")
         this.removeReserved(market.base, order.filled);
         this.addFree(market.quote, order.cost);
         break;
@@ -124,12 +122,12 @@ export class Portfolio {
 
   private addFree(symbol:string, amount:Num):void {
     let balance = this.balance(symbol);
-    balance.free = balance.free.plus(amount);
+    balance.free = BN(balance.free).plus(amount);
   }
 
   private addReserved(symbol:string, amount:Num):void {
     let balance = this.balance(symbol);
-    balance.reserved = balance.reserved.plus(amount);
+    balance.reserved = BN(balance.reserved).plus(amount);
   }
 
   private removeFree(symbol:string, amount:Num):void {
@@ -144,27 +142,24 @@ export class Portfolio {
     if (!this.balances[symbol]) this.balances[symbol] = {free: BN(0), reserved: BN(0)};
   }
 
-
-  /*
-
-  async value(quote='USDT') {
-    let value = {free: 0, reserved: 0};
-    for (var base in this.balances) {
-      if (base == quote) {
-        let balance = this.balances[base];
-        value.free += balance.free;
-        value.reserved += balance.reserved;
-        value[base] = {free: balance.free, reserved: balance.reserved};
-        continue;
-      }
-      let rate = await this.exchange.price(base, quote);
-      let balance = this.balances[base];
-      value[base] = {free: balance.free * rate, reserved: balance.reserved * rate};
-      value.free += value[base].free;
-      value.reserved += value[base].reserved;
-    }
-    value.total = value.free + value.reserved;
-    return value;
-  }*/
+  // public async value(quote='USDT') {
+  //   let value:Balance = {free: 0, reserved: 0};
+  //   for (var base in this.balances) {
+  //     if (base == quote) {
+  //       let balance = this.balances[base];
+  //       value.free += balance.free;
+  //       value.reserved += balance.reserved;
+  //       value[base] = {free: balance.free, reserved: balance.reserved};
+  //       continue;
+  //     }
+  //     let rate = await this.exchange.price(base, quote);
+  //     let balance = this.balances[base];
+  //     value[base] = {free: balance.free * rate, reserved: balance.reserved * rate};
+  //     value.free += value[base].free;
+  //     value.reserved += value[base].reserved;
+  //   }
+  //   value.total = value.free + value.reserved;
+  //   return value;
+  // }
 }
 

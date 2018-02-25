@@ -27,13 +27,14 @@ export interface TraderStrategyInterface {
 export class Strategy {
   readonly id:ID;
   readonly title:string;
+  readonly initialValue:Num;
   protected indicators:Signal[] = [];
   protected orders:Map<ID,Order> = new Map<ID,Order>();
 
   constructor(public portfolio:Portfolio, source:StrategyJSON, protected tsi:TraderStrategyInterface) {
     this.id = uuid();
     this.title = source.title || "Strategy";
-    
+    this.initialValue = tsi.fundAmount;
     this.init(source);
   } 
 
@@ -69,14 +70,14 @@ export class Strategy {
       let last:Tick = ticker.last();
       if (signal == SignalCode.BUY) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
-        if (quote.free.isGreaterThan(0)) {
+        if (BN(quote.free).isGreaterThan(0)) {
           // greedily use up funds
-          const order = await this.placeLimitBuyOrder(indicator.symbol, quote.free.toNumber(), Number(last.close));
+          const order = await this.placeLimitBuyOrder(indicator.symbol, BN(quote.free).toNumber(), BN(last.close));
         }
       } else if (signal == SignalCode.SELL) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
-        if (base.free.isGreaterThan(0)) {
-          const order = await this.placeLimitSellOrder(indicator.symbol, base.free.toNumber(), Number(last.close));
+        if (BN(base.free).isGreaterThan(0)) {
+          const order = await this.placeLimitSellOrder(indicator.symbol, BN(base.free).toNumber(), BN(last.close));
         }
       } else {
         throw new InvalidSignalError(indicator, signal);
