@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const utils_1 = require("../utils");
+const exchange_error_1 = require("../errors/exchange-error");
 class Serializer {
     constructor(props) {
         this.props = props;
@@ -202,7 +203,7 @@ class Series {
         }
     }
     /**
-     * Reads series from file
+     * Reads series from file--this only applies to mocking
     */
     read() {
         if (fs.existsSync(this.filepath)) {
@@ -212,6 +213,9 @@ class Series {
                     this.append(this.serializer.fromCSV(line));
                 }
             });
+        }
+        else {
+            throw new exchange_error_1.BacktestFileMissingError(this.filepath);
         }
     }
 }

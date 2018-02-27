@@ -1,5 +1,5 @@
 import { SignalJSON, Signal, SignalCode } from "../signal";
-import { ID, Num, BN } from "../types";
+import { ID, Num, BN, Value } from "../types";
 import { Portfolio } from "../portfolio";
 import { OrderRequest, Order, OrderType, OrderSide } from "../order";
 import { Feed } from "../exchange";
@@ -30,6 +30,7 @@ export class Strategy {
   readonly initialValue:Num;
   protected indicators:Signal[] = [];
   protected orders:Map<ID,Order> = new Map<ID,Order>();
+  public originalValue:Value;
 
   constructor(public portfolio:Portfolio, source:StrategyJSON, protected tsi:TraderStrategyInterface) {
     this.id = uuid();

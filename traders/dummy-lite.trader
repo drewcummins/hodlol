@@ -6,10 +6,9 @@
       "fileName": "",
       "className": "Strategy",
       "weight": 1
-    },
+    }
   ],
   "tickers": [
     "ETH/BTC", "BTC/USDT"
-  ],
-  "record": true
+  ]
 }

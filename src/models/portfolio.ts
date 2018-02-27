@@ -1,5 +1,5 @@
 const uuid = require('uuid/v4');
-import { Balance, Num, BN, ID } from './types';
+import { Balance, Num, BN, ID, Value } from './types';
 import { Order, OrderRequest, OrderSide, OrderType } from './order';
 import { Marketplace } from './market';
 import { BigNumber } from "bignumber.js";
@@ -8,12 +8,11 @@ import { Tick } from './series';
 
 export class Portfolio {
   readonly id:string;
-  private balances: { [symbol:string]:Balance; };
+  private balances: Map<string,Balance> = new Map<string,Balance>();
 
   constructor(private markets:Marketplace, readonly fundSymbol:string='BTC', readonly fundAmount:Num=10) {
     this.id = uuid();
-    this.balances = {};
-    this.balances[fundSymbol] = { free:BN(fundAmount), reserved:BN(0) };
+    this.balances.set(fundSymbol, { free:fundAmount, reserved:0 });
   }
 
   /**
@@ -25,7 +24,7 @@ export class Portfolio {
    */
   public balance(symbol:string):Balance {
     this.ensureBalance(symbol);
-    return this.balances[symbol];
+    return this.balances.get(symbol);
   }
 
   /**
@@ -139,27 +138,36 @@ export class Portfolio {
   }
 
   private ensureBalance(symbol:string):void {
-    if (!this.balances[symbol]) this.balances[symbol] = {free: BN(0), reserved: BN(0)};
+    if (!this.balances.has(symbol)) this.balances.set(symbol, {free: 0, reserved: 0});
   }
 
-  // public async value(quote='USDT') {
-  //   let value:Balance = {free: 0, reserved: 0};
-  //   for (var base in this.balances) {
-  //     if (base == quote) {
-  //       let balance = this.balances[base];
-  //       value.free += balance.free;
-  //       value.reserved += balance.reserved;
-  //       value[base] = {free: balance.free, reserved: balance.reserved};
-  //       continue;
-  //     }
-  //     let rate = await this.exchange.price(base, quote);
-  //     let balance = this.balances[base];
-  //     value[base] = {free: balance.free * rate, reserved: balance.reserved * rate};
-  //     value.free += value[base].free;
-  //     value.reserved += value[base].reserved;
-  //   }
-  //   value.total = value.free + value.reserved;
-  //   return value;
-  // }
+  /**
+   * Gets the value of the portfolio in @quote
+   * 
+   * @param quote Quote symbol to get price in
+   * @param price Price function (on exchange)--this is sloppy
+   * 
+   * @returns portfolio value
+   */
+  public async value(quote='USDT', price:(base:string, quote:string) => Num):Promise<Value> {
+    let value:Value = { all:{free: BN(0), reserved: BN(0)} };
+    let balances = this.balances.keys();
+    for (let base of balances) {
+      if (base == quote) {
+        let balance = this.balances.get(base);
+        value.all.free = BN(value.all.free).plus(balance.free);
+        value.all.reserved = BN(value.all.reserved).plus(balance.reserved);
+        value[base] = balance;
+        continue;
+      }
+      let rate = await price(base, quote);
+      let balance = this.balances.get(base);
+      console.log(base, quote, rate, balance)
+      value[base] = {free: BN(balance.free).times(rate), reserved: BN(balance.reserved).times(rate)};
+      value.all.free = BN(value.all.free).plus(value[base].free);
+      value.all.reserved = BN(value.all.reserved).plus(value[base].reserved);
+    }
+    return value;
+  }
 }
 

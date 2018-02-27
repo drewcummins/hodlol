@@ -36,4 +36,22 @@ class InvalidOrderSideError extends Error {
     }
 }
 exports.InvalidOrderSideError = InvalidOrderSideError;
+class FileMissingError extends Error {
+    constructor(filename, type) {
+        super(`No ${type} file found when attempting to read ${filename}`);
+    }
+}
+exports.FileMissingError = FileMissingError;
+class BacktestFileMissingError extends FileMissingError {
+    constructor(filename) {
+        super(filename, 'backtest');
+    }
+}
+exports.BacktestFileMissingError = BacktestFileMissingError;
+class ScenarioFileMissingError extends FileMissingError {
+    constructor(filename) {
+        super(filename, 'scenario');
+    }
+}
+exports.ScenarioFileMissingError = ScenarioFileMissingError;
 //# sourceMappingURL=exchange-error.js.map

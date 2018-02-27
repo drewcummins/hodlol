@@ -9,9 +9,9 @@ class Portfolio {
         this.markets = markets;
         this.fundSymbol = fundSymbol;
         this.fundAmount = fundAmount;
+        this.balances = new Map();
         this.id = uuid();
-        this.balances = {};
-        this.balances[fundSymbol] = { free: types_1.BN(fundAmount), reserved: types_1.BN(0) };
+        this.balances.set(fundSymbol, { free: fundAmount, reserved: 0 });
     }
     /**
      * Gets balance for the given currency
@@ -22,7 +22,7 @@ class Portfolio {
      */
     balance(symbol) {
         this.ensureBalance(symbol);
-        return this.balances[symbol];
+        return this.balances.get(symbol);
     }
     /**
      * Gets balance for base and quote of given market
@@ -47,10 +47,10 @@ class Portfolio {
     hasSufficientFunds(request) {
         let [base, quote] = this.balanceByMarket(request.marketSymbol);
         if (request.side == order_1.OrderSide.BUY) {
-            return quote.free.isGreaterThanOrEqualTo(request.cost());
+            return types_1.BN(quote.free).isGreaterThanOrEqualTo(request.cost());
         }
         else if (request.side == order_1.OrderSide.SELL) {
-            return base.free.isGreaterThanOrEqualTo(request.amount);
+            return types_1.BN(base.free).isGreaterThanOrEqualTo(request.amount);
         }
         else {
             throw new exchange_error_1.InvalidOrderSideError(request);
@@ -105,11 +105,11 @@ class Portfolio {
     }
     addFree(symbol, amount) {
         let balance = this.balance(symbol);
-        balance.free = balance.free.plus(amount);
+        balance.free = types_1.BN(balance.free).plus(amount);
     }
     addReserved(symbol, amount) {
         let balance = this.balance(symbol);
-        balance.reserved = balance.reserved.plus(amount);
+        balance.reserved = types_1.BN(balance.reserved).plus(amount);
     }
     removeFree(symbol, amount) {
         this.addFree(symbol, -amount);
@@ -118,8 +118,34 @@ class Portfolio {
         this.addReserved(symbol, -amount);
     }
     ensureBalance(symbol) {
-        if (!this.balances[symbol])
-            this.balances[symbol] = { free: types_1.BN(0), reserved: types_1.BN(0) };
+        if (!this.balances.has(symbol))
+            this.balances.set(symbol, { free: 0, reserved: 0 });
+    }
+    /**
+     * Gets the value of the portfolio in @quote
+     *
+     * @param quote Quote symbol to get price in
+     * @param price Price function (on exchange)--this is sloppy
+     *
+     * @returns portfolio value
+     */
+    async value(quote = 'USDT', price) {
+        let value = { all: { free: types_1.BN(0), reserved: types_1.BN(0) } };
+        for (var base in this.balances) {
+            if (base == quote) {
+                let balance = this.balances.get(base);
+                value.all.free = types_1.BN(value.all.free).plus(balance.free);
+                value.all.reserved = types_1.BN(value.all.reserved).plus(balance.free);
+                value[base] = { free: balance.free, reserved: balance.reserved };
+                continue;
+            }
+            let rate = await price(base, quote);
+            let balance = this.balances.get(base);
+            value[base] = { free: types_1.BN(balance.free).times(rate), reserved: types_1.BN(balance.reserved).times(rate) };
+            value.all.free = types_1.BN(value.all.free).plus(value[base].free);
+            value.all.reserved = types_1.BN(value.all.reserved).plus(value[base].reserved);
+        }
+        return value;
     }
 }
 exports.Portfolio = Portfolio;

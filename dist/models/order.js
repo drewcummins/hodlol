@@ -1,18 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const bignumber_js_1 = require("bignumber.js");
-var OrderType;
-(function (OrderType) {
-    OrderType[OrderType["LIMIT_BUY"] = 0] = "LIMIT_BUY";
-    OrderType[OrderType["LIMIT_SELL"] = 1] = "LIMIT_SELL";
-    OrderType[OrderType["MARKET_BUY"] = 2] = "MARKET_BUY";
-    OrderType[OrderType["MARKET_SELL"] = 3] = "MARKET_SELL";
-})(OrderType = exports.OrderType || (exports.OrderType = {}));
 var OrderSide;
 (function (OrderSide) {
-    OrderSide[OrderSide["BUY"] = 0] = "BUY";
-    OrderSide[OrderSide["SELL"] = 1] = "SELL";
+    OrderSide["BUY"] = "buy";
+    OrderSide["SELL"] = "sell";
 })(OrderSide = exports.OrderSide || (exports.OrderSide = {}));
+var OrderType;
+(function (OrderType) {
+    OrderType["MARKET"] = "market";
+    OrderType["LIMIT"] = "limit";
+})(OrderType = exports.OrderType || (exports.OrderType = {}));
 var OrderStatus;
 (function (OrderStatus) {
     OrderStatus["OPEN"] = "open";
@@ -20,18 +18,13 @@ var OrderStatus;
     OrderStatus["CANCELLED"] = "cancelled";
 })(OrderStatus = exports.OrderStatus || (exports.OrderStatus = {}));
 class OrderRequest {
-    constructor(type, marketSymbol, amount, price, portfolioID) {
+    constructor(type, side, marketSymbol, amount, price, portfolioID) {
         this.type = type;
+        this.side = side;
         this.marketSymbol = marketSymbol;
         this.amount = amount;
         this.price = price;
         this.portfolioID = portfolioID;
-        if (type == OrderType.LIMIT_BUY || type == OrderType.MARKET_BUY) {
-            this.side = OrderSide.BUY;
-        }
-        else {
-            this.side = OrderSide.SELL;
-        }
     }
     /**
      * Calculates the cost of the order
@@ -45,4 +38,22 @@ class OrderRequest {
     }
 }
 exports.OrderRequest = OrderRequest;
+/*
+let order = {
+      id:        uuid(),
+      timestamp: +new Date(),   // Unix timestamp in milliseconds
+      status:    'open',          // 'open', 'closed', 'canceled'
+      symbol:    request.market,  // symbol
+      type:      'limit',         // 'market', 'limit'
+      side:      'buy',           // 'buy', 'sell'
+      price:     request.price,   // float price in quote currency
+      amount:    request.amount,  // ordered amount of base currency
+      cost:      request.price * request.amount,
+      filled:    0.0,             // filled amount of base currency
+      remaining: request.amount,  // remaining amount to fill
+      trades:   []
+    };
+    this.orders.add(order);
+    return order;
+*/ 
 //# sourceMappingURL=order.js.map

@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js"
 import { OrderRequest, Order } from "./order";
 import * as fs from "fs";
 import { ScenarioFileMissingError } from "../errors/exchange-error";
+import { Balances } from "ccxt";
 
 BigNumber.config({ DECIMAL_PLACES:5 });
 
@@ -19,6 +20,8 @@ export interface Balance {
   free: Num;
   reserved: Num;
 }
+
+export type Value = { [key:string]:Balance };
 // (request.market, request.amount, request.price);
 export interface API {
   readonly name:string;

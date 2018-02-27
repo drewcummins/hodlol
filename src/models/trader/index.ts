@@ -1,5 +1,5 @@
 import { Exchange } from "../exchange";
-import { ID, API, Scenario } from "../types";
+import { BN, ID, API, Scenario, ScenarioMode } from "../types";
 import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors/exchange-error";
 import { sleep, Thread } from "../../utils";
 import { Strategy, TraderStrategyInterface, StrategyJSON } from "../strategy";
@@ -8,6 +8,9 @@ import { request } from "https";
 import { Portfolio } from "../portfolio";
 import { MockAPI } from "../mock-api";
 const ccxt = require('ccxt');
+const dateFormat = require('dateformat');
+const colors = require('ansicolors');
+const columnify = require('columnify');
 
 export interface TraderJSON {
   name:string,
@@ -90,10 +93,15 @@ export class Trader {
       await strategy.before();
     }
 
+    let step = 0;
+
     while (this.thread.isRunning()) {
       await this.stepExchange();
-      if (this.params.backtest) Scenario.getInstance().time += 10000;
-      await this.thread.sleep(10);
+      if (this.params.backtest) {
+        Scenario.getInstance().time += 10000;
+        if (step++ % 100 == 0) this.printPerformance();
+      }
+      await this.thread.sleep(1);
     }
 
     for (const strategy of this.strategies) {
@@ -110,36 +118,38 @@ export class Trader {
     return this.exchange.createOrder(orderRequest);
   }
 
-  // public async printPerformance() {
-  //   if (this.strategies.length == 0) return;
-  //   console.log('\x1Bc');
-  //   var date = "";
-  //   if (this.exchange.isBacktesting()) {
-  //     let dateStart = colors.magenta(dateFormat(config.scenario.start, "mmm d, h:MM:ssTT"));
-  //     let dateEnd = colors.magenta(dateFormat(config.scenario.end, "mmm d, h:MM:ssTT"));
-  //     date = colors.magenta(dateFormat(Math.min(this.exchange.time, config.scenario.end), "mmm d, h:MM:ssTT"));
-  //     console.log(` | Backtesting from ${dateStart} to ${dateEnd}\n`);
-  //   }
-  //   let columns = [];
-  //   for (var i = 0; i < this.strategies.length; i++) {
-  //     let strategy = this.strategies[i];
-  //     try {
-  //       let value = await strategy.portfolio.value("USDT");
-  //       if(!strategy.originalValue) strategy.originalValue = value;
-  //       let valstr = colors.green("$" + value.total.toFixed(2));
-  //       let ovalstr = colors.green("$" + strategy.originalValue.total.toFixed(2));
-  //       columns.push({strategy: colors.blue(strategy.title), value: valstr, "original value": ovalstr});
-  //       // console.log(" |=> " + strategy.prettyTitle(), valstr + ", original value:", ovalstr);
-  //     } catch(err) {
-  //       throw err;
-  //       console.log("Error calculating value");
-  //     }
-  //   }
-  //   let table = columnify(columns, {minWidth: 20});
-  //   table = table.split("\n").join("\n | ");
-  //   console.log(" | " + table);
-  //   console.log("");
-  //   console.log(` | ${date}`);
-  //   console.log("\n");
-  // }
+  public async printPerformance() {
+    if (this.strategies.length == 0) return;
+    let scenario = Scenario.getInstance();
+    console.log('\x1Bc');
+    var date = "";
+    if (Scenario.getInstance().mode == ScenarioMode.PLAYBACK) {
+      let dateStart = colors.magenta(dateFormat(scenario.start, "mmm d, h:MM:ssTT"));
+      let dateEnd = colors.magenta(dateFormat(scenario.end, "mmm d, h:MM:ssTT"));
+      date = colors.magenta(dateFormat(Math.min(scenario.time, scenario.end), "mmm d, h:MM:ssTT"));
+      console.log(` | Backtesting from ${dateStart} to ${dateEnd}\n`);
+    }
+    let columns = [];
+    for (var i = 0; i < this.strategies.length; i++) {
+      let strategy = this.strategies[i];
+      try {
+        let value = await strategy.portfolio.value("USDT", this.exchange.price.bind(this.exchange));
+        if(!strategy.originalValue) strategy.originalValue = value;
+        let total:string = BN(value.all.free).plus(value.all.reserved).toFixed(2);
+        let originalTotal:string = BN(strategy.originalValue.all.free).plus(strategy.originalValue.all.reserved).toFixed(2);
+        let valstr = colors.green("$" + total);
+        let ovalstr = colors.green("$" + originalTotal);
+        columns.push({strategy: colors.blue(strategy.title), value: valstr, "original value": ovalstr});
+        // console.log(" |=> " + strategy.prettyTitle(), valstr + ", original value:", ovalstr);
+      } catch(err) {
+        throw err;
+      }
+    }
+    let table = columnify(columns, {minWidth: 20});
+    table = table.split("\n").join("\n | ");
+    console.log(" | " + table);
+    console.log("");
+    console.log(` | ${date}`);
+    console.log("\n");
+  }
 }

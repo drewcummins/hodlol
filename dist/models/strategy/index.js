@@ -13,18 +13,27 @@ class Strategy {
         this.orders = new Map();
         this.id = uuid();
         this.title = source.title || "Strategy";
+        this.initialValue = tsi.fundAmount;
         this.init(source);
+    }
+    async before() {
+        console.log(`Strategy ${this.title} before called.`);
+    }
+    async after() {
+        console.log(`Strategy ${this.title} after called.`);
     }
     init(source) {
         const feed = this.tsi.feed;
-        source.indicators.forEach(async (signal) => {
-            const sig = await Promise.resolve().then(() => require(`../signal/${signal.fileName}`));
-            const sigClass = sig[signal.className];
-            for (const [symbol, ticker] of feed.candles.entries()) {
-                let indicator = new sigClass(feed, symbol, signal);
-                this.indicators.push(indicator);
-            }
-        });
+        if (source.indicators) {
+            source.indicators.forEach(async (signal) => {
+                const sig = await Promise.resolve().then(() => require(`../signal/${signal.fileName}`));
+                const sigClass = sig[signal.className];
+                for (const [symbol, ticker] of feed.candles.entries()) {
+                    let indicator = new sigClass(feed, symbol, signal);
+                    this.indicators.push(indicator);
+                }
+            });
+        }
     }
     async tick() {
         const feed = this.tsi.feed;
@@ -36,15 +45,15 @@ class Strategy {
             let last = ticker.last();
             if (signal == signal_1.SignalCode.BUY) {
                 let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
-                if (quote.free.isGreaterThan(0)) {
+                if (types_1.BN(quote.free).isGreaterThan(0)) {
                     // greedily use up funds
-                    const order = await this.placeLimitBuyOrder(indicator.symbol, quote.free.toNumber(), Number(last.close));
+                    const order = await this.placeLimitBuyOrder(indicator.symbol, types_1.BN(quote.free).toNumber(), types_1.BN(last.close));
                 }
             }
             else if (signal == signal_1.SignalCode.SELL) {
                 let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
-                if (base.free.isGreaterThan(0)) {
-                    const order = await this.placeLimitSellOrder(indicator.symbol, base.free.toNumber(), Number(last.close));
+                if (types_1.BN(base.free).isGreaterThan(0)) {
+                    const order = await this.placeLimitSellOrder(indicator.symbol, types_1.BN(base.free).toNumber(), types_1.BN(last.close));
                 }
             }
             else {
@@ -55,15 +64,15 @@ class Strategy {
     }
     async placeLimitBuyOrder(symbol, budget, close) {
         let amount = types_1.BN(budget).dividedBy(types_1.BN(close));
-        return await this.requestOrder(order_1.OrderType.LIMIT_BUY, symbol, amount, close);
+        return await this.requestOrder(order_1.OrderType.LIMIT, order_1.OrderSide.BUY, symbol, amount, close);
     }
     async placeLimitSellOrder(symbol, budget, close) {
-        return await this.requestOrder(order_1.OrderType.LIMIT_SELL, symbol, budget, close);
+        return await this.requestOrder(order_1.OrderType.LIMIT, order_1.OrderSide.SELL, symbol, budget, close);
     }
-    async requestOrder(type, market, amount, price = null) {
-        let request = new order_1.OrderRequest(type, market, amount, price, this.portfolio.id);
+    async requestOrder(type, side, market, amount, price = null) {
+        let request = new order_1.OrderRequest(type, side, market, amount, price, this.portfolio.id);
         try {
-            let order = await this.tsi.requestOrderHandler(request);
+            let order = await this.tsi.requestOrderHandler(this, request);
             this.orders.set(order.id, order);
             return order;
         }

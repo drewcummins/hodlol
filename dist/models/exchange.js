@@ -9,10 +9,19 @@ class Exchange {
     constructor(api) {
         this.api = api;
         this.feed = { candles: new Map(), orders: new Map() };
+        this.portfolios = new Map();
         this.time = 0;
         this.state = new types_1.BitfieldState();
-        [this.marketsLoaded, this.feedsLoaded] = this.state.init(2);
-        this.dirty = this.state.add(false, false);
+        [this.marketsLoaded, this.feedsLoaded, this.tickersRunning] = this.state.init(3);
+        this.dirty = this.state.add();
+    }
+    /**
+     * Registers a portfolio for the exchange to mutate
+     *
+     * @param portfolio Portfolio to register
+     */
+    registerPortfolio(portfolio) {
+        this.portfolios.set(portfolio.id, portfolio);
     }
     /**
      * Marks the exchange to process a change in ticker/order state
@@ -53,6 +62,14 @@ class Exchange {
         return this.state.isSet(this.feedsLoaded);
     }
     /**
+     * Indicates whether tickers have kicked off
+     *
+     * @returns boolean
+    */
+    areTickersRunning() {
+        return this.state.isSet(this.tickersRunning);
+    }
+    /**
      * Indicates whether all things have been initalized
      *
      * @returns true if feeds and markets are loaded, false otherwise
@@ -83,40 +100,34 @@ class Exchange {
      *
      * @param tickers tickers for feed to load
      */
-    async loadFeeds(tickers) {
+    loadFeeds(tickers) {
         if (!this.state.isSet(this.feedsLoaded)) {
             for (const symbol of tickers) {
                 const ticker = this.addCandlestick(symbol);
-                // if backtest
-                await ticker.read();
-                ticker.run();
             }
             this.state.set(this.feedsLoaded);
         }
     }
     /**
-     * Kills all feeds so we can exit
+     * Runs all tickers (each in their own "thread")
     */
-    killFeeds() {
-        if (this.state.isSet(this.feedsLoaded)) {
-            for (const [_, ticker] of this.feed.candles) {
-                ticker.kill = true;
-            }
-            this.state.kill(this.feedsLoaded);
-        }
+    runTickers() {
+        this.feed.candles.forEach((candle) => candle.run());
+        this.state.set(this.tickersRunning);
     }
     /**
      * Cleans up order tickers when status has changed to closed or cancelled
     */
     processOrderState() {
-        Array.from(this.feed.orders.values()).forEach((ticker) => {
+        this.feed.orders.forEach((ticker) => {
             const last = ticker.last();
             if (last) {
                 if (last.status == order_1.OrderStatus.CLOSED || last.status == order_1.OrderStatus.CANCELLED) {
-                    ticker.kill = true;
+                    ticker.kill();
                     this.feed.orders.delete(ticker.orderID);
-                    // let portfolio = this.portfolios[order.portfolioID];
-                    // if (portfolio) portfolio.fill(last);
+                    let portfolio = this.portfolios.get(ticker.portfolioID);
+                    if (portfolio)
+                        portfolio.fill(last);
                 }
             }
         });
@@ -180,17 +191,19 @@ class Exchange {
      */
     async createOrder(request) {
         let order = null;
-        switch (request.type) {
-            case order_1.OrderType.LIMIT_BUY:
+        let portfolio = this.portfolios.get(request.portfolioID);
+        portfolio.reserve(request);
+        switch (request.side) {
+            case order_1.OrderSide.BUY:
                 order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
                 break;
-            case order_1.OrderType.LIMIT_SELL:
+            case order_1.OrderSide.SELL:
                 order = await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price);
                 break;
             default:
-                throw new exchange_error_1.InvalidOrderTypeError(request);
+                throw new exchange_error_1.InvalidOrderSideError(request);
         }
-        this.addOrder(order);
+        this.addOrder(order, portfolio.id);
         return order;
     }
     /**
@@ -212,9 +225,10 @@ class Exchange {
      *
      * @returns the OrderTicker
      */
-    addOrder(order) {
-        const ticker = new ticker_1.OrderTicker(this, order);
+    addOrder(order, portfolioID) {
+        const ticker = new ticker_1.OrderTicker(this, order, portfolioID);
         this.feed.orders.set(order.id, ticker);
+        ticker.run();
         return ticker;
     }
     /**

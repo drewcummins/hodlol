@@ -1,18 +1,29 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const exchange_1 = require("../exchange");
+const types_1 = require("../types");
 const exchange_error_1 = require("../../errors/exchange-error");
 const utils_1 = require("../../utils");
 const portfolio_1 = require("../portfolio");
+const mock_api_1 = require("../mock-api");
 const ccxt = require('ccxt');
+const dateFormat = require('dateformat');
+const colors = require('ansicolors');
+const columnify = require('columnify');
 class Trader {
     constructor(source, params) {
         this.source = source;
         this.params = params;
+        this.strategies = [];
+        if (params.backtest)
+            types_1.Scenario.create(params.backtest);
         let apiClass = ccxt[source.exchange];
         if (!apiClass)
             throw new exchange_error_1.InvalidExchangeNameError(source.exchange);
         let api = new apiClass();
+        if (params.mock)
+            api = new mock_api_1.MockAPI(api);
+        this.thread = new utils_1.Thread();
         this.exchange = new exchange_1.Exchange(api);
     }
     async stepExchange() {
@@ -39,33 +50,85 @@ class Trader {
             const amount = tsi.fundAmount * stratJSON.weight / sum;
             if (amount > 0) {
                 let portfolio = new portfolio_1.Portfolio(this.exchange.markets, tsi.fundSymbol, amount);
+                this.exchange.registerPortfolio(portfolio);
                 const strat = await Promise.resolve().then(() => require(`../strategy/${stratJSON.fileName}`));
                 const stratClass = strat[stratJSON.className];
-                this.strategies.push(new stratClass(portfolio, stratJSON, tsi));
+                let strategy = new stratClass(portfolio, stratJSON, tsi);
+                this.strategies.push(strategy);
             }
         }
     }
     async run() {
-        this.exchange.loadMarketplace();
-        this.exchange.loadFeeds(this.source.tickers);
+        await this.exchange.loadFeeds(this.source.tickers);
+        await this.exchange.loadMarketplace();
         await this.initStrategies();
-        while (!this.exchange.isLoaded()) {
-            await utils_1.sleep(1000);
+        if (this.params.mock) {
+            let api = this.exchange.api;
+            await api.loadTickers(this.exchange.feed);
+            // kick off the "server" if we're mocking
+            api.run();
         }
-        while (true) {
+        this.exchange.runTickers();
+        for (const strategy of this.strategies) {
+            await strategy.before();
+        }
+        let step = 0;
+        while (this.thread.isRunning()) {
             await this.stepExchange();
-            await utils_1.sleep(1000);
+            if (this.params.backtest) {
+                types_1.Scenario.getInstance().time += 10000;
+                if (step++ % 100 == 0)
+                    this.printPerformance();
+            }
+            await this.thread.sleep(1);
+        }
+        for (const strategy of this.strategies) {
+            await strategy.after();
         }
     }
+    kill() {
+        this.thread.kill();
+    }
     async consider(strategy, orderRequest) {
-        let portfolio = strategy.portfolio;
-        if (portfolio.hasSufficientFunds(orderRequest)) {
-            portfolio.reserve(orderRequest);
-            return this.exchange.createOrder(orderRequest);
+        // just create an order!
+        return this.exchange.createOrder(orderRequest);
+    }
+    async printPerformance() {
+        if (this.strategies.length == 0)
+            return;
+        let scenario = types_1.Scenario.getInstance();
+        console.log('\x1Bc');
+        var date = "";
+        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK) {
+            let dateStart = colors.magenta(dateFormat(scenario.start, "mmm d, h:MM:ssTT"));
+            let dateEnd = colors.magenta(dateFormat(scenario.end, "mmm d, h:MM:ssTT"));
+            date = colors.magenta(dateFormat(Math.min(scenario.time, scenario.end), "mmm d, h:MM:ssTT"));
+            console.log(` | Backtesting from ${dateStart} to ${dateEnd}\n`);
         }
-        else {
-            throw new exchange_error_1.InsufficientFundsError(orderRequest);
+        let columns = [];
+        for (var i = 0; i < this.strategies.length; i++) {
+            let strategy = this.strategies[i];
+            try {
+                let value = await strategy.portfolio.value("USDT", this.exchange.price.bind(this.exchange));
+                if (!strategy.originalValue)
+                    strategy.originalValue = value;
+                let total = types_1.BN(value.all.free).plus(value.all.reserved).toFixed(2);
+                let originalTotal = types_1.BN(strategy.originalValue.all.free).plus(strategy.originalValue.all.reserved).toFixed(2);
+                let valstr = colors.green("$" + total);
+                let ovalstr = colors.green("$" + originalTotal);
+                columns.push({ strategy: colors.blue(strategy.title), value: valstr, "original value": ovalstr });
+                // console.log(" |=> " + strategy.prettyTitle(), valstr + ", original value:", ovalstr);
+            }
+            catch (err) {
+                throw err;
+            }
         }
+        let table = columnify(columns, { minWidth: 20 });
+        table = table.split("\n").join("\n | ");
+        console.log(" | " + table);
+        console.log("");
+        console.log(` | ${date}`);
+        console.log("\n");
     }
 }
 exports.Trader = Trader;

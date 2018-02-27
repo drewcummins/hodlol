@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const uuid = require('uuid/v4');
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -34,4 +35,29 @@ function bnearest(list, value, compare, state = undefined) {
     return bnearest(list, value, compare, state);
 }
 exports.bnearest = bnearest;
+class Thread {
+    constructor() {
+        this.running = true;
+        this.id = uuid();
+        Thread.threads.set(this.id, this);
+    }
+    async sleep(time) {
+        let next = +new Date() + time;
+        while (this.running && +new Date() < next)
+            await sleep(1);
+    }
+    async kill() {
+        this.running = false;
+        await sleep(1);
+        Thread.threads.delete(this.id);
+    }
+    isRunning() {
+        return this.running;
+    }
+    static killAll() {
+        Thread.threads.forEach((thread) => thread.kill());
+    }
+}
+Thread.threads = new Map();
+exports.Thread = Thread;
 //# sourceMappingURL=index.js.map

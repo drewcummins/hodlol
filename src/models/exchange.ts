@@ -280,8 +280,8 @@ export class Exchange {
           let tick = ticker.last(); // last here means most recent tick
           price *= Number(tick.close);
         } else {
-          let tick = await this.fetchTicker(pair);
-          price *= tick.close;
+          let tick = await this.fetchOHLCV(pair);
+          price *= Number(tick[0][4]); //.close;
         }
       }
       return price;

@@ -2,39 +2,30 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const series_1 = require("./series");
 const utils_1 = require("../utils");
+const types_1 = require("./types");
 class Ticker {
-    constructor(exchange, symbol, record = false, timeout = 5000) {
+    constructor(exchange, symbol, record = false) {
         this.exchange = exchange;
         this.symbol = symbol;
         this.record = record;
-        this.timeout = timeout;
-        this.kill = false;
+        this._kill = false;
         this.series = new series_1.Series(this.filepath(), this.generateSerializer(), record);
-    }
-    /**
-     * Tells the series to get reading
-    */
-    async read() {
-        return this.series.read();
+        this.thread = new utils_1.Thread();
+        this.timeout = types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK ? 1 : 5000;
     }
     /**
      * Kicks off the ticker process. This runs asynchronously
     */
     async run() {
-        while (true) {
-            if (this.kill)
-                break;
+        while (this.thread.isRunning()) {
             await this.step();
-            await this.sleep();
+            await this.thread.sleep(this.timeout);
         }
     }
     async step() {
         const tick = await this.exchange.fetchTicker(this.symbol);
         this.series.append(tick);
         this.exchange.invalidate();
-    }
-    async sleep() {
-        await utils_1.sleep(this.timeout);
     }
     /**
      * Gets the length of the series
@@ -62,11 +53,14 @@ class Ticker {
     last() {
         return this.series.last();
     }
+    kill() {
+        this.thread.kill();
+    }
     filename() {
         return `${this.symbol.replace("/", "-")}.${this.extension()}`;
     }
     subdir() {
-        return ""; //`${config.dateID}`
+        return types_1.Scenario.getInstance().id;
     }
     filepath() {
         return `./data/${this.exchange.name()}/${this.subdir()}/${this.filename()}`;
@@ -77,12 +71,16 @@ class Ticker {
     generateSerializer() {
         return new series_1.TickerSerializer();
     }
+    seriesFromTicker() {
+        return new series_1.Series(this.filepath(), this.generateSerializer());
+    }
 }
 exports.Ticker = Ticker;
 class CandleTicker extends Ticker {
-    constructor(exchange, symbol, record = false, timeout = 35000, period = "1m") {
-        super(exchange, symbol, record, timeout);
+    constructor(exchange, symbol, record = false, period = "1m") {
+        super(exchange, symbol, record);
         this.period = period;
+        this.timeout = types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK ? 1 : 35000;
     }
     async step() {
         let last = this.last();
@@ -105,9 +103,10 @@ class CandleTicker extends Ticker {
 }
 exports.CandleTicker = CandleTicker;
 class OrderTicker extends Ticker {
-    constructor(exchange, order, record = false, timeout = 5000) {
-        super(exchange, order.symbol, record, timeout);
+    constructor(exchange, order, portfolioID, record = false) {
+        super(exchange, order.symbol, record);
         this.order = order;
+        this.portfolioID = portfolioID;
         this.orderID = order.id;
     }
     async step() {
