@@ -88,9 +88,14 @@ class Exchange {
     /**
      * Grabs marketplace from API
     */
-    async loadMarketplace() {
+    async loadMarketplace(tickers) {
         if (!this.state.isSet(this.marketsLoaded)) {
             let marketMap = await this.loadMarkets();
+            if (tickers) {
+                let clone = {};
+                tickers.forEach((ticker) => clone[ticker] = marketMap[ticker]);
+                marketMap = clone;
+            }
             this.markets = new market_1.Marketplace(marketMap);
             this.state.set(this.marketsLoaded);
         }
@@ -251,8 +256,8 @@ class Exchange {
                     price *= Number(tick.close);
                 }
                 else {
-                    let tick = await this.fetchTicker(pair);
-                    price *= tick.close;
+                    let tick = await this.fetchOHLCV(pair);
+                    price *= Number(tick[0][4]); //.close;
                 }
             }
             return price;

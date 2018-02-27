@@ -5,7 +5,7 @@ const fs = require("fs");
 const exchange_error_1 = require("../errors/exchange-error");
 bignumber_js_1.BigNumber.config({ DECIMAL_PLACES: 5 });
 function BN(x) {
-    return new bignumber_js_1.BigNumber(x);
+    return new bignumber_js_1.BigNumber(x.toString());
 }
 exports.BN = BN;
 class BitfieldState {

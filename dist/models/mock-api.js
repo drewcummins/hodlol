@@ -41,6 +41,10 @@ class MockAPI {
     }
     async fetchOHLCV(symbol, period, since) {
         let series = this.candles.get(symbol);
+        if (!series) {
+            console.log("no symbol:", symbol);
+            process.exit();
+        }
         let [tick] = series.nearest(types_1.Scenario.getInstance().time);
         let serializer = series.serializer;
         return Promise.resolve(serializer.toCCXT(tick));

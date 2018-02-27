@@ -106,9 +106,14 @@ export class Exchange {
   /** 
    * Grabs marketplace from API
   */
-  public async loadMarketplace() {
+  public async loadMarketplace(tickers?:string[]) {
     if (!this.state.isSet(this.marketsLoaded)) {
       let marketMap = await this.loadMarkets();
+      if (tickers) {
+        let clone:any = {};
+        tickers.forEach((ticker) => clone[ticker] = marketMap[ticker])
+        marketMap = clone;
+      }
       this.markets = new Marketplace(marketMap);
       this.state.set(this.marketsLoaded);
     }

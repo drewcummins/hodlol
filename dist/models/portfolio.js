@@ -131,15 +131,16 @@ class Portfolio {
      */
     async value(quote = 'USDT', price) {
         let value = { all: { free: types_1.BN(0), reserved: types_1.BN(0) } };
-        for (var base in this.balances) {
+        let balances = this.balances.keys();
+        for (let base of balances) {
             if (base == quote) {
                 let balance = this.balances.get(base);
                 value.all.free = types_1.BN(value.all.free).plus(balance.free);
-                value.all.reserved = types_1.BN(value.all.reserved).plus(balance.free);
-                value[base] = { free: balance.free, reserved: balance.reserved };
+                value.all.reserved = types_1.BN(value.all.reserved).plus(balance.reserved);
+                value[base] = balance;
                 continue;
             }
-            let rate = await price(base, quote);
+            let rate = types_1.BN(await price(base, quote));
             let balance = this.balances.get(base);
             value[base] = { free: types_1.BN(balance.free).times(rate), reserved: types_1.BN(balance.reserved).times(rate) };
             value.all.free = types_1.BN(value.all.free).plus(value[base].free);

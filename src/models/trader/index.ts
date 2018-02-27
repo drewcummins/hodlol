@@ -77,7 +77,7 @@ export class Trader {
 
   public async run() {
     await this.exchange.loadFeeds(this.source.tickers);
-    await this.exchange.loadMarketplace();
+    await this.exchange.loadMarketplace(this.source.tickers);
     await this.initStrategies();
 
     if (this.params.mock) {
@@ -99,7 +99,10 @@ export class Trader {
       await this.stepExchange();
       if (this.params.backtest) {
         Scenario.getInstance().time += 10000;
-        if (step++ % 100 == 0) this.printPerformance();
+        if (step++ % 100 == 0) await this.printPerformance();
+        if (Scenario.getInstance().time > Scenario.getInstance().end) {
+          Thread.killAll();
+        }
       }
       await this.thread.sleep(1);
     }

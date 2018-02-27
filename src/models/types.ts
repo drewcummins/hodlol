@@ -7,7 +7,7 @@ import { Balances } from "ccxt";
 BigNumber.config({ DECIMAL_PLACES:5 });
 
 export function BN(x: Num):BigNumber {
-  return new BigNumber(x);
+  return new BigNumber(x.toString());
 }
 
 export type ID = string;

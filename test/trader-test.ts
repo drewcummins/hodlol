@@ -51,7 +51,6 @@ describe('Trader tests', async () => {
   })
 
   it('should', async () => {
-    trader.run();
-    await sleep(15000);
+    await trader.run();
   }).timeout(20000)
 });

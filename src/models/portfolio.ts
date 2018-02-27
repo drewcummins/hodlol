@@ -160,9 +160,8 @@ export class Portfolio {
         value[base] = balance;
         continue;
       }
-      let rate = await price(base, quote);
+      let rate = BN(await price(base, quote));
       let balance = this.balances.get(base);
-      console.log(base, quote, rate, balance)
       value[base] = {free: BN(balance.free).times(rate), reserved: BN(balance.reserved).times(rate)};
       value.all.free = BN(value.all.free).plus(value[base].free);
       value.all.reserved = BN(value.all.reserved).plus(value[base].reserved);

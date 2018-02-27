@@ -40,11 +40,11 @@ export class Strategy {
   } 
 
   public async before() {
-    console.log(`Strategy ${this.title} before called.`);
+    // console.log(`Strategy ${this.title} before called.`);
   }
 
   public async after() {
-    console.log(`Strategy ${this.title} after called.`);
+    // console.log(`Strategy ${this.title} after called.`);
   }
 
   protected init(source:StrategyJSON) {

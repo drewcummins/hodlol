@@ -49,6 +49,10 @@ export class MockAPI implements API {
 
   public async fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<any> {
     let series = this.candles.get(symbol);
+    if (!series) {
+      console.log("no symbol:", symbol);
+      process.exit();
+    }
     let [tick] = series.nearest(Scenario.getInstance().time);
     let serializer = series.serializer as CandleSerializer;
     return Promise.resolve(serializer.toCCXT(tick));

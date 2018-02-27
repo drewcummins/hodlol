@@ -17,10 +17,10 @@ class Strategy {
         this.init(source);
     }
     async before() {
-        console.log(`Strategy ${this.title} before called.`);
+        // console.log(`Strategy ${this.title} before called.`);
     }
     async after() {
-        console.log(`Strategy ${this.title} after called.`);
+        // console.log(`Strategy ${this.title} after called.`);
     }
     init(source) {
         const feed = this.tsi.feed;

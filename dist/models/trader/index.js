@@ -60,7 +60,7 @@ class Trader {
     }
     async run() {
         await this.exchange.loadFeeds(this.source.tickers);
-        await this.exchange.loadMarketplace();
+        await this.exchange.loadMarketplace(this.source.tickers);
         await this.initStrategies();
         if (this.params.mock) {
             let api = this.exchange.api;
@@ -78,7 +78,10 @@ class Trader {
             if (this.params.backtest) {
                 types_1.Scenario.getInstance().time += 10000;
                 if (step++ % 100 == 0)
-                    this.printPerformance();
+                    await this.printPerformance();
+                if (types_1.Scenario.getInstance().time > types_1.Scenario.getInstance().end) {
+                    utils_1.Thread.killAll();
+                }
             }
             await this.thread.sleep(1);
         }
