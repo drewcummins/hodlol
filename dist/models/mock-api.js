@@ -42,6 +42,7 @@ class MockAPI {
     async fetchOHLCV(symbol, period, since) {
         let series = this.candles.get(symbol);
         if (!series) {
+            console.log("ok", this.candles);
             console.log("no symbol:", symbol);
             process.exit();
         }

@@ -13,10 +13,12 @@ const optionDefinitions = [
   { name: 'amount', alias: 'a', type: Number },
   { name: 'trader', alias: 't', type: String, defaultOption: true},
   { name: 'backtest', alias: 'b', type: String},
-  { name: 'fake', alias: 'f', type: Boolean, defaultValue: false}
+  { name: 'mock', alias: 'm', type: Boolean, defaultValue: false}
 ];
 
 const opts = commandLineArgs(optionDefinitions);
+// don't require explicit mock
+if (!opts.mock && opts.backtest) opts.mock = true;
 
 (async () => {
   let traderJSON:TraderJSON = JSON.parse(fs.readFileSync(opts.trader).toString());

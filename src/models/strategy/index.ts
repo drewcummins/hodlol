@@ -34,7 +34,7 @@ export class Strategy {
 
   constructor(public portfolio:Portfolio, source:StrategyJSON, protected tsi:TraderStrategyInterface) {
     this.id = uuid();
-    this.title = source.title || "Strategy";
+    this.title = source.title || this.getTitle();
     this.initialValue = tsi.fundAmount;
     this.init(source);
   } 
@@ -102,8 +102,12 @@ export class Strategy {
       this.orders.set(order.id, order);
       return order;
     } catch(err) {
-      console.log("Error on request order:", request, err.message);
+      // console.log("Error on request order:", request, err.message);
       return null; // figure out how we want to handle this generic error case
     }
+  }
+
+  protected getTitle():string {
+    return "Strategy";
   }
 }

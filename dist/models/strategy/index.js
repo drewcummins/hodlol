@@ -12,7 +12,7 @@ class Strategy {
         this.indicators = [];
         this.orders = new Map();
         this.id = uuid();
-        this.title = source.title || "Strategy";
+        this.title = source.title || this.getTitle();
         this.initialValue = tsi.fundAmount;
         this.init(source);
     }
@@ -77,9 +77,12 @@ class Strategy {
             return order;
         }
         catch (err) {
-            console.log("Error on request order:", request, err.message);
+            // console.log("Error on request order:", request, err.message);
             return null; // figure out how we want to handle this generic error case
         }
+    }
+    getTitle() {
+        return "Strategy";
     }
 }
 exports.Strategy = Strategy;

@@ -38,13 +38,19 @@ exports.bnearest = bnearest;
 class Thread {
     constructor() {
         this.running = true;
+        this.cycles = 0;
         this.id = uuid();
         Thread.threads.set(this.id, this);
     }
     async sleep(time) {
         let next = +new Date() + time;
-        while (this.running && +new Date() < next)
+        while (this.running && +new Date() < next) {
             await sleep(1);
+            this.cycles++;
+        }
+    }
+    hasCycled(period) {
+        return this.cycles % period == 0;
     }
     async kill() {
         this.running = false;

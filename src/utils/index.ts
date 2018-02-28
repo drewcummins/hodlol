@@ -46,13 +46,20 @@ export class Thread {
   private static threads:Map<ID,Thread> = new Map<ID,Thread>();
   private running:boolean=true;
   private id:ID;
+  private cycles:number = 0;
   constructor() {
     this.id = uuid();
     Thread.threads.set(this.id, this);
   }
   public async sleep(time:number) {
     let next:number = +new Date() + time;
-    while (this.running && +new Date() < next) await sleep(1);
+    while (this.running && +new Date() < next) {
+      await sleep(1);
+      this.cycles++;
+    }
+  }
+  public hasCycled(period:number):boolean {
+    return this.cycles % period == 0;
   }
   public async kill() {
     this.running = false;

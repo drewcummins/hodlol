@@ -93,18 +93,17 @@ export class Trader {
       await strategy.before();
     }
 
-    let step = 0;
-
     while (this.thread.isRunning()) {
+      await this.thread.sleep(1);
       await this.stepExchange();
       if (this.params.backtest) {
         Scenario.getInstance().time += 10000;
-        if (step++ % 100 == 0) await this.printPerformance();
+        if (this.thread.hasCycled(100)) await this.printPerformance();
         if (Scenario.getInstance().time > Scenario.getInstance().end) {
           Thread.killAll();
+          this.printPerformance();
         }
       }
-      await this.thread.sleep(1);
     }
 
     for (const strategy of this.strategies) {
