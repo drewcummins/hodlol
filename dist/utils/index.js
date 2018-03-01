@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const uuid = require('uuid/v4');
+const dateFormat = require('dateformat');
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -35,6 +36,10 @@ function bnearest(list, value, compare, state = undefined) {
     return bnearest(list, value, compare, state);
 }
 exports.bnearest = bnearest;
+function formatTimestamp(time) {
+    return dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
+}
+exports.formatTimestamp = formatTimestamp;
 class Thread {
     constructor() {
         this.running = true;

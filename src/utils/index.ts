@@ -1,6 +1,7 @@
 import { ID } from "../models/types";
 
 const uuid = require('uuid/v4');
+const dateFormat = require('dateformat');
 
 export function sleep(ms:number):Promise<NodeJS.Timer> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -40,6 +41,10 @@ export function bnearest(list:Array<any>, value:number, compare:Compare, state:S
   if (diff > 0) state.min = Math.min(mid + 1, state.max);
   else state.max = Math.max(mid - 1, state.min);
   return bnearest(list, value, compare, state);
+}
+
+export function formatTimestamp(time:number) {
+  return dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
 }
 
 export class Thread {

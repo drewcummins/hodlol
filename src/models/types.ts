@@ -74,7 +74,7 @@ export class BitfieldState {
   }
 }
 
-interface IScenario {
+export interface IScenario {
   id: ID,
   start: number,
   end: number
@@ -95,17 +95,17 @@ export class Scenario implements IScenario {
 
   private static instance:Scenario = null;
 
-  private constructor(filepath:string | IScenario) {
+  private constructor(file:string | IScenario) {
     let json:IScenario = null;
-    if (typeof filepath === "string") {
-      if (fs.existsSync(filepath as string)) {
-        json = JSON.parse(fs.readFileSync(filepath as string, 'utf8'));
+    if (typeof file === "string") {
+      if (fs.existsSync(file as string)) {
+        json = JSON.parse(fs.readFileSync(file as string, 'utf8'));
         this.mode = ScenarioMode.PLAYBACK;
       } else {
-        throw new ScenarioFileMissingError(filepath as string);
+        throw new ScenarioFileMissingError(file as string);
       }
     } else {
-      json = filepath as IScenario;
+      json = file as IScenario;
       this.mode = ScenarioMode.RECORD;
     }
     this.id = json.id;

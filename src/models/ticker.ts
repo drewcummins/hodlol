@@ -9,8 +9,8 @@ export class Ticker {
   readonly series:Series;
   protected thread:Thread;
   protected timeout:number;
-  constructor(protected exchange:Exchange, readonly symbol:string, readonly record:boolean=false) {
-    this.series = new Series(this.filepath(), this.generateSerializer(), record);
+  constructor(protected exchange:Exchange, readonly symbol:string) {
+    this.series = new Series(this.filepath(), this.generateSerializer());
     this.thread = new Thread();
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 5000;
   }
@@ -25,7 +25,10 @@ export class Ticker {
     }
   }
 
-  protected async step() {
+  /** 
+   * Move one step forward
+  */
+  public async step() {
     const tick = await this.exchange.fetchTicker(this.symbol);
     this.series.append(tick);
     this.exchange.invalidate();
@@ -90,21 +93,21 @@ export class Ticker {
 }
 
 export class CandleTicker extends Ticker {
-  constructor(exchange:Exchange, symbol:string, record:boolean=false, private period:string="1m") {
-    super(exchange, symbol, record);
+  constructor(exchange:Exchange, symbol:string, private period:string="1m") {
+    super(exchange, symbol);
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 35000;
   }
 
-  protected async step() {
+  public async step() {
     let last:Tick = this.last();
-    let since:number = last ? last.timestamp : this.exchange.time;
+    let since:number = last ? last.timestamp : Scenario.getInstance().time;
     const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     tick.forEach((candlestick:Array<number>) => {
       let csv:string = candlestick.join(",");
       this.series.appendFromCSV(csv, true);
       this.exchange.invalidate();
     });
-    if (this.series.autowrite) this.series.write();
+    if (Scenario.getInstance().mode == ScenarioMode.RECORD) this.series.write();
   }
 
   protected extension():string {
@@ -118,12 +121,12 @@ export class CandleTicker extends Ticker {
 
 export class OrderTicker extends Ticker {
   readonly orderID:ID;
-  constructor(exchange:Exchange, readonly order:Order, readonly portfolioID:ID, record:boolean=false) {
-    super(exchange, order.symbol, record);
+  constructor(exchange:Exchange, readonly order:Order, readonly portfolioID:ID) {
+    super(exchange, order.symbol);
     this.orderID = order.id;
   }
 
-  protected async step() {
+  public async step() {
     const tick = await this.exchange.fetchOrder(this.orderID, this.symbol);
     if (this.hasChanged(tick)) {
       this.series.append(tick);

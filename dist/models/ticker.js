@@ -4,12 +4,11 @@ const series_1 = require("./series");
 const utils_1 = require("../utils");
 const types_1 = require("./types");
 class Ticker {
-    constructor(exchange, symbol, record = false) {
+    constructor(exchange, symbol) {
         this.exchange = exchange;
         this.symbol = symbol;
-        this.record = record;
         this._kill = false;
-        this.series = new series_1.Series(this.filepath(), this.generateSerializer(), record);
+        this.series = new series_1.Series(this.filepath(), this.generateSerializer());
         this.thread = new utils_1.Thread();
         this.timeout = types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK ? 1 : 5000;
     }
@@ -22,6 +21,9 @@ class Ticker {
             await this.thread.sleep(this.timeout);
         }
     }
+    /**
+     * Move one step forward
+    */
     async step() {
         const tick = await this.exchange.fetchTicker(this.symbol);
         this.series.append(tick);
@@ -77,21 +79,21 @@ class Ticker {
 }
 exports.Ticker = Ticker;
 class CandleTicker extends Ticker {
-    constructor(exchange, symbol, record = false, period = "1m") {
-        super(exchange, symbol, record);
+    constructor(exchange, symbol, period = "1m") {
+        super(exchange, symbol);
         this.period = period;
         this.timeout = types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK ? 1 : 35000;
     }
     async step() {
         let last = this.last();
-        let since = last ? last.timestamp : this.exchange.time;
+        let since = last ? last.timestamp : types_1.Scenario.getInstance().time;
         const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
         tick.forEach((candlestick) => {
             let csv = candlestick.join(",");
             this.series.appendFromCSV(csv, true);
             this.exchange.invalidate();
         });
-        if (this.series.autowrite)
+        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.RECORD)
             this.series.write();
     }
     extension() {
@@ -103,8 +105,8 @@ class CandleTicker extends Ticker {
 }
 exports.CandleTicker = CandleTicker;
 class OrderTicker extends Ticker {
-    constructor(exchange, order, portfolioID, record = false) {
-        super(exchange, order.symbol, record);
+    constructor(exchange, order, portfolioID) {
+        super(exchange, order.symbol);
         this.order = order;
         this.portfolioID = portfolioID;
         this.orderID = order.id;

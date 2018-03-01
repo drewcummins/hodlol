@@ -47,19 +47,19 @@ var ScenarioMode;
     ScenarioMode[ScenarioMode["RECORD"] = 1] = "RECORD";
 })(ScenarioMode = exports.ScenarioMode || (exports.ScenarioMode = {}));
 class Scenario {
-    constructor(filepath) {
+    constructor(file) {
         let json = null;
-        if (typeof filepath === "string") {
-            if (fs.existsSync(filepath)) {
-                json = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+        if (typeof file === "string") {
+            if (fs.existsSync(file)) {
+                json = JSON.parse(fs.readFileSync(file, 'utf8'));
                 this.mode = ScenarioMode.PLAYBACK;
             }
             else {
-                throw new exchange_error_1.ScenarioFileMissingError(filepath);
+                throw new exchange_error_1.ScenarioFileMissingError(file);
             }
         }
         else {
-            json = filepath;
+            json = file;
             this.mode = ScenarioMode.RECORD;
         }
         this.id = json.id;

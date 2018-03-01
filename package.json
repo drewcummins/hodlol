@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@types/bignumber.js": "^5.0.0",
+    "@types/mkdirp": "^0.5.2",
     "ansicolor": "^1.1.71",
     "ansicolors": "^0.3.2",
     "as-table": "^1.0.31",

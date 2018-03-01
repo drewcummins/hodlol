@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const utils_1 = require("../utils");
 const exchange_error_1 = require("../errors/exchange-error");
+const types_1 = require("./types");
 class Serializer {
     constructor(props) {
         this.props = props;
@@ -87,10 +88,9 @@ class OrderSerializer extends Serializer {
 }
 exports.OrderSerializer = OrderSerializer;
 class Series {
-    constructor(filepath, serializer, autowrite = false) {
+    constructor(filepath, serializer) {
         this.filepath = filepath;
         this.serializer = serializer;
-        this.autowrite = autowrite;
         this.map = {};
         this.list = [];
         this.lastWrite = 0;
@@ -135,7 +135,7 @@ class Series {
         if (!this.map[key]) {
             this.map[key] = true;
             this.list.push(tick);
-            if (this.autowrite && !lock)
+            if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.RECORD && !lock)
                 this.write();
         }
     }

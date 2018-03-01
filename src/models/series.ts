@@ -2,6 +2,7 @@ import * as fs from "fs";
 import { bnearest } from "../utils";
 import { BacktestFileMissingError } from "../errors/exchange-error";
 import { OrderSide, OrderType } from "./order";
+import { Scenario, ScenarioMode } from "./types";
 
 type TickProp = { [property:string]:any } | undefined;
 interface ITick {
@@ -105,7 +106,7 @@ export class Series {
   private list:Tick[] = [];
   private lastWrite:number = 0;
 
-  constructor(readonly filepath:string, readonly serializer:Serializer, readonly autowrite:boolean=false) {}
+  constructor(readonly filepath:string, readonly serializer:Serializer) {}
 
   /** 
    * Gets the current length of the series
@@ -150,7 +151,7 @@ export class Series {
     if (!this.map[key]) {
       this.map[key] = true;
       this.list.push(tick);
-      if (this.autowrite && !lock) this.write();
+      if (Scenario.getInstance().mode == ScenarioMode.RECORD && !lock) this.write();
     }
   }
 
