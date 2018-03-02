@@ -6,6 +6,12 @@ class InvalidMarketSymbolError extends Error {
     }
 }
 exports.InvalidMarketSymbolError = InvalidMarketSymbolError;
+class InsufficientExchangeFundsError extends Error {
+    constructor(symbol, amount, funds) {
+        super(`Insufficient funds on exchange: Expected ${amount} ${symbol} to be >= ${funds} ${symbol}`);
+    }
+}
+exports.InsufficientExchangeFundsError = InsufficientExchangeFundsError;
 class InsufficientFundsError extends Error {
     constructor(request) {
         super(`Insufficient funds for request: ${request}`);

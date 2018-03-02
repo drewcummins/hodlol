@@ -1,6 +1,7 @@
 import { BigNumber } from "bignumber.js"
 import { OrderRequest, Order } from "./order";
 import * as fs from "fs";
+import * as mkdirp from "mkdirp";
 import { ScenarioFileMissingError } from "../errors/exchange-error";
 import { Balances } from "ccxt";
 
@@ -81,8 +82,8 @@ export interface IScenario {
 }
 
 export enum ScenarioMode {
-  PLAYBACK,
-  RECORD
+  PLAYBACK="playback",
+  RECORD="record"
 }
 
 export class Scenario implements IScenario {

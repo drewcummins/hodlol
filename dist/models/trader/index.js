@@ -6,6 +6,8 @@ const exchange_error_1 = require("../../errors/exchange-error");
 const utils_1 = require("../../utils");
 const portfolio_1 = require("../portfolio");
 const mock_api_1 = require("../mock-api");
+const config_1 = require("../../config");
+const mkdirp = require("mkdirp");
 const ccxt = require('ccxt');
 const dateFormat = require('dateformat');
 const colors = require('ansicolors');
@@ -15,12 +17,18 @@ class Trader {
         this.source = source;
         this.params = params;
         this.strategies = [];
-        if (params.backtest)
+        if (params.backtest) {
             types_1.Scenario.create(params.backtest);
+        }
+        else {
+            types_1.Scenario.createWithName(utils_1.formatTimestamp(+new Date()), +new Date(), 0);
+            mkdirp.sync(`./data/${source.exchange}/${types_1.Scenario.getInstance().id}`);
+        }
         let apiClass = ccxt[source.exchange];
+        let apiCreds = config_1.config[source.exchange];
         if (!apiClass)
             throw new exchange_error_1.InvalidExchangeNameError(source.exchange);
-        let api = new apiClass();
+        let api = new apiClass(apiCreds);
         if (params.mock)
             api = new mock_api_1.MockAPI(api);
         this.thread = new utils_1.Thread();
@@ -59,6 +67,7 @@ class Trader {
         }
     }
     async run() {
+        await this.exchange.validateFunds(this.params.symbol, this.params.amount);
         await this.exchange.loadFeeds(this.source.tickers);
         await this.exchange.loadMarketplace(this.source.tickers);
         await this.initStrategies();
@@ -73,17 +82,20 @@ class Trader {
             await strategy.before();
         }
         while (this.thread.isRunning()) {
-            await this.thread.sleep(1);
             await this.stepExchange();
+            if (this.thread.hasCycled(100))
+                this.printPerformance();
             if (this.params.backtest) {
                 types_1.Scenario.getInstance().time += 10000;
-                if (this.thread.hasCycled(100))
-                    await this.printPerformance();
                 if (types_1.Scenario.getInstance().time > types_1.Scenario.getInstance().end) {
                     utils_1.Thread.killAll();
                     this.printPerformance();
                 }
             }
+            else {
+                types_1.Scenario.getInstance().time = +new Date();
+            }
+            await this.thread.sleep(1);
         }
         for (const strategy of this.strategies) {
             await strategy.after();
@@ -100,13 +112,13 @@ class Trader {
         if (this.strategies.length == 0)
             return;
         let scenario = types_1.Scenario.getInstance();
-        console.log('\x1Bc');
-        var date = "";
-        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK) {
+        let out = "\x1Bc\n";
+        var date;
+        if (scenario.mode == types_1.ScenarioMode.PLAYBACK) {
             let dateStart = colors.magenta(dateFormat(scenario.start, "mmm d, h:MM:ssTT"));
             let dateEnd = colors.magenta(dateFormat(scenario.end, "mmm d, h:MM:ssTT"));
             date = colors.magenta(dateFormat(Math.min(scenario.time, scenario.end), "mmm d, h:MM:ssTT"));
-            console.log(` | Backtesting from ${dateStart} to ${dateEnd}\n`);
+            out += ` | Backtesting from ${dateStart} to ${dateEnd}\n\n`;
         }
         let columns = [];
         for (var i = 0; i < this.strategies.length; i++) {
@@ -120,7 +132,6 @@ class Trader {
                 let valstr = colors.green("$" + total);
                 let ovalstr = colors.green("$" + originalTotal);
                 columns.push({ strategy: colors.blue(strategy.title), value: valstr, "original value": ovalstr });
-                // console.log(" |=> " + strategy.prettyTitle(), valstr + ", original value:", ovalstr);
             }
             catch (err) {
                 throw err;
@@ -128,10 +139,12 @@ class Trader {
         }
         let table = columnify(columns, { minWidth: 20 });
         table = table.split("\n").join("\n | ");
-        console.log(" | " + table);
-        console.log("");
-        console.log(` | ${date}`);
-        console.log("\n");
+        // console.log(" | " + table);
+        out += " | " + table + "\n";
+        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK) {
+            out += (`\n | ${date}\n`);
+        }
+        console.log(`\n${out}\n`);
     }
 }
 exports.Trader = Trader;

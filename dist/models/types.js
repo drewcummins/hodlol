@@ -43,8 +43,8 @@ class BitfieldState {
 exports.BitfieldState = BitfieldState;
 var ScenarioMode;
 (function (ScenarioMode) {
-    ScenarioMode[ScenarioMode["PLAYBACK"] = 0] = "PLAYBACK";
-    ScenarioMode[ScenarioMode["RECORD"] = 1] = "RECORD";
+    ScenarioMode["PLAYBACK"] = "playback";
+    ScenarioMode["RECORD"] = "record";
 })(ScenarioMode = exports.ScenarioMode || (exports.ScenarioMode = {}));
 class Scenario {
     constructor(file) {

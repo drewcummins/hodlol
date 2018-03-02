@@ -1,9 +1,9 @@
-import { ID, BN, API, BitState, BitfieldState } from "./types";
+import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { CandleTicker, OrderTicker } from "./ticker";
 import { Order, OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
-import { InvalidOrderSideError, InvalidOrderTypeError } from "../errors/exchange-error";
+import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors/exchange-error";
 import { Portfolio } from "./portfolio";
 
 export type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
@@ -18,9 +18,10 @@ export class Exchange {
   readonly marketsLoaded:BitState;
   readonly feedsLoaded:BitState;
   readonly tickersRunning:BitState;
+  readonly fundsSufficient:BitState;
   
   constructor(readonly api:API) {
-    [this.marketsLoaded, this.feedsLoaded, this.tickersRunning] = this.state.init(3);
+    [this.marketsLoaded, this.feedsLoaded, this.tickersRunning, this.fundsSufficient] = this.state.init(4);
     this.dirty = this.state.add();
   }
 
@@ -104,6 +105,15 @@ export class Exchange {
   }
 
   /** 
+   * Indicates whether the funds requested are available
+   * 
+   * @returns true if funds are available
+  */
+ public hasSufficientFunds():boolean {
+  return this.state.isSet(this.fundsSufficient);
+}
+
+  /** 
    * Grabs marketplace from API
   */
   public async loadMarketplace(tickers?:string[]) {
@@ -131,6 +141,16 @@ export class Exchange {
       }
       this.state.set(this.feedsLoaded);
     }
+  }
+
+  public async validateFunds(fundSymbol:string, fundAmount:number):Promise<boolean> {
+    if (Scenario.getInstance().mode == ScenarioMode.PLAYBACK) return true;
+    let balance = await this.fetchBalance();
+    if (balance[fundSymbol] && balance[fundSymbol].free >= fundAmount) {
+      this.state.set(this.fundsSufficient);
+      return true;
+    }
+    throw new InsufficientExchangeFundsError(fundSymbol, balance[fundSymbol].free, fundAmount);
   }
 
   /** 

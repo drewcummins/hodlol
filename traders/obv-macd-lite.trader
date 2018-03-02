@@ -7,10 +7,13 @@
       "weight": 1,
       "indicators": [
         {
-          "id": "all",
-          "subsignals": [
-            {"id": "obv", "id": "macd"}
-          ]
+          {
+            "title": "MACD'n",
+            "fileName": "index",
+            "className": "Strategy",
+            "weight": 1,
+            "indicators": [{ "fileName": "macd", "className": "MACD"}]
+          },
         }
       ]
     },

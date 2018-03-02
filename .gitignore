@@ -6,3 +6,4 @@ fixtures
 *.ohlcv
 *.order
 .DS_Store
+.vscode

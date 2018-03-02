@@ -12,7 +12,7 @@ class Exchange {
         this.portfolios = new Map();
         this.time = 0;
         this.state = new types_1.BitfieldState();
-        [this.marketsLoaded, this.feedsLoaded, this.tickersRunning] = this.state.init(3);
+        [this.marketsLoaded, this.feedsLoaded, this.tickersRunning, this.fundsSufficient] = this.state.init(4);
         this.dirty = this.state.add();
     }
     /**
@@ -86,6 +86,14 @@ class Exchange {
         return this.state.isSet(this.dirty);
     }
     /**
+     * Indicates whether the funds requested are available
+     *
+     * @returns true if funds are available
+    */
+    hasSufficientFunds() {
+        return this.state.isSet(this.fundsSufficient);
+    }
+    /**
      * Grabs marketplace from API
     */
     async loadMarketplace(tickers) {
@@ -112,6 +120,16 @@ class Exchange {
             }
             this.state.set(this.feedsLoaded);
         }
+    }
+    async validateFunds(fundSymbol, fundAmount) {
+        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK)
+            return true;
+        let balance = await this.fetchBalance();
+        if (balance[fundSymbol] && balance[fundSymbol].free >= fundAmount) {
+            this.state.set(this.fundsSufficient);
+            return true;
+        }
+        throw new exchange_error_1.InsufficientExchangeFundsError(fundSymbol, balance[fundSymbol].free, fundAmount);
     }
     /**
      * Runs all tickers (each in their own "thread")

@@ -3,13 +3,6 @@
   "exchange": "binance",
   "strategies": [
     {
-      "title": "MACD'n",
-      "fileName": "index",
-      "className": "Strategy",
-      "weight": 1,
-      "indicators": [{ "fileName": "macd", "className": "MACD"}]
-    },
-    {
       "fileName": "hodl",
       "className": "HODL",
       "weight": 1
