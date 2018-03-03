@@ -105,11 +105,11 @@ class Portfolio {
     }
     addFree(symbol, amount) {
         let balance = this.balance(symbol);
-        balance.free = types_1.BN(balance.free).plus(amount);
+        balance.free = types_1.BN(balance.free).plus(types_1.BN(amount));
     }
     addReserved(symbol, amount) {
         let balance = this.balance(symbol);
-        balance.reserved = types_1.BN(balance.reserved).plus(amount);
+        balance.reserved = types_1.BN(balance.reserved).plus(types_1.BN(amount));
     }
     removeFree(symbol, amount) {
         this.addFree(symbol, -amount);

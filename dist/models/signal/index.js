@@ -40,4 +40,15 @@ class Signal {
     }
 }
 exports.Signal = Signal;
+class MultiSignal extends Signal {
+    async init(source) {
+        this.subsignals = [];
+        for (const sub of source.subsignals) {
+            const sig = await Promise.resolve().then(() => require(`./${sub.fileName}`));
+            const sigClass = sig[sub.className];
+            this.subsignals.push(new sigClass(this.feed, this.symbol, sub));
+        }
+    }
+}
+exports.MultiSignal = MultiSignal;
 //# sourceMappingURL=index.js.map

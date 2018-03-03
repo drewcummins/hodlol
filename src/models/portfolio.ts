@@ -120,12 +120,12 @@ export class Portfolio {
 
   private addFree(symbol:string, amount:Num):void {
     let balance = this.balance(symbol);
-    balance.free = BN(balance.free).plus(amount);
+    balance.free = BN(balance.free).plus(BN(amount));
   }
 
   private addReserved(symbol:string, amount:Num):void {
     let balance = this.balance(symbol);
-    balance.reserved = BN(balance.reserved).plus(amount);
+    balance.reserved = BN(balance.reserved).plus(BN(amount));
   }
 
   private removeFree(symbol:string, amount:Num):void {

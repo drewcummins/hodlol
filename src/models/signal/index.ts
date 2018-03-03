@@ -20,7 +20,7 @@ export class Signal {
     this.init(source);
   }
 
-  public init(source:SignalJSON) {
+  public init(source:SignalJSON):void {
     // no default
   }
 
@@ -49,4 +49,20 @@ export class Signal {
     if (last) this.last = last.timestamp;
   }
 
+}
+
+export interface MultiSignalJSON extends SignalJSON {
+  subsignals:SignalJSON[]
+}
+
+export class MultiSignal extends Signal {
+  protected subsignals:Signal[];
+  public async init(source:MultiSignalJSON) {
+    this.subsignals = [];
+    for (const sub of source.subsignals) {
+      const sig = await import(`./${sub.fileName}`);
+      const sigClass = sig[sub.className];
+      this.subsignals.push(new sigClass(this.feed, this.symbol, sub));
+    }
+  }
 }
