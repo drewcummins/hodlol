@@ -1,4 +1,4 @@
-import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick, Ticker, TickerTick } from "./types";
+import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick, Ticker, TickerTick, ID } from "./types";
 import { OrderType, OrderSide, OrderStatus } from "./order"
 import { Feed } from "./exchange";
 import { Series, OHLCVSerializer } from "./series";
@@ -109,5 +109,14 @@ export class MockAPI implements API {
 
   public fetchBalance():Promise<Balance> {
     return Promise.resolve({free:BN(0), reserved:BN(0)});
+  }
+
+  public cancelOrder(id:ID):Promise<any> {
+    if (this.orders.has(id)) {
+      let order:OrderTick = this.orders.get(id);
+      order.status = OrderStatus.CANCELED;
+      return Promise.resolve(order);
+    }
+    return Promise.resolve({});
   }
 }

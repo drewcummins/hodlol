@@ -121,6 +121,12 @@ class Exchange {
             this.state.set(this.feedsLoaded);
         }
     }
+    /**
+     * Validates that there are sufficient funds for the given symbol
+     *
+     * @param fundSymbol Symbol to extract funds from
+     * @param fundAmount Amount to use
+     */
     async validateFunds(fundSymbol, fundAmount) {
         if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK) {
             this.state.set(this.fundsSufficient);
@@ -199,6 +205,16 @@ class Exchange {
      */
     async fetchOrder(orderID, symbol) {
         return new types_1.Tick(await this.api.fetchOrder(orderID, symbol));
+    }
+    /**
+     * Cancels an order by id
+     *
+     * @param orderID ID of order to cancel
+     *
+     * @return
+     */
+    async cancelOrder(orderID) {
+        return await this.api.cancelOrder(orderID);
     }
     /**
      * Gets exchange balance

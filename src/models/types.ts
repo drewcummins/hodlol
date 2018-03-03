@@ -32,8 +32,9 @@ export interface API {
   createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
   createLimitSellOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
   fetchOrders(symbol:string, since:number, limit:number):Promise<OrderTick[]>;
-  fetchOrder(orderID:string, symbol:string):Promise<OrderTick>;
+  fetchOrder(orderID:ID, symbol:string):Promise<OrderTick>;
   fetchBalance():Promise<any>;
+  cancelOrder(id:ID):Promise<any>;
 }
 
 

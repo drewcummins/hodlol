@@ -130,7 +130,7 @@ export class Trader {
   }
 
   public async consider(strategy:Strategy, orderRequest:OrderRequest) {
-    // just create an order!
+    // this is not a clever trader--just create an order
     return this.exchange.createOrder(orderRequest);
   }
 

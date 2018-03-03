@@ -105,7 +105,7 @@ class Trader {
         this.thread.kill();
     }
     async consider(strategy, orderRequest) {
-        // just create an order!
+        // this is not a clever trader--just create an order
         return this.exchange.createOrder(orderRequest);
     }
     async printPerformance() {

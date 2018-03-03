@@ -98,6 +98,14 @@ class MockAPI {
     fetchBalance() {
         return Promise.resolve({ free: types_1.BN(0), reserved: types_1.BN(0) });
     }
+    cancelOrder(id) {
+        if (this.orders.has(id)) {
+            let order = this.orders.get(id);
+            order.status = order_1.OrderStatus.CANCELED;
+            return Promise.resolve(order);
+        }
+        return Promise.resolve({});
+    }
 }
 exports.MockAPI = MockAPI;
 //# sourceMappingURL=mock-api.js.map

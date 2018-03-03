@@ -101,8 +101,8 @@ export class Strategy {
       this.orders.set(order.state.id, order);
       return order;
     } catch(err) {
-      // console.log("Error on request order:", request, err.message);
-      return null; // figure out how we want to handle this generic error case
+      // default to doing nothing; strategy subclasses can handle this differently
+      return null; 
     }
   }
 
