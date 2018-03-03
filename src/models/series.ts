@@ -81,7 +81,7 @@ export class OHLCVSerializer extends Serializer {
     if (ohlcv.length != 6) {
       throw new InvalidCSVError(csv, OHLCVSerializer);
     }
-    return new OHLCV(ohlcv);
+    return new OHLCV(Object.assign(ohlcv, {timestamp:ohlcv[0]}));
   }
 }
 
