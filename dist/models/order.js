@@ -15,7 +15,7 @@ var OrderStatus;
 (function (OrderStatus) {
     OrderStatus["OPEN"] = "open";
     OrderStatus["CLOSED"] = "closed";
-    OrderStatus["CANCELLED"] = "cancelled";
+    OrderStatus["CANCELED"] = "canceled";
 })(OrderStatus = exports.OrderStatus || (exports.OrderStatus = {}));
 class OrderRequest {
     constructor(type, side, marketSymbol, amount, price, portfolioID) {
@@ -38,22 +38,4 @@ class OrderRequest {
     }
 }
 exports.OrderRequest = OrderRequest;
-/*
-let order = {
-      id:        uuid(),
-      timestamp: +new Date(),   // Unix timestamp in milliseconds
-      status:    'open',          // 'open', 'closed', 'canceled'
-      symbol:    request.market,  // symbol
-      type:      'limit',         // 'market', 'limit'
-      side:      'buy',           // 'buy', 'sell'
-      price:     request.price,   // float price in quote currency
-      amount:    request.amount,  // ordered amount of base currency
-      cost:      request.price * request.amount,
-      filled:    0.0,             // filled amount of base currency
-      remaining: request.amount,  // remaining amount to fill
-      trades:   []
-    };
-    this.orders.add(order);
-    return order;
-*/ 
 //# sourceMappingURL=order.js.map

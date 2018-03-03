@@ -5,8 +5,8 @@ const utils_1 = require("../utils");
 const exchange_error_1 = require("../errors/exchange-error");
 const types_1 = require("./types");
 class Serializer {
-    constructor(props) {
-        this.props = props;
+    properties(tick) {
+        return [tick.timestamp];
     }
     /**
      * Converts a JSON tick response to CSV for recording.
@@ -16,7 +16,7 @@ class Serializer {
      * @returns CSV string
      */
     toCSV(tick) {
-        return this.props.map((prop) => tick[prop]).join(",");
+        return this.properties(tick).join(",");
     }
     /**
      * Converts a CSV string to Tick hash
@@ -26,64 +26,95 @@ class Serializer {
      * @returns Tick
      */
     fromCSV(csv) {
-        let tick = { timestamp: 0 };
-        csv.split(",").forEach((value, i) => {
-            tick[this.props[i]] = this.cast(value);
-        });
-        return tick;
-    }
-    /**
-     * Provides the unique key for the given Tick
-     *
-     * @param tick Tick
-     *
-     * @returns key
-     */
-    key(tick) {
-        return tick.timestamp.toString();
-    }
-    cast(value) {
-        return value;
+        return;
     }
 }
 exports.Serializer = Serializer;
 class TickerSerializer extends Serializer {
-    constructor() {
-        super(["timestamp", "high", "low", "bid", "bidVolume", "ask", "askVolume", "vwap", "open", "close", "last", "change", "baseVolume", "quoteVolume"]);
+    properties(tick) {
+        let state = tick.state;
+        return [tick.timestamp, state.high, state.low, state.bid, state.ask];
+    }
+    /**
+     * Converts a CSV string to TickerTick
+     *
+     * @param csv CSV string to convert to Tick
+     *
+     * @returns TickerTick
+     */
+    fromCSV(csv) {
+        let props = csv.split(",").map((x) => Number(x));
+        if (props.length != 5) {
+            throw new exchange_error_1.InvalidCSVError(csv, TickerSerializer);
+        }
+        let ticker = {
+            symbol: "N/A",
+            datetime: "N/A",
+            timestamp: props[0],
+            high: props[1],
+            low: props[2],
+            bid: props[3],
+            ask: props[4],
+            info: {}
+        };
+        return new types_1.Tick(ticker);
     }
 }
 exports.TickerSerializer = TickerSerializer;
-class CandleSerializer extends Serializer {
-    constructor() {
-        super(["timestamp", "open", "high", "low", "close", "volume"]);
+class OHLCVSerializer extends Serializer {
+    properties(tick) {
+        return tick.state;
     }
     /**
-     * Wraps tick in CCXT format
+     * Converts a CSV string to OHLCVTick
      *
-     * @param tick tick data to wrap in the format CCXT gives back when querying ohlcv
+     * @param csv CSV string to convert to Tick
+     *
+     * @returns OHLCVTick
      */
-    toCCXT(tick) {
-        return [this.toCSV(tick).split(",")];
-    }
-    cast(value) {
-        // all candlestick data are numbers
-        return Number(value);
+    fromCSV(csv) {
+        let ohlcv = csv.split(",").map((x) => Number(x));
+        if (ohlcv.length != 6) {
+            throw new exchange_error_1.InvalidCSVError(csv, OHLCVSerializer);
+        }
+        return new types_1.OHLCV(ohlcv);
     }
 }
-exports.CandleSerializer = CandleSerializer;
+exports.OHLCVSerializer = OHLCVSerializer;
 class OrderSerializer extends Serializer {
-    constructor() {
-        super(["id", "timestamp", "status", "symbol", "type", "side", "price", "amount", "filled", "remaining"]);
+    properties(tick) {
+        let state = tick.state;
+        return [tick.timestamp, state.id, state.status, state.symbol, state.type, state.side, state.price, state.cost, state.amount, state.filled, state.remaining, state.fee];
     }
     /**
-     * Provides the unique key for the given order tick
+     * Converts a CSV string to OHLCVTick
      *
-     * @param tick Tick
+     * @param csv CSV string to convert to Tick
      *
-     * @returns unique key as a function of creation timestamp and order status
+     * @returns OHLCVTick
      */
-    key(tick) {
-        return `${tick["timestamp"]}${tick["status"]}`;
+    fromCSV(csv) {
+        let props = csv.split(",");
+        if (props.length != 12) {
+            throw new exchange_error_1.InvalidCSVError(csv, OrderSerializer);
+        }
+        let order = {
+            id: props[1],
+            info: {},
+            timestamp: Number(props[0]),
+            datetime: "N/A",
+            status: props[2],
+            symbol: props[3],
+            type: props[4],
+            side: props[5],
+            price: Number(props[6]),
+            cost: Number(props[7]),
+            amount: Number(props[8]),
+            filled: Number(props[9]),
+            remaining: Number(props[10]),
+            fee: Number(props[11])
+        };
+        return new types_1.Order(order);
     }
 }
 exports.OrderSerializer = OrderSerializer;
@@ -131,9 +162,8 @@ class Series {
      * @param lock whether to ignore autowrite regardless
      */
     append(tick, lock = false) {
-        let key = this.serializer.key(tick);
-        if (!this.map[key]) {
-            this.map[key] = true;
+        if (!this.map[tick.key()]) {
+            this.map[tick.key()] = true;
             this.list.push(tick);
             if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.RECORD && !lock)
                 this.write();
@@ -166,6 +196,7 @@ class Series {
         let series = this.list;
         if (series.length > tail)
             series = series.slice(-tail);
+        // can't type tick here, props have to be right!
         series.forEach((tick) => {
             props.forEach((prop) => {
                 if (!transpose.has(prop))

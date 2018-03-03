@@ -1,10 +1,9 @@
 const uuid = require('uuid/v4');
-import { Balance, Num, BN, ID, Value } from './types';
-import { Order, OrderRequest, OrderSide, OrderType } from './order';
+import { Balance, Num, BN, ID, Value, Order, Tick, OrderTick } from './types';
+import { OrderRequest, OrderSide, OrderType } from './order';
 import { Marketplace } from './market';
 import { BigNumber } from "bignumber.js";
 import { InsufficientFundsError, InvalidOrderSideError } from '../errors/exchange-error';
-import { Tick } from './series';
 
 export class Portfolio {
   readonly id:string;
@@ -50,7 +49,7 @@ export class Portfolio {
    * @throws InvalidOrderSideError if request.side not set correctly
    */
   public hasSufficientFunds(request:OrderRequest):Boolean {
-    let [base,quote] = this.balanceByMarket(request.marketSymbol);
+    let [base, quote] = this.balanceByMarket(request.marketSymbol);
     if (request.side == OrderSide.BUY) {
       return BN(quote.free).isGreaterThanOrEqualTo(request.cost());
     } else if (request.side == OrderSide.SELL) {
@@ -98,16 +97,16 @@ export class Portfolio {
    * @param order Order to fill
    */
   public fill(order:Order):void {
-    let market = this.markets.getWithSymbol(order.symbol as string);
-    switch (order.side) {
+    let market = this.markets.getWithSymbol(order.state.symbol as string);
+    switch (order.state.side) {
       case OrderSide.BUY:
-        this.removeReserved(market.quote, order.cost);
-        this.addFree(market.base, order.filled);
+        this.removeReserved(market.quote, order.state.cost);
+        this.addFree(market.base, order.state.filled);
         break;
 
       case OrderSide.SELL:
-        this.removeReserved(market.base, order.filled);
-        this.addFree(market.quote, order.cost);
+        this.removeReserved(market.base, order.state.filled);
+        this.addFree(market.quote, order.state.cost);
         break;
     
       default:

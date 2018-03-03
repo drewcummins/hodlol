@@ -1,16 +1,16 @@
-import { API, Num, BN, Balance, Scenario } from "./types";
-import { Order, OrderType, OrderSide, OrderStatus } from "./order"
+import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick } from "./types";
+import { OrderType, OrderSide, OrderStatus } from "./order"
 import { Feed } from "./exchange";
-import { Series, Tick, CandleSerializer } from "./series";
+import { Series, OHLCVSerializer } from "./series";
 import { Thread } from "../utils";
-import { CandleTicker } from "./ticker";
+import { OHLCVTicker } from "./ticker";
 const uuid = require('uuid/v4');
 
 export class MockAPI implements API {
   public name:string;
   private thread:Thread;
   protected candles:Map<string, Series> = new Map<string, Series>();
-  protected orders:Map<string, Order> = new Map<string, Order>();
+  protected orders:Map<string, OrderTick> = new Map<string, OrderTick>();
   constructor(protected api:API) {
     this.name = api.name;
   }
@@ -28,7 +28,7 @@ export class MockAPI implements API {
     while (this.thread.isRunning()) {
       await this.thread.sleep(1);
       // fill any open orders
-      this.orders.forEach((order:Order) => {
+      this.orders.forEach((order:OrderTick) => {
         if (order.status == OrderStatus.OPEN) {
           order.status = OrderStatus.CLOSED;
           order.filled = order.amount;
@@ -47,63 +47,63 @@ export class MockAPI implements API {
     return;
   }
 
-  public async fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<any> {
+  public async fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<OHLCVTick[]> {
     let series = this.candles.get(symbol);
-    if (!series) {
-      console.log("ok", this.candles)
-      console.log("no symbol:", symbol);
-      process.exit();
-    }
-    let [tick] = series.nearest(Scenario.getInstance().time);
-    let serializer = series.serializer as CandleSerializer;
-    return Promise.resolve(serializer.toCCXT(tick));
+    let [ohlcv] = series.nearest(Scenario.getInstance().time);
+    return [ohlcv.state as OHLCVTick];
   }
 
-  public async createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<Order> {
-    let order:Order = {
+  public async createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<OrderTick> {
+    let order:OrderTick = {
       id:        uuid(),
+      datetime:  "N/A",
       timestamp: +new Date(),               // Unix timestamp in milliseconds
       status:    OrderStatus.OPEN,          // 'open', 'closed', 'canceled'
       symbol:    market,                    // symbol
       type:      OrderType.LIMIT,           // 'market', 'limit'
       side:      OrderSide.BUY,             // 'buy', 'sell'
-      price:     price,                     // float price in quote currency
-      amount:    amount,                    // ordered amount of base currency
-      cost:      BN(price).times(amount),
+      price:     Number(price),                     // float price in quote currency
+      amount:    Number(amount),                    // ordered amount of base currency
+      cost:      BN(price).times(amount).toNumber(),
       filled:    0.0,                       // filled amount of base currency
-      remaining: amount,
+      remaining: Number(amount),
+      fee: 0,
+      info: {}
     };
     this.orders.set(order.id, order);
-    return Promise.resolve(order);
+    return order;
   }
 
-  public createLimitSellOrder(market:string, amount:Num, price:Num):Promise<Order> {
-    let order:Order = {
+  public createLimitSellOrder(market:string, amount:Num, price:Num):Promise<OrderTick> {
+    let order:OrderTick = {
       id:        uuid(),
-      timestamp: +new Date(),             // Unix timestamp in milliseconds
-      status:    OrderStatus.OPEN,        // 'open', 'closed', 'canceled'
-      symbol:    market,                  // symbol
-      type:      OrderType.LIMIT,         // 'market', 'limit'
-      side:      OrderSide.SELL,          // 'buy', 'sell'
-      price:     price,                   // float price in quote currency
-      amount:    amount,                  // ordered amount of base currency
-      cost:      BN(price).times(amount),
-      filled:    0.0,                     // filled amount of base currency
-      remaining: amount,
+      datetime:  "N/A",
+      timestamp: +new Date(),               // Unix timestamp in milliseconds
+      status:    OrderStatus.OPEN,          // 'open', 'closed', 'canceled'
+      symbol:    market,                    // symbol
+      type:      OrderType.LIMIT,           // 'market', 'limit'
+      side:      OrderSide.SELL,             // 'buy', 'sell'
+      price:     Number(price),                     // float price in quote currency
+      amount:    Number(amount),                    // ordered amount of base currency
+      cost:      BN(price).times(amount).toNumber(),
+      filled:    0.0,                       // filled amount of base currency
+      remaining: Number(amount),
+      fee: 0,
+      info: {}
     };
     this.orders.set(order.id, order);
     return Promise.resolve(order);
   }
 
-  public fetchOrders(symbol:string, since:number=-1, limit:number=100):Promise<any> {
-    let orders:Order[] = [];
-    this.orders.forEach((val:Order) => {
+  public fetchOrders(symbol:string, since:number=-1, limit:number=100):Promise<OrderTick[]> {
+    let orders:OrderTick[] = [];
+    this.orders.forEach((val:OrderTick) => {
       if (val.symbol == symbol && val.timestamp >= since) orders.push(val);
     });
     return Promise.resolve(orders.slice(0, limit));
   }
 
-  public fetchOrder(orderID:string, symbol:string):Promise<any> {
+  public fetchOrder(orderID:string, symbol:string):Promise<OrderTick> {
     return Promise.resolve(this.orders.get(orderID));
   }
 

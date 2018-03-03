@@ -1,19 +1,13 @@
 import * as fs from "fs";
 import { bnearest } from "../utils";
-import { BacktestFileMissingError } from "../errors/exchange-error";
+import { BacktestFileMissingError, InvalidCSVError } from "../errors/exchange-error";
 import { OrderSide, OrderType } from "./order";
-import { Scenario, ScenarioMode } from "./types";
-
-type TickProp = { [property:string]:any } | undefined;
-interface ITick {
-  timestamp:number;
-}
-export type Tick = TickProp & ITick; //{ [property:string]:number | string } | undefined;
+import { Scenario, ScenarioMode, Tick, ExchangeState, OHLCVTick, OHLCV, TickerTick, Ticker, OrderTick, Order } from "./types";
 
 export class Serializer {
-  protected props:string[];
-  constructor(props:string[]) {
-    this.props = props;
+
+  protected properties(tick:Tick<ExchangeState>):any[] {
+    return [tick.timestamp];
   }
 
   /**
@@ -23,8 +17,8 @@ export class Serializer {
    * 
    * @returns CSV string
    */
-  public toCSV(tick:Tick):string {
-    return this.props.map((prop) => tick[prop]).join(",");
+  public toCSV(tick:Tick<ExchangeState>):string {
+    return this.properties(tick).join(",");
   }
 
   /**
@@ -34,76 +28,106 @@ export class Serializer {
    * 
    * @returns Tick
    */
-  public fromCSV(csv:string):Tick {
-    let tick:Tick = {timestamp:0};
-    csv.split(",").forEach((value:number | string, i:number) => {
-      tick[this.props[i]] = this.cast(value);
-    })
-    return tick;
-  }
-
-  /**
-   * Provides the unique key for the given Tick
-   * 
-   * @param tick Tick
-   * 
-   * @returns key
-   */
-  public key(tick:Tick):string {
-    return tick.timestamp.toString();
-  }
-
-  protected cast(value:any):number | string {
-    return value;
+  public fromCSV(csv:string):Tick<ExchangeState> {
+    return;
   }
 }
 
 export class TickerSerializer extends Serializer {
-  constructor() {
-    super(["timestamp", "high", "low", "bid", "bidVolume", "ask","askVolume", "vwap", "open", "close", "last", "change","baseVolume", "quoteVolume"])
+  protected properties(tick:Ticker):any[] {
+    let state = tick.state;
+    return [tick.timestamp,state.high,state.low,state.bid,state.ask];
+  }
+  /**
+   * Converts a CSV string to TickerTick
+   * 
+   * @param csv CSV string to convert to Tick
+   * 
+   * @returns TickerTick
+   */
+  public fromCSV(csv:string):Ticker {
+    let props:any = csv.split(",").map((x) => Number(x));
+    if (props.length != 5) {
+      throw new InvalidCSVError(csv, TickerSerializer);
+    }
+    let ticker:TickerTick = {
+      symbol: "N/A",
+      datetime: "N/A",
+      timestamp: props[0],
+      high: props[1],
+      low: props[2],
+      bid: props[3],
+      ask: props[4],
+      info: {}
+    }
+    return new Tick<TickerTick>(ticker);
   }
 }
 
-export class CandleSerializer extends Serializer {
-  constructor() {
-    super(["timestamp", "open", "high", "low", "close", "volume"]);
+export class OHLCVSerializer extends Serializer {
+  protected properties(tick:OHLCV):any[] {
+    return tick.state;
   }
 
   /**
-   * Wraps tick in CCXT format
+   * Converts a CSV string to OHLCVTick
    * 
-   * @param tick tick data to wrap in the format CCXT gives back when querying ohlcv
+   * @param csv CSV string to convert to Tick
+   * 
+   * @returns OHLCVTick
    */
-  public toCCXT(tick:Tick):string[][] {
-    return [this.toCSV(tick).split(",")];
-  }
-
-  protected cast(value:number | string):number | string {
-    // all candlestick data are numbers
-    return Number(value);
+  public fromCSV(csv:string):OHLCV {
+    let ohlcv:any = csv.split(",").map((x) => Number(x));
+    if (ohlcv.length != 6) {
+      throw new InvalidCSVError(csv, OHLCVSerializer);
+    }
+    return new OHLCV(ohlcv);
   }
 }
 
 export class OrderSerializer extends Serializer {
-  constructor() {
-    super(["id", "timestamp", "status", "symbol", "type", "side", "price", "amount", "filled", "remaining"]);
+  protected properties(tick:Order):any[] {
+    let state = tick.state;
+    return [tick.timestamp,state.id,state.status,state.symbol,state.type,state.side,state.price,state.cost,state.amount,state.filled,state.remaining,state.fee];
   }
 
   /**
-   * Provides the unique key for the given order tick
+   * Converts a CSV string to OHLCVTick
    * 
-   * @param tick Tick
+   * @param csv CSV string to convert to Tick
    * 
-   * @returns unique key as a function of creation timestamp and order status
+   * @returns OHLCVTick
    */
-  public key(tick:Tick):string {
-    return `${tick["timestamp"]}${tick["status"]}`;
+  public fromCSV(csv:string):Order {
+    let props:any = csv.split(",");
+    if (props.length != 12) {
+      throw new InvalidCSVError(csv, OrderSerializer);
+    }
+    let order:OrderTick = {
+      id: props[1],
+      info: {},
+      timestamp: Number(props[0]),
+      datetime: "N/A",
+      status: props[2],
+      symbol: props[3],
+      type: props[4],
+      side: props[5],
+      price: Number(props[6]),
+      cost: Number(props[7]),
+      amount: Number(props[8]),
+      filled: Number(props[9]),
+      remaining: Number(props[10]),
+      fee: Number(props[11])
+    }
+    return new Order(order);
   }
 }
 
+type Point = Tick<ExchangeState>;
+
 export class Series {
   private map:{ [idx:string]:boolean } = {};
-  private list:Tick[] = [];
+  private list:Point[] = [];
   private lastWrite:number = 0;
 
   constructor(readonly filepath:string, readonly serializer:Serializer) {}
@@ -120,7 +144,7 @@ export class Series {
    * 
    * @returns the last tick
   */
-  public last():Tick {
+  public last():Point {
     return this.list[this.length()-1];
   }
 
@@ -133,7 +157,7 @@ export class Series {
    * 
    * @param idx index to get tick at
    */
-  public getAt(idx:number):Tick {
+  public getAt(idx:number):Point {
     if (idx < 0) {
       idx = this.length() + idx;
     }
@@ -146,10 +170,9 @@ export class Series {
    * @param tick tick to add to series
    * @param lock whether to ignore autowrite regardless
    */
-  public append(tick:Tick, lock:boolean=false):void {
-    let key:string = this.serializer.key(tick);
-    if (!this.map[key]) {
-      this.map[key] = true;
+  public append(tick:Point, lock:boolean=false):void {
+    if (!this.map[tick.key()]) {
+      this.map[tick.key()] = true;
       this.list.push(tick);
       if (Scenario.getInstance().mode == ScenarioMode.RECORD && !lock) this.write();
     }
@@ -162,7 +185,7 @@ export class Series {
    * @param lock whether to ignore autowrite regardless
    */
   public appendFromCSV(csv:string, lock:boolean=false):void {
-    let tick:Tick = this.serializer.fromCSV(csv);
+    let tick:Point = this.serializer.fromCSV(csv);
     this.append(tick, lock);
   }
 
@@ -182,7 +205,8 @@ export class Series {
     let transpose = new Map<string, number[]>();
     let series = this.list;
     if (series.length > tail) series = series.slice(-tail);
-    series.forEach((tick:Tick) => {
+    // can't type tick here, props have to be right!
+    series.forEach((tick:any) => {
       props.forEach((prop) => {
         if (!transpose.has(prop)) transpose.set(prop, []);
         transpose.get(prop).push(Number(tick[prop]));
@@ -198,7 +222,7 @@ export class Series {
    * 
    * @returns tuple of closest tick and that tick's index in the list
    */
-  public nearest(timestamp:number):[Tick, number] {
+  public nearest(timestamp:number):[Point, number] {
     return bnearest(this.list, timestamp, (x) => timestamp - x.timestamp);
   }
 

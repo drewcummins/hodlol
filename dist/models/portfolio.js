@@ -89,15 +89,15 @@ class Portfolio {
      * @param order Order to fill
      */
     fill(order) {
-        let market = this.markets.getWithSymbol(order.symbol);
-        switch (order.side) {
+        let market = this.markets.getWithSymbol(order.state.symbol);
+        switch (order.state.side) {
             case order_1.OrderSide.BUY:
-                this.removeReserved(market.quote, order.cost);
-                this.addFree(market.base, order.filled);
+                this.removeReserved(market.quote, order.state.cost);
+                this.addFree(market.base, order.state.filled);
                 break;
             case order_1.OrderSide.SELL:
-                this.removeReserved(market.base, order.filled);
-                this.addFree(market.quote, order.cost);
+                this.removeReserved(market.base, order.state.filled);
+                this.addFree(market.quote, order.state.cost);
                 break;
             default:
                 break;

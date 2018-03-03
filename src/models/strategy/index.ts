@@ -1,11 +1,10 @@
 import { SignalJSON, Signal, SignalCode } from "../signal";
-import { ID, Num, BN, Value } from "../types";
+import { ID, Num, BN, Value, Order } from "../types";
 import { Portfolio } from "../portfolio";
-import { OrderRequest, Order, OrderType, OrderSide } from "../order";
+import { OrderRequest, OrderType, OrderSide } from "../order";
 import { Feed } from "../exchange";
 import { MACD } from "../signal/macd";
-import { CandleTicker } from "../ticker";
-import { Tick } from "../series";
+import { OHLCVTicker } from "../ticker";
 import { InvalidSignalError } from "../../errors/exchange-error";
 const uuid = require('uuid/v4');
 

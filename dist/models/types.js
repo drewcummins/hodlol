@@ -8,6 +8,35 @@ function BN(x) {
     return new bignumber_js_1.BigNumber(x.toString());
 }
 exports.BN = BN;
+class Tick {
+    constructor(state) {
+        this.state = state;
+        // most of what we generically do with a tick is just referencing timestamp
+        this.timestamp = state.timestamp;
+    }
+    /**
+     * Provides the unique key for this tick
+     *
+     * @returns unique key
+     */
+    key() {
+        return this.timestamp.toString();
+    }
+}
+exports.Tick = Tick;
+class OHLCV extends Tick {
+    constructor(state) {
+        super(state);
+        [, this.open, this.high, this.low, this.close, this.volume] = state;
+    }
+}
+exports.OHLCV = OHLCV;
+class Order extends Tick {
+    key() {
+        return this.state.status + super.key();
+    }
+}
+exports.Order = Order;
 class BitfieldState {
     constructor() {
         this.state = 0;

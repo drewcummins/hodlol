@@ -1,11 +1,9 @@
 import { Exchange } from "./exchange";
-import { Series, Tick, Serializer, TickerSerializer, CandleSerializer, OrderSerializer } from "./series";
+import { Series, Serializer, TickerSerializer, OrderSerializer, OHLCVSerializer } from "./series";
 import { sleep, Thread } from "../utils";
-import { Order } from "./order";
-import { ID, Scenario, ScenarioMode } from "./types";
+import { ID, Scenario, ScenarioMode, Tick, ExchangeState, OHLCVTick, OrderTick, Order, OHLCV } from "./types";
 
 export class Ticker {
-  protected _kill:boolean = false;
   readonly series:Series;
   protected thread:Thread;
   protected timeout:number;
@@ -50,7 +48,7 @@ export class Ticker {
    * 
    * @returns tick 
    */
-  public getAt(idx:number):Tick {
+  public getAt(idx:number):Tick<ExchangeState> {
     return this.series.getAt(idx);
   }
 
@@ -59,7 +57,7 @@ export class Ticker {
    * 
    * @returns the last tick in the series
   */
-  public last():Tick {
+  public last():Tick<ExchangeState> {
     return this.series.last();
   }
 
@@ -92,19 +90,18 @@ export class Ticker {
   }
 }
 
-export class CandleTicker extends Ticker {
+export class OHLCVTicker extends Ticker {
   constructor(exchange:Exchange, symbol:string, private period:string="1m") {
     super(exchange, symbol);
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 35000;
   }
 
   public async step() {
-    let last:Tick = this.last();
+    let last:Tick<ExchangeState> = this.last();
     let since:number = last ? last.timestamp : Scenario.getInstance().time;
-    const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
-    tick.forEach((candlestick:Array<number>) => {
-      let csv:string = candlestick.join(",");
-      this.series.appendFromCSV(csv, true);
+    const ohlcv:OHLCV[] = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
+    ohlcv.forEach((candlestick:OHLCV) => {
+      this.series.append(candlestick);
       this.exchange.invalidate();
     });
     if (Scenario.getInstance().mode == ScenarioMode.RECORD) this.series.write();
@@ -115,31 +112,31 @@ export class CandleTicker extends Ticker {
   }
 
   protected generateSerializer():Serializer {
-    return new CandleSerializer();
+    return new OHLCVSerializer();
   }
 }
 
 export class OrderTicker extends Ticker {
   readonly orderID:ID;
   constructor(exchange:Exchange, readonly order:Order, readonly portfolioID:ID) {
-    super(exchange, order.symbol);
-    this.orderID = order.id;
+    super(exchange, order.state.symbol);
+    this.orderID = order.state.id;
   }
 
   public async step() {
-    const tick = await this.exchange.fetchOrder(this.orderID, this.symbol);
+    const tick:Order = await this.exchange.fetchOrder(this.orderID, this.symbol);
     if (this.hasChanged(tick)) {
       this.series.append(tick);
-      this.order.status = tick.status;
+      this.order.state.status = tick.state.status;
       this.exchange.invalidate();
     }
   }
 
-  private hasChanged(tick:Tick):boolean {
-    let last:Tick = this.last();
+  private hasChanged(tick:Order):boolean {
+    let last:Order = this.last() as Order;
     if (!last) return true;
-    if (last.status != tick.status) return true;
-    if (last.filled != tick.filled) return true;
+    if (last.state.status != tick.state.status) return true;
+    if (last.state.filled != tick.state.filled) return true;
     return false;
   }
 

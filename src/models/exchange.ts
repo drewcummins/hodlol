@@ -1,16 +1,17 @@
-import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode } from "./types";
+import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, TickerTick, OHLCVTick, OrderTick, Order, Ticker, OHLCV } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
-import { CandleTicker, OrderTicker } from "./ticker";
-import { Order, OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
+import { OHLCVTicker, OrderTicker } from "./ticker";
+import { OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
 import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors/exchange-error";
 import { Portfolio } from "./portfolio";
+import * as ccxt from "ccxt";
 
-export type Feed = { candles:Map<string,CandleTicker>, orders:Map<string,OrderTicker> };
+export type Feed = { candles:Map<string,OHLCVTicker>, orders:Map<string,OrderTicker> };
 
 export class Exchange {
   public markets:Marketplace;
-  readonly feed:Feed = { candles:new Map<string,CandleTicker>(), orders:new Map<string,OrderTicker>() };
+  readonly feed:Feed = { candles:new Map<string,OHLCVTicker>(), orders:new Map<string,OrderTicker>() };
   private portfolios:Map<ID,Portfolio> = new Map<ID,Portfolio>();
   readonly time:number = 0;
   private state:BitfieldState = new BitfieldState(); 
@@ -166,13 +167,14 @@ export class Exchange {
   */
   public processOrderState():void {
     this.feed.orders.forEach((ticker) => {
-      const last = ticker.last();
+      const last:Order = ticker.last() as Order;
+      const order:OrderTick = last.state;
       if (last) {
-        if (last.status == OrderStatus.CLOSED || last.status == OrderStatus.CANCELLED) {
+        if (order.status == OrderStatus.CLOSED || order.status == OrderStatus.CANCELED) {
           ticker.kill();
           this.feed.orders.delete(ticker.orderID);
           let portfolio:Portfolio = this.portfolios.get(ticker.portfolioID);
-          if (portfolio) portfolio.fill(last as Order);
+          if (portfolio) portfolio.fill(last);
         }
       }
     })
@@ -194,8 +196,8 @@ export class Exchange {
    * 
    * @returns ticker data
    */
-  public async fetchTicker(pair:string) {
-    return await this.api.fetchTicker(pair);
+  public async fetchTicker(pair:string):Promise<Ticker> {
+    return new Tick(await this.api.fetchTicker(pair));
   }
 
   /**
@@ -207,8 +209,9 @@ export class Exchange {
    * 
    * @returns candlestick data
    */
-  public async fetchOHLCV(symbol:string, period:string="1m", since:number|undefined=undefined) {
-    return await this.api.fetchOHLCV(symbol, period, since);
+  public async fetchOHLCV(symbol:string, period:string="1m", since:number|undefined=undefined):Promise<OHLCV[]> {
+    let ohlcvs:OHLCVTick[] = await this.api.fetchOHLCV(symbol, period, since);
+    return ohlcvs.map((ohlcv) => new OHLCV(Object.assign(ohlcv, {timestamp:ohlcv[0]})));
   }
 
   /**
@@ -219,8 +222,8 @@ export class Exchange {
    * 
    * @return requested order if it exists
    */
-  public async fetchOrder(orderID:string, symbol:string) {
-    return await this.api.fetchOrder(orderID, symbol);
+  public async fetchOrder(orderID:string, symbol:string):Promise<Order> {
+    return new Tick(await this.api.fetchOrder(orderID, symbol));
   }
 
   /** 
@@ -246,10 +249,10 @@ export class Exchange {
     portfolio.reserve(request);
     switch (request.side) {
       case OrderSide.BUY:
-        order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
+        order = new Order(await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price));
         break;
       case OrderSide.SELL:
-        order = await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price);
+        order = new Order(await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price));
         break;
     
       default:
@@ -266,8 +269,8 @@ export class Exchange {
    * 
    * @returns the candleticker
    */
-  public addCandlestick(symbol:string):CandleTicker {
-    const ticker = new CandleTicker(this, symbol);
+  public addCandlestick(symbol:string):OHLCVTicker {
+    const ticker = new OHLCVTicker(this, symbol);
     this.feed.candles.set(symbol, ticker);
     return ticker;
   }
@@ -279,9 +282,9 @@ export class Exchange {
    * 
    * @returns the OrderTicker
    */
-  public addOrder(order:Order, portfolioID:ID):OrderTicker {
+  protected addOrder(order:Order, portfolioID:ID):OrderTicker {
     const ticker = new OrderTicker(this, order, portfolioID);
-    this.feed.orders.set(order.id, ticker);
+    this.feed.orders.set(order.state.id, ticker);
     ticker.run();
     return ticker;
   }
@@ -302,11 +305,11 @@ export class Exchange {
         let pair:string = path[i];
         let ticker = this.feed.candles.get(pair);
         if (ticker && ticker.length() > 0) {
-          let tick = ticker.last(); // last here means most recent tick
-          price *= Number(tick.close);
+          let tick:OHLCV = ticker.last() as OHLCV;
+          price *= tick.close;
         } else {
-          let tick = await this.fetchOHLCV(pair);
-          price *= Number(tick[0][4]); //.close;
+          let tick:OHLCV[] = await this.fetchOHLCV(pair);
+          price *= tick[tick.length-1].close;
         }
       }
       return price;

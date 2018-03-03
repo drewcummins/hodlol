@@ -144,8 +144,9 @@ class Exchange {
     processOrderState() {
         this.feed.orders.forEach((ticker) => {
             const last = ticker.last();
+            const order = last.state;
             if (last) {
-                if (last.status == order_1.OrderStatus.CLOSED || last.status == order_1.OrderStatus.CANCELLED) {
+                if (order.status == order_1.OrderStatus.CLOSED || order.status == order_1.OrderStatus.CANCELED) {
                     ticker.kill();
                     this.feed.orders.delete(ticker.orderID);
                     let portfolio = this.portfolios.get(ticker.portfolioID);
@@ -171,7 +172,7 @@ class Exchange {
      * @returns ticker data
      */
     async fetchTicker(pair) {
-        return await this.api.fetchTicker(pair);
+        return new types_1.Tick(await this.api.fetchTicker(pair));
     }
     /**
      * Gets candlestick (open, high, low, close, volume) data for @symbol
@@ -183,7 +184,8 @@ class Exchange {
      * @returns candlestick data
      */
     async fetchOHLCV(symbol, period = "1m", since = undefined) {
-        return await this.api.fetchOHLCV(symbol, period, since);
+        let ohlcvs = await this.api.fetchOHLCV(symbol, period, since);
+        return ohlcvs.map((ohlcv) => new types_1.OHLCV(Object.assign(ohlcv, { timestamp: ohlcv[0] })));
     }
     /**
      * Gets an order by given ID
@@ -194,7 +196,7 @@ class Exchange {
      * @return requested order if it exists
      */
     async fetchOrder(orderID, symbol) {
-        return await this.api.fetchOrder(orderID, symbol);
+        return new types_1.Tick(await this.api.fetchOrder(orderID, symbol));
     }
     /**
      * Gets exchange balance
@@ -218,10 +220,10 @@ class Exchange {
         portfolio.reserve(request);
         switch (request.side) {
             case order_1.OrderSide.BUY:
-                order = await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price);
+                order = new types_1.Order(await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price));
                 break;
             case order_1.OrderSide.SELL:
-                order = await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price);
+                order = new types_1.Order(await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price));
                 break;
             default:
                 throw new exchange_error_1.InvalidOrderSideError(request);
@@ -237,7 +239,7 @@ class Exchange {
      * @returns the candleticker
      */
     addCandlestick(symbol) {
-        const ticker = new ticker_1.CandleTicker(this, symbol);
+        const ticker = new ticker_1.OHLCVTicker(this, symbol);
         this.feed.candles.set(symbol, ticker);
         return ticker;
     }
@@ -250,7 +252,7 @@ class Exchange {
      */
     addOrder(order, portfolioID) {
         const ticker = new ticker_1.OrderTicker(this, order, portfolioID);
-        this.feed.orders.set(order.id, ticker);
+        this.feed.orders.set(order.state.id, ticker);
         ticker.run();
         return ticker;
     }
@@ -270,12 +272,12 @@ class Exchange {
                 let pair = path[i];
                 let ticker = this.feed.candles.get(pair);
                 if (ticker && ticker.length() > 0) {
-                    let tick = ticker.last(); // last here means most recent tick
-                    price *= Number(tick.close);
+                    let tick = ticker.last();
+                    price *= tick.close;
                 }
                 else {
                     let tick = await this.fetchOHLCV(pair);
-                    price *= Number(tick[0][4]); //.close;
+                    price *= tick[tick.length - 1].close;
                 }
             }
             return price;

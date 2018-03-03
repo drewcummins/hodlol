@@ -41,45 +41,45 @@ class MockAPI {
     }
     async fetchOHLCV(symbol, period, since) {
         let series = this.candles.get(symbol);
-        if (!series) {
-            console.log("ok", this.candles);
-            console.log("no symbol:", symbol);
-            process.exit();
-        }
-        let [tick] = series.nearest(types_1.Scenario.getInstance().time);
-        let serializer = series.serializer;
-        return Promise.resolve(serializer.toCCXT(tick));
+        let [ohlcv] = series.nearest(types_1.Scenario.getInstance().time);
+        return [ohlcv.state];
     }
     async createLimitBuyOrder(market, amount, price) {
         let order = {
             id: uuid(),
+            datetime: "N/A",
             timestamp: +new Date(),
             status: order_1.OrderStatus.OPEN,
             symbol: market,
             type: order_1.OrderType.LIMIT,
             side: order_1.OrderSide.BUY,
-            price: price,
-            amount: amount,
-            cost: types_1.BN(price).times(amount),
+            price: Number(price),
+            amount: Number(amount),
+            cost: types_1.BN(price).times(amount).toNumber(),
             filled: 0.0,
-            remaining: amount,
+            remaining: Number(amount),
+            fee: 0,
+            info: {}
         };
         this.orders.set(order.id, order);
-        return Promise.resolve(order);
+        return order;
     }
     createLimitSellOrder(market, amount, price) {
         let order = {
             id: uuid(),
+            datetime: "N/A",
             timestamp: +new Date(),
             status: order_1.OrderStatus.OPEN,
             symbol: market,
             type: order_1.OrderType.LIMIT,
             side: order_1.OrderSide.SELL,
-            price: price,
-            amount: amount,
-            cost: types_1.BN(price).times(amount),
+            price: Number(price),
+            amount: Number(amount),
+            cost: types_1.BN(price).times(amount).toNumber(),
             filled: 0.0,
-            remaining: amount,
+            remaining: Number(amount),
+            fee: 0,
+            info: {}
         };
         this.orders.set(order.id, order);
         return Promise.resolve(order);

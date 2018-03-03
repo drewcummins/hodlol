@@ -1,9 +1,9 @@
 import { BigNumber } from "bignumber.js"
-import { OrderRequest, Order } from "./order";
+import { OrderRequest } from "./order";
 import * as fs from "fs";
 import * as mkdirp from "mkdirp";
 import { ScenarioFileMissingError } from "../errors/exchange-error";
-import { Balances } from "ccxt";
+import * as ccxt from "ccxt";
 
 BigNumber.config({ DECIMAL_PLACES:5 });
 
@@ -27,14 +27,62 @@ export type Value = { [key:string]:Balance };
 export interface API {
   readonly name:string;
   loadMarkets():Promise<any>;
-  fetchTicker(pair:string):Promise<any>;
-  fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<any>;
-  createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<Order>;
-  createLimitSellOrder(market:string, amount:Num, price:Num):Promise<Order>;
+  fetchTicker(pair:string):Promise<TickerTick>;
+  fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<OHLCVTick[]>;
+  createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
+  createLimitSellOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
   fetchOrders(symbol:string, since:number, limit:number):Promise<any>;
   fetchOrder(orderID:string, symbol:string):Promise<any>;
   fetchBalance():Promise<any>;
 }
+
+
+export type OrderTick = ccxt.Order;
+export type OrderBookTick = ccxt.OrderBook;
+export type TradeTick = ccxt.Trade;
+export type TickerTick = ccxt.Ticker;
+export type OHLCVTick = ccxt.OHLCV & { timestamp:number };
+export type ExchangeState = OHLCVTick | OrderTick | OrderBookTick | TradeTick | TickerTick;
+
+export class Tick<T extends ExchangeState> {
+  readonly timestamp:number;
+  constructor(readonly state:T) {
+    // most of what we generically do with a tick is just referencing timestamp
+    this.timestamp = state.timestamp;
+  }
+
+  /**
+   * Provides the unique key for this tick
+   * 
+   * @returns unique key
+   */
+  public key():string {
+    return this.timestamp.toString();
+  }
+}
+
+export type OrderBook = Tick<OrderBookTick>;
+export type Trade = Tick<TradeTick>;
+export type Ticker = Tick<TickerTick>;
+export class OHLCV extends Tick<OHLCVTick> {
+  readonly open:number; 
+  readonly high:number;
+  readonly low:number;
+  readonly close:number;
+  readonly volume:number;
+  constructor(state:OHLCVTick) {
+    super(state);
+    [,this.open,this.high,this.low,this.close,this.volume] = state;
+  }
+}
+
+export class Order extends Tick<OrderTick> {
+  public key():string {
+    return this.state.status + super.key();
+  }
+}
+
+
 
 export type BitState = number;
 

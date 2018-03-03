@@ -15,7 +15,7 @@ export enum OrderType {
 export enum OrderStatus {
   OPEN='open',
   CLOSED='closed',
-  CANCELLED='cancelled'
+  CANCELED='canceled'
 }
 
 export class OrderRequest {
@@ -39,37 +39,3 @@ export class OrderRequest {
     return amount.multipliedBy(price);
   }
 }
-
-export interface Order {
-  type:OrderType
-  side:OrderSide,
-  id:ID,
-  timestamp: number,
-  symbol:string,
-  status:OrderStatus,
-  cost:Num,
-  filled:Num,
-  price:Num,
-  amount:Num,
-  remaining:Num,
-  trades?:any[]
-}
-
-/*
-let order = {
-      id:        uuid(),
-      timestamp: +new Date(),   // Unix timestamp in milliseconds
-      status:    'open',          // 'open', 'closed', 'canceled'
-      symbol:    request.market,  // symbol
-      type:      'limit',         // 'market', 'limit'
-      side:      'buy',           // 'buy', 'sell'
-      price:     request.price,   // float price in quote currency
-      amount:    request.amount,  // ordered amount of base currency
-      cost:      request.price * request.amount,
-      filled:    0.0,             // filled amount of base currency
-      remaining: request.amount,  // remaining amount to fill
-      trades:   []
-    };
-    this.orders.add(order);
-    return order;
-*/

@@ -60,4 +60,10 @@ class ScenarioFileMissingError extends FileMissingError {
     }
 }
 exports.ScenarioFileMissingError = ScenarioFileMissingError;
+class InvalidCSVError extends Error {
+    constructor(csv, type) {
+        super(csv + type);
+    }
+}
+exports.InvalidCSVError = InvalidCSVError;
 //# sourceMappingURL=exchange-error.js.map

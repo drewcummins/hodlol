@@ -7,7 +7,6 @@ class Ticker {
     constructor(exchange, symbol) {
         this.exchange = exchange;
         this.symbol = symbol;
-        this._kill = false;
         this.series = new series_1.Series(this.filepath(), this.generateSerializer());
         this.thread = new utils_1.Thread();
         this.timeout = types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK ? 1 : 5000;
@@ -78,7 +77,7 @@ class Ticker {
     }
 }
 exports.Ticker = Ticker;
-class CandleTicker extends Ticker {
+class OHLCVTicker extends Ticker {
     constructor(exchange, symbol, period = "1m") {
         super(exchange, symbol);
         this.period = period;
@@ -87,10 +86,9 @@ class CandleTicker extends Ticker {
     async step() {
         let last = this.last();
         let since = last ? last.timestamp : types_1.Scenario.getInstance().time;
-        const tick = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
-        tick.forEach((candlestick) => {
-            let csv = candlestick.join(",");
-            this.series.appendFromCSV(csv, true);
+        const ohlcv = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
+        ohlcv.forEach((candlestick) => {
+            this.series.append(candlestick);
             this.exchange.invalidate();
         });
         if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.RECORD)
@@ -100,22 +98,22 @@ class CandleTicker extends Ticker {
         return 'ohlcv';
     }
     generateSerializer() {
-        return new series_1.CandleSerializer();
+        return new series_1.OHLCVSerializer();
     }
 }
-exports.CandleTicker = CandleTicker;
+exports.OHLCVTicker = OHLCVTicker;
 class OrderTicker extends Ticker {
     constructor(exchange, order, portfolioID) {
-        super(exchange, order.symbol);
+        super(exchange, order.state.symbol);
         this.order = order;
         this.portfolioID = portfolioID;
-        this.orderID = order.id;
+        this.orderID = order.state.id;
     }
     async step() {
         const tick = await this.exchange.fetchOrder(this.orderID, this.symbol);
         if (this.hasChanged(tick)) {
             this.series.append(tick);
-            this.order.status = tick.status;
+            this.order.state.status = tick.state.status;
             this.exchange.invalidate();
         }
     }
@@ -123,9 +121,9 @@ class OrderTicker extends Ticker {
         let last = this.last();
         if (!last)
             return true;
-        if (last.status != tick.status)
+        if (last.state.status != tick.state.status)
             return true;
-        if (last.filled != tick.filled)
+        if (last.state.filled != tick.state.filled)
             return true;
         return false;
     }

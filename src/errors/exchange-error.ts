@@ -60,3 +60,9 @@ export class ScenarioFileMissingError extends FileMissingError {
     super(filename, 'scenario');
   }
 }
+
+export class InvalidCSVError extends Error {
+  constructor(csv:string, type:Function) {
+    super(csv + type);
+  }
+}
