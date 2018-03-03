@@ -1,7 +1,7 @@
 import { MultiSignal, SignalCode } from ".";
 import { Ticker } from "../ticker";
 
-export class And extends MultiSignal {
+export class All extends MultiSignal {
   public async evaluate(ticker:Ticker):Promise<SignalCode> {
     let consensus:SignalCode = null;
     for (const subsignal of this.subsignals) {

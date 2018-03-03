@@ -1,29 +1,46 @@
 {
-  "name": "obv-macd",
+  "name": "obv-macd-lite",
   "exchange": "binance",
   "strategies": [
     {
-      "displayName": "OBV-MACD",
+      "fileName": "index",
+      "className": "Strategy",
+      "title": "Any--MACD,OBV",
       "weight": 1,
       "indicators": [
         {
-          {
-            "title": "MACD'n",
-            "fileName": "index",
-            "className": "Strategy",
-            "weight": 1,
-            "indicators": [{ "fileName": "macd", "className": "MACD"}]
-          },
+          "fileName": "any", 
+          "className": "Any",
+          "subsignals": [
+            { "fileName": "macd", "className": "MACD" },
+            { "fileName": "obv", "className": "OBV" }
+          ]
         }
       ]
     },
     {
+      "fileName": "index",
+      "className": "Strategy",
+      "title": "All--MACD,OBV",
       "weight": 1,
-      "id": "hodl"
+      "indicators": [
+        {
+          "fileName": "all", 
+          "className": "All",
+          "subsignals": [
+            { "fileName": "macd", "className": "MACD" },
+            { "fileName": "obv", "className": "OBV" }
+          ]
+        }
+      ]
+    },
+    {
+      "fileName": "hodl",
+      "className": "HODL",
+      "weight":1
     }
   ],
   "tickers": [
     "ETH/BTC", "BTC/USDT"
-  ],
-  "record": true
+  ]
 }

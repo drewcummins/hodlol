@@ -3,24 +3,44 @@
   "exchange": "binance",
   "strategies": [
     {
-      "displayName": "OBV-MACD",
+      "fileName": "index",
+      "className": "Strategy",
+      "title": "Any--MACD,OBV",
       "weight": 1,
       "indicators": [
         {
-          "id": "all",
+          "fileName": "any", 
+          "className": "Any",
           "subsignals": [
-            {"id": "obv", "id": "macd"}
+            { "fileName": "macd", "className": "MACD" },
+            { "fileName": "obv", "className": "OBV" }
           ]
         }
       ]
     },
     {
+      "fileName": "index",
+      "className": "Strategy",
+      "title": "All--MACD,OBV",
       "weight": 1,
-      "id": "hodl"
+      "indicators": [
+        {
+          "fileName": "all", 
+          "className": "All",
+          "subsignals": [
+            { "fileName": "macd", "className": "MACD" },
+            { "fileName": "obv", "className": "OBV" }
+          ]
+        }
+      ]
+    },
+    {
+      "fileName": "hodl",
+      "className": "HODL",
+      "weight":1
     }
   ],
   "tickers": [
     "ETH/BTC", "BTC/USDT", "ETH/USDT", "XMR/BTC", "ARK/BTC", "VEN/BTC", "LTC/BTC", "BNB/BTC", "ZRX/BTC", "OMG/BTC", "IOTA/BTC", "SUB/BTC", "REQ/BTC", "ENJ/BTC", "ENJ/ETH", "ZEC/BTC", "ICX/BTC"
-  ],
-  "record": true
+  ]
 }

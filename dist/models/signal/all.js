@@ -17,4 +17,4 @@ class All extends _1.MultiSignal {
     }
 }
 exports.All = All;
-//# sourceMappingURL=and.js.map
+//# sourceMappingURL=all.js.map
