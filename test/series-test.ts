@@ -1,6 +1,6 @@
-import { Series, CandleSerializer, OrderSerializer } from '../src/models/series';
-import { Num, BN } from '../src/models/types';
-import { sleep } from '../src/utils';
+import { Series, OHLCVSerializer, OrderSerializer } from '../src/models/series';
+import { Num, BN, OHLCV, OHLCVTick, Scenario } from '../src/models/types';
+import { sleep, Thread } from '../src/utils';
 import { expect } from 'chai';
 import 'mocha';
 import * as fs from "fs";
@@ -14,22 +14,33 @@ function removeSeriesFile(filepath) {
 describe('Series tests', async () => {
   const filepath = "./rofl.csv";
 
-  before(removeSeriesFile.bind(null, filepath));
-  after(removeSeriesFile.bind(null, filepath));
+  before(() => {
+    removeSeriesFile(filepath);
+    Scenario.createWithName("lol", 0, 0);
+  });
+  
+  after(() => {
+    Thread.killAll();
+    removeSeriesFile(filepath);
+    Scenario.kill();
+  });
 
-  let candles = new Series(filepath, new CandleSerializer());
+  let candles = new Series(filepath, new OHLCVSerializer());
   it('should have expected init candle values', () => {
     expect(candles.filepath).to.equal(filepath);
-    expect(candles.autowrite).to.equal(false);
     expect(candles.length()).to.equal(0);
     expect(candles.last()).to.be.undefined;
     expect(candles.getAt(-3)).to.be.undefined;
   });
 
+  const timestamp:number = +new Date();
+
   let [tick0, tick1] = [
-    {"timestamp": +new Date(), "open": 5, "high": 10, "low": 2, "close": 7, "volume": 100},
-    {"timestamp": +new Date() + 5, "open": 7, "high": 11, "low": 4, "close": 8, "volume": 200}
+    new OHLCV(Object.assign([timestamp, 5, 10, 2, 7, 100], {timestamp:timestamp}) as OHLCVTick),
+    new OHLCV(Object.assign([timestamp + 5, 7, 11, 4, 8, 200], {timestamp:timestamp + 5}) as OHLCVTick)
   ];
+
+  console.log(tick0.timestamp, tick1.timestamp)
 
   it('should add tick to candles', () => {
     candles.append(tick0);
@@ -61,7 +72,7 @@ describe('Series tests', async () => {
     expect(fs.existsSync(filepath)).to.be.true;
   })
 
-  let reader = new Series(filepath, new CandleSerializer());
+  let reader = new Series(filepath, new OHLCVSerializer());
 
   it('should read the series file', () => {
     reader.read();
@@ -73,8 +84,8 @@ describe('Series tests', async () => {
 
   it('should find closest ticks for given timestamps', () => {
     let [tick2, tick3] = [
-      {"timestamp": tick1.timestamp+3, "open": tick1.close, "high": 10, "low": 2, "close": 10, "volume": 100},
-      {"timestamp": tick1.timestamp+5, "open": 10, "high": 11, "low": 4, "close": 8, "volume": 200}
+      new OHLCV(Object.assign([timestamp + 8, tick1.close, 10, 2, 7, 100], {timestamp:timestamp + 8}) as OHLCVTick),
+      new OHLCV(Object.assign([timestamp + 10, 7, 11, 4, 8, 200], {timestamp:timestamp + 10}) as OHLCVTick)
     ];
     candles.append(tick2);
     candles.append(tick3);

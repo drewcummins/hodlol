@@ -145,7 +145,10 @@ export class Exchange {
   }
 
   public async validateFunds(fundSymbol:string, fundAmount:number):Promise<boolean> {
-    if (Scenario.getInstance().mode == ScenarioMode.PLAYBACK) return true;
+    if (Scenario.getInstance().mode == ScenarioMode.PLAYBACK) {
+      this.state.set(this.fundsSufficient);
+      return true;
+    }
     let balance = await this.fetchBalance();
     if (balance[fundSymbol] && balance[fundSymbol].free >= fundAmount) {
       this.state.set(this.fundsSufficient);

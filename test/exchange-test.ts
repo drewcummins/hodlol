@@ -3,7 +3,7 @@ import { Exchange } from '../src/models/exchange';
 const ccxt = require('ccxt');
 import { expect } from 'chai';
 import 'mocha';
-import { Thread } from '../src/utils';
+import { Thread, sleep } from '../src/utils';
 
 describe('Exchange tests', async () => {
 
@@ -11,9 +11,12 @@ describe('Exchange tests', async () => {
     Scenario.create("./scenarios/market-crash.scenario");
   })
 
-  after(() => {
-    Scenario.kill();
+  after(async () => {
     Thread.killAll();
+    // wait for threads to die; 
+    // otherwise we can end up accessing stuff on scenario after it's been killed
+    await sleep(1200);
+    Scenario.kill();
   })
 
   let state = new BitfieldState();
@@ -50,22 +53,32 @@ describe('Exchange tests', async () => {
     expect(exchange).to.exist;
     expect(exchange.hasMarkets()).to.be.false;
     expect(exchange.hasFeeds()).to.be.false;
-    expect(exchange.isLoaded()).to.be.false;
     expect(exchange.areTickersRunning()).to.be.false;
+    expect(exchange.hasSufficientFunds()).to.be.false;
+    expect(exchange.isLoaded()).to.be.false;
     await exchange.loadMarketplace();
     expect(exchange.hasMarkets()).to.be.true;
     expect(exchange.hasFeeds()).to.be.false;
-    expect(exchange.isLoaded()).to.be.false;
     expect(exchange.areTickersRunning()).to.be.false;
+    expect(exchange.hasSufficientFunds()).to.be.false;
+    expect(exchange.isLoaded()).to.be.false;
     await exchange.loadFeeds(["XMR/BTC", "BTC/USDT"]);
     expect(exchange.hasMarkets()).to.be.true;
     expect(exchange.hasFeeds()).to.be.true;
     expect(exchange.areTickersRunning()).to.be.false;
+    expect(exchange.hasSufficientFunds()).to.be.false;
     expect(exchange.isLoaded()).to.be.false;
     await exchange.runTickers();
     expect(exchange.hasMarkets()).to.be.true;
     expect(exchange.hasFeeds()).to.be.true;
     expect(exchange.areTickersRunning()).to.be.true;
+    expect(exchange.hasSufficientFunds()).to.be.false;
+    expect(exchange.isLoaded()).to.be.false;
+    await exchange.validateFunds("BTC", 0);
+    expect(exchange.hasMarkets()).to.be.true;
+    expect(exchange.hasFeeds()).to.be.true;
+    expect(exchange.areTickersRunning()).to.be.true;
+    expect(exchange.hasSufficientFunds()).to.be.true;
     expect(exchange.isLoaded()).to.be.true;
   }).timeout(15000);
 

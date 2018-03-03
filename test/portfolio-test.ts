@@ -1,7 +1,7 @@
 import { Portfolio } from '../src/models/portfolio';
-import { Num, BN } from '../src/models/types';
+import { Num, BN, Order, OrderTick } from '../src/models/types';
 import { Marketplace, IMarket } from '../src/models/market';
-import { Order, OrderRequest, OrderStatus, OrderType, OrderSide } from '../src/models/order';
+import { OrderRequest, OrderStatus, OrderType, OrderSide } from '../src/models/order';
 import { expect } from 'chai';
 import 'mocha';
 import { InvalidMarketSymbolError, InsufficientFundsError } from '../src/errors/exchange-error';
@@ -42,19 +42,23 @@ describe('Portfolio tests', () => {
     expect(BN(btcBalance.reserved).toNumber()).to.equal(amount);
   });
 
-  let buyOrder:Order = { 
+  let buyOrderTick:OrderTick = { 
     timestamp:0,
+    datetime: "N/A",
     type:buyRequest.type,
     side:buyRequest.side,
     id:"buy",
     symbol:market.symbol,
     status:OrderStatus.CLOSED,
-    cost:buyRequest.cost(),
+    cost:Number(buyRequest.cost()),
     filled:50,
-    price:buyRequest.price,
+    price:Number(buyRequest.price),
     remaining:0,
-    amount:50
-     };
+    amount:50,
+    info: {},
+    fee: 0
+  };
+  let buyOrder:Order = new Order(buyOrderTick);
 
   it('should fill the above order giving us 50 ethereum -- Portfolio.fill, Portfolio.balanceByMarket', () => {
     portfolio.fill(buyOrder);
@@ -86,18 +90,24 @@ describe('Portfolio tests', () => {
     expect(BN(ethBalance.reserved).toNumber()).to.equal(sellRequest.amount);
   });
 
-  let sellOrder:Order = { 
+  let sellOrderTick:OrderTick = { 
     timestamp: 0,
+    datetime: "N/A",
+    fee: 0,
     type:sellRequest.type,
     side:sellRequest.side,
     id:"sell",
     symbol:market.symbol,
     status:OrderStatus.CLOSED,
-    cost:sellRequest.cost(),
+    cost:Number(sellRequest.cost()),
     filled:50,
     remaining:0,
-    price:sellRequest.price,
-    amount:sellRequest.amount };
+    info: {},
+    price:Number(sellRequest.price),
+    amount:Number(sellRequest.amount) 
+  };
+
+  let sellOrder:Order = new Order(sellOrderTick);
 
   it('should fill the sell order giving us back our original 10 bitcoin -- Portfolio.fill, Portfolio.balanceByMarket', () => {
     portfolio.fill(sellOrder);

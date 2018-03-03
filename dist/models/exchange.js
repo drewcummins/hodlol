@@ -122,8 +122,10 @@ class Exchange {
         }
     }
     async validateFunds(fundSymbol, fundAmount) {
-        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK)
+        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK) {
+            this.state.set(this.fundsSufficient);
             return true;
+        }
         let balance = await this.fetchBalance();
         if (balance[fundSymbol] && balance[fundSymbol].free >= fundAmount) {
             this.state.set(this.fundsSufficient);
