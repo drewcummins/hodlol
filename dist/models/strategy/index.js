@@ -73,7 +73,7 @@ class Strategy {
         let request = new order_1.OrderRequest(type, side, market, amount, price, this.portfolio.id);
         try {
             let order = await this.tsi.requestOrderHandler(this, request);
-            this.orders.set(order.id, order);
+            this.orders.set(order.state.id, order);
             return order;
         }
         catch (err) {

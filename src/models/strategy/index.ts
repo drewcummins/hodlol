@@ -1,5 +1,5 @@
 import { SignalJSON, Signal, SignalCode } from "../signal";
-import { ID, Num, BN, Value, Order } from "../types";
+import { ID, Num, BN, Value, Order, OHLCV } from "../types";
 import { Portfolio } from "../portfolio";
 import { OrderRequest, OrderType, OrderSide } from "../order";
 import { Feed } from "../exchange";
@@ -66,8 +66,8 @@ export class Strategy {
       let signal = await indicator.tick();
       if (signal == SignalCode.PASS) continue;
 
-      let ticker:CandleTicker = feed.candles.get(indicator.symbol);
-      let last:Tick = ticker.last();
+      let ticker:OHLCVTicker = feed.candles.get(indicator.symbol);
+      let last:OHLCV = ticker.last() as OHLCV;
       if (signal == SignalCode.BUY) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
         if (BN(quote.free).isGreaterThan(0)) {
@@ -97,8 +97,8 @@ export class Strategy {
   protected async requestOrder(type:OrderType, side:OrderSide, market:string, amount:Num, price:Num=null):Promise<Order> {
     let request = new OrderRequest(type, side, market, amount, price, this.portfolio.id);
     try {
-      let order = await this.tsi.requestOrderHandler(this, request);
-      this.orders.set(order.id, order);
+      let order:Order = await this.tsi.requestOrderHandler(this, request);
+      this.orders.set(order.state.id, order);
       return order;
     } catch(err) {
       // console.log("Error on request order:", request, err.message);

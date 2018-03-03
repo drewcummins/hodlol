@@ -1,4 +1,4 @@
-import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick } from "./types";
+import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick, Ticker, TickerTick } from "./types";
 import { OrderType, OrderSide, OrderStatus } from "./order"
 import { Feed } from "./exchange";
 import { Series, OHLCVSerializer } from "./series";
@@ -42,7 +42,7 @@ export class MockAPI implements API {
     return this.api.loadMarkets();
   }
 
-  public async fetchTicker(pair:string):Promise<any> {
+  public async fetchTicker(pair:string):Promise<TickerTick> {
     // not using this yet
     return;
   }
