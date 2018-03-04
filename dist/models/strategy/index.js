@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const signal_1 = require("../signal");
 const types_1 = require("../types");
 const order_1 = require("../order");
-const exchange_error_1 = require("../../errors/exchange-error");
+const errors_1 = require("../../errors");
 const uuid = require('uuid/v4');
 class Strategy {
     constructor(portfolio, source, tsi) {
@@ -58,7 +58,7 @@ class Strategy {
                 }
             }
             else {
-                throw new exchange_error_1.InvalidSignalError(indicator, signal);
+                throw new errors_1.InvalidSignalError(indicator, signal);
             }
         }
         ;

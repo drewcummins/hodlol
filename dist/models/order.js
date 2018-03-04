@@ -47,7 +47,7 @@ class MarketOrderRequest extends OrderRequest {
 exports.MarketOrderRequest = MarketOrderRequest;
 class LimitOrderRequest extends OrderRequest {
     constructor(side, market, amount, price, portfolioID) {
-        super(OrderType.MARKET, side, market, portfolioID);
+        super(OrderType.LIMIT, side, market, portfolioID);
         this.amount = amount;
         this.price = price;
     }

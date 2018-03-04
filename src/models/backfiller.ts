@@ -3,7 +3,7 @@ import * as mkdirp from "mkdirp";
 const ccxt = require('ccxt');
 import { TraderJSON } from "./trader";
 import { Scenario, API, IScenario } from "./types";
-import { InvalidExchangeNameError } from "../errors/exchange-error";
+import { InvalidExchangeNameError } from "../errors";
 import { Exchange } from "./exchange";
 import { Thread } from "../utils";
 

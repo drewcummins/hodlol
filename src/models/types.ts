@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js"
 import { OrderRequest } from "./order";
 import * as fs from "fs";
 import * as mkdirp from "mkdirp";
-import { ScenarioFileMissingError } from "../errors/exchange-error";
+import { ScenarioFileMissingError } from "../errors";
 import * as ccxt from "ccxt";
 
 BigNumber.config({ DECIMAL_PLACES:5 });

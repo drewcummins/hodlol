@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const uuid = require('uuid/v4');
 const types_1 = require("./types");
 const order_1 = require("./order");
-const exchange_error_1 = require("../errors/exchange-error");
+const errors_1 = require("../errors");
 class Portfolio {
     constructor(markets, fundSymbol = 'BTC', fundAmount = 10) {
         this.markets = markets;
@@ -61,10 +61,15 @@ class Portfolio {
             return types_1.BN(quote.free).isGreaterThanOrEqualTo(request.cost());
         }
         else if (request.side == order_1.OrderSide.SELL) {
-            return types_1.BN(base.free).isGreaterThanOrEqualTo(request.amount);
+            if (request.type == order_1.OrderType.LIMIT) {
+                return types_1.BN(base.free).isGreaterThanOrEqualTo(types_1.BN(request.amount));
+            }
+            else {
+                return types_1.BN(base.free).isGreaterThanOrEqualTo(types_1.BN(request.balance));
+            }
         }
         else {
-            throw new exchange_error_1.InvalidOrderSideError(request);
+            throw new errors_1.InvalidOrderSideError(request);
         }
     }
     /**
@@ -76,7 +81,7 @@ class Portfolio {
      */
     reserve(request) {
         if (!this.hasSufficientFunds(request)) {
-            throw new exchange_error_1.InsufficientFundsError(request);
+            throw new errors_1.InsufficientFundsError(request);
         }
         let market = this.markets.getWithSymbol(request.market.symbol);
         switch (request.side) {
@@ -85,8 +90,14 @@ class Portfolio {
                 this.addReserved(market.quote, request.cost());
                 break;
             case order_1.OrderSide.SELL:
-                this.removeFree(market.base, request.amount);
-                this.addReserved(market.base, request.amount);
+                if (request.type == order_1.OrderType.LIMIT) {
+                    this.removeFree(market.base, request.amount);
+                    this.addReserved(market.base, request.amount);
+                }
+                else {
+                    this.removeFree(market.base, request.balance);
+                    this.addReserved(market.base, request.balance);
+                }
                 break;
             default:
                 break;

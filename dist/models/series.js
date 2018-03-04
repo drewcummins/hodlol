@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const utils_1 = require("../utils");
-const exchange_error_1 = require("../errors/exchange-error");
+const errors_1 = require("../errors");
 const types_1 = require("./types");
 class Serializer {
     properties(tick) {
@@ -45,7 +45,7 @@ class TickerSerializer extends Serializer {
     fromCSV(csv) {
         let props = csv.split(",").map((x) => Number(x));
         if (props.length != 5) {
-            throw new exchange_error_1.InvalidCSVError(csv, TickerSerializer);
+            throw new errors_1.InvalidCSVError(csv, TickerSerializer);
         }
         let ticker = {
             symbol: "N/A",
@@ -75,7 +75,7 @@ class OHLCVSerializer extends Serializer {
     fromCSV(csv) {
         let ohlcv = csv.split(",").map((x) => Number(x));
         if (ohlcv.length != 6) {
-            throw new exchange_error_1.InvalidCSVError(csv, OHLCVSerializer);
+            throw new errors_1.InvalidCSVError(csv, OHLCVSerializer);
         }
         return new types_1.OHLCV(Object.assign(ohlcv, { timestamp: ohlcv[0] }));
     }
@@ -96,7 +96,7 @@ class OrderSerializer extends Serializer {
     fromCSV(csv) {
         let props = csv.split(",");
         if (props.length != 12) {
-            throw new exchange_error_1.InvalidCSVError(csv, OrderSerializer);
+            throw new errors_1.InvalidCSVError(csv, OrderSerializer);
         }
         let order = {
             id: props[1],
@@ -246,7 +246,7 @@ class Series {
             });
         }
         else {
-            throw new exchange_error_1.BacktestFileMissingError(this.filepath);
+            throw new errors_1.BacktestFileMissingError(this.filepath);
         }
     }
 }

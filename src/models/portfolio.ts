@@ -1,9 +1,9 @@
 const uuid = require('uuid/v4');
 import { Balance, Num, BN, ID, Value, Order, Tick, OrderTick } from './types';
-import { OrderRequest, OrderSide, OrderType } from './order';
+import { OrderRequest, OrderSide, OrderType, LimitOrderRequest, MarketOrderRequest } from './order';
 import { Marketplace, IMarket } from './market';
 import { BigNumber } from "bignumber.js";
-import { InsufficientFundsError, InvalidOrderSideError } from '../errors/exchange-error';
+import { InsufficientFundsError, InvalidOrderSideError } from '../errors';
 
 export class Portfolio {
   readonly id:string;
@@ -65,7 +65,11 @@ export class Portfolio {
     if (request.side == OrderSide.BUY) {
       return BN(quote.free).isGreaterThanOrEqualTo(request.cost());
     } else if (request.side == OrderSide.SELL) {
-      return BN(base.free).isGreaterThanOrEqualTo(request.amount);
+      if (request.type == OrderType.LIMIT) {
+        return BN(base.free).isGreaterThanOrEqualTo(BN((request as LimitOrderRequest).amount));
+      } else {
+        return BN(base.free).isGreaterThanOrEqualTo(BN((request as MarketOrderRequest).balance));
+      }
     } else {
       throw new InvalidOrderSideError(request);
     }
@@ -91,8 +95,13 @@ export class Portfolio {
         break;
 
       case OrderSide.SELL:
-        this.removeFree(market.base, request.amount);
-        this.addReserved(market.base, request.amount);
+        if (request.type == OrderType.LIMIT) {
+          this.removeFree(market.base, (request as LimitOrderRequest).amount);
+          this.addReserved(market.base, (request as LimitOrderRequest).amount);
+        } else {
+          this.removeFree(market.base, (request as MarketOrderRequest).balance);
+          this.addReserved(market.base, (request as MarketOrderRequest).balance);
+        }
         break;
     
       default:

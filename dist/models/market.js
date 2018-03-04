@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const exchange_error_1 = require("../errors/exchange-error");
+const errors_1 = require("../errors");
 class Marketplace {
     constructor(markets) {
         this.symbolMap = {};
@@ -72,14 +72,14 @@ class Marketplace {
     getMarket(map, symbol) {
         let market = this.symbolMap[symbol];
         if (market == undefined) {
-            throw new exchange_error_1.InvalidMarketSymbolError(symbol);
+            throw new errors_1.InvalidMarketSymbolError(symbol);
         }
         return market;
     }
     getMarketMap(mm, symbol) {
         let map = mm[symbol];
         if (map == undefined) {
-            throw new exchange_error_1.InvalidMarketSymbolError(symbol);
+            throw new errors_1.InvalidMarketSymbolError(symbol);
         }
         return map;
     }

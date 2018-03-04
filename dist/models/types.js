@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const bignumber_js_1 = require("bignumber.js");
 const fs = require("fs");
-const exchange_error_1 = require("../errors/exchange-error");
+const errors_1 = require("../errors");
 bignumber_js_1.BigNumber.config({ DECIMAL_PLACES: 5 });
 function BN(x) {
     return new bignumber_js_1.BigNumber(x.toString());
@@ -84,7 +84,7 @@ class Scenario {
                 this.mode = ScenarioMode.PLAYBACK;
             }
             else {
-                throw new exchange_error_1.ScenarioFileMissingError(file);
+                throw new errors_1.ScenarioFileMissingError(file);
             }
         }
         else {

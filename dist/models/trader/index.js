@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const exchange_1 = require("../exchange");
 const types_1 = require("../types");
-const exchange_error_1 = require("../../errors/exchange-error");
+const errors_1 = require("../../errors");
 const utils_1 = require("../../utils");
 const portfolio_1 = require("../portfolio");
 const mock_api_1 = require("../mock-api");
@@ -32,7 +32,7 @@ class Trader {
         }
         let apiClass = ccxt[source.exchange];
         if (!apiClass)
-            throw new exchange_error_1.InvalidExchangeNameError(source.exchange);
+            throw new errors_1.InvalidExchangeNameError(source.exchange);
         let apiCreds = config_1.config[source.exchange];
         let api = new apiClass(apiCreds);
         // This is a little weird

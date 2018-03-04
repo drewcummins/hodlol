@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { bnearest } from "../utils";
-import { BacktestFileMissingError, InvalidCSVError } from "../errors/exchange-error";
+import { BacktestFileMissingError, InvalidCSVError } from "../errors";
 import { OrderSide, OrderType } from "./order";
 import { Scenario, ScenarioMode, Tick, ExchangeState, OHLCVTick, OHLCV, TickerTick, Ticker, OrderTick, Order } from "./types";
 

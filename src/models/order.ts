@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { BN, Num, ID } from "./types"
-import { InvalidOrderTypeError } from "../errors/exchange-error";
+import { InvalidOrderTypeError } from "../errors";
 import { IMarket } from "./market";
 
 export enum OrderSide {
@@ -52,7 +52,7 @@ export class MarketOrderRequest extends OrderRequest {
 
 export class LimitOrderRequest extends OrderRequest {
   constructor(side:OrderSide, market:IMarket, readonly amount:Num, readonly price:Num, portfolioID:ID) {
-    super(OrderType.MARKET, side, market, portfolioID);
+    super(OrderType.LIMIT, side, market, portfolioID);
   }
 
   public cost():Num {

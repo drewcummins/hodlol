@@ -4,7 +4,7 @@ const types_1 = require("./types");
 const market_1 = require("./market");
 const ticker_1 = require("./ticker");
 const order_1 = require("./order");
-const exchange_error_1 = require("../errors/exchange-error");
+const errors_1 = require("../errors");
 class Exchange {
     constructor(api) {
         this.api = api;
@@ -137,7 +137,7 @@ class Exchange {
             this.state.set(this.fundsSufficient);
             return true;
         }
-        throw new exchange_error_1.InsufficientExchangeFundsError(fundSymbol, balance[fundSymbol].free, fundAmount);
+        throw new errors_1.InsufficientExchangeFundsError(fundSymbol, balance[fundSymbol].free, fundAmount);
     }
     /**
      * Runs all tickers (each in their own "thread")
@@ -238,15 +238,22 @@ class Exchange {
         let order = null;
         let portfolio = this.portfolios.get(request.portfolioID);
         portfolio.reserve(request);
-        switch (request.side) {
-            case order_1.OrderSide.BUY:
-                order = new types_1.Order(await this.api.createLimitBuyOrder(request.market.symbol, request.amount, request.price));
-                break;
-            case order_1.OrderSide.SELL:
-                order = new types_1.Order(await this.api.createLimitSellOrder(request.market.symbol, request.amount, request.price));
+        switch (request.type) {
+            case order_1.OrderType.LIMIT:
+                let limit = request;
+                switch (request.side) {
+                    case order_1.OrderSide.BUY:
+                        order = new types_1.Order(await this.api.createLimitBuyOrder(limit.market.symbol, limit.amount, limit.price));
+                        break;
+                    case order_1.OrderSide.SELL:
+                        order = new types_1.Order(await this.api.createLimitSellOrder(limit.market.symbol, limit.amount, limit.price));
+                        break;
+                    default:
+                        throw new errors_1.InvalidOrderSideError(request);
+                }
                 break;
             default:
-                throw new exchange_error_1.InvalidOrderSideError(request);
+                throw new errors_1.InvalidOrderTypeError(request);
         }
         this.addOrder(order, portfolio.id);
         return order;

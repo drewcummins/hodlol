@@ -5,7 +5,7 @@ import { OrderRequest, OrderType, OrderSide, LimitOrderRequest, LimitSellOrderRe
 import { Feed } from "../exchange";
 import { MACD } from "../signal/macd";
 import { OHLCVTicker } from "../ticker";
-import { InvalidSignalError } from "../../errors/exchange-error";
+import { InvalidSignalError } from "../../errors";
 import { IMarket } from "../market";
 const uuid = require('uuid/v4');
 

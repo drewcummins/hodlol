@@ -4,7 +4,7 @@ const fs = require("fs");
 const mkdirp = require("mkdirp");
 const ccxt = require('ccxt');
 const types_1 = require("./types");
-const exchange_error_1 = require("../errors/exchange-error");
+const errors_1 = require("../errors");
 const exchange_1 = require("./exchange");
 const utils_1 = require("../utils");
 class Backfiller {
@@ -17,7 +17,7 @@ class Backfiller {
         mkdirp.sync(`./data/${trader.exchange}/${name}`);
         const apiClass = ccxt[trader.exchange];
         if (!apiClass)
-            throw new exchange_error_1.InvalidExchangeNameError(trader.exchange);
+            throw new errors_1.InvalidExchangeNameError(trader.exchange);
         let api = new apiClass();
         const exchange = new exchange_1.Exchange(api);
         await exchange.loadFeeds(trader.tickers);

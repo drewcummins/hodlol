@@ -2,8 +2,8 @@ import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, Tic
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { OHLCVTicker, OrderTicker } from "./ticker";
-import { OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
-import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors/exchange-error";
+import { OrderStatus, OrderRequest, OrderType, OrderSide, LimitOrderRequest } from "./order";
+import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors";
 import { Portfolio } from "./portfolio";
 import * as ccxt from "ccxt";
 
@@ -269,16 +269,24 @@ export class Exchange {
     let order:Order = null;
     let portfolio = this.portfolios.get(request.portfolioID);
     portfolio.reserve(request);
-    switch (request.side) {
-      case OrderSide.BUY:
-        order = new Order(await this.api.createLimitBuyOrder(request.market.symbol, request.amount, request.price));
-        break;
-      case OrderSide.SELL:
-        order = new Order(await this.api.createLimitSellOrder(request.market.symbol, request.amount, request.price));
+    switch (request.type) {
+      case OrderType.LIMIT:
+        let limit:LimitOrderRequest = request as LimitOrderRequest;
+        switch (request.side) {
+          case OrderSide.BUY:
+            order = new Order(await this.api.createLimitBuyOrder(limit.market.symbol, limit.amount, limit.price));
+            break;
+          case OrderSide.SELL:
+            order = new Order(await this.api.createLimitSellOrder(limit.market.symbol, limit.amount, limit.price));
+            break;
+        
+          default:
+            throw new InvalidOrderSideError(request);
+        }
         break;
     
       default:
-        throw new InvalidOrderSideError(request);
+        throw new InvalidOrderTypeError(request);
     }
     this.addOrder(order, portfolio.id);
     return order;

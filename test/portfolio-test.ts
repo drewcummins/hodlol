@@ -4,7 +4,7 @@ import { Marketplace, IMarket } from '../src/models/market';
 import { OrderRequest, OrderStatus, OrderType, OrderSide, LimitBuyOrderRequest, LimitSellOrderRequest, LimitOrderRequest } from '../src/models/order';
 import { expect } from 'chai';
 import 'mocha';
-import { InvalidMarketSymbolError, InsufficientFundsError } from '../src/errors/exchange-error';
+import { InvalidMarketSymbolError, InsufficientFundsError } from '../src/errors';
 
 const BTC:string = "BTC";
 const btcFunds:Num = 10;

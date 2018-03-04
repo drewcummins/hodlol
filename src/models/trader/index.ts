@@ -1,6 +1,6 @@
 import { Exchange } from "../exchange";
 import { BN, ID, API, Scenario, ScenarioMode, Order } from "../types";
-import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors/exchange-error";
+import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors";
 import { sleep, Thread, formatTimestamp } from "../../utils";
 import { Strategy, TraderStrategyInterface, StrategyJSON } from "../strategy";
 import { OrderRequest, OrderType, OrderSide } from "../order";

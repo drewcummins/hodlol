@@ -1,5 +1,5 @@
 import { Num } from './types'
-import { InvalidMarketSymbolError } from "../errors/exchange-error";
+import { InvalidMarketSymbolError } from "../errors";
 
 export interface IMarket {
   readonly symbol:string;
