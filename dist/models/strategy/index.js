@@ -17,10 +17,10 @@ class Strategy {
         this.init(source);
     }
     async before() {
-        // console.log(`Strategy ${this.title} before called.`);
+        //
     }
     async after() {
-        // console.log(`Strategy ${this.title} after called.`);
+        //
     }
     init(source) {
         const feed = this.tsi.feed;
@@ -43,17 +43,18 @@ class Strategy {
                 continue;
             let ticker = feed.candles.get(indicator.symbol);
             let last = ticker.last();
+            let market = this.portfolio.marketBySymbol(indicator.symbol);
             if (signal == signal_1.SignalCode.BUY) {
                 let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
                 if (types_1.BN(quote.free).isGreaterThan(0)) {
                     // greedily use up funds
-                    const order = await this.placeLimitBuyOrder(indicator.symbol, types_1.BN(quote.free).toNumber(), types_1.BN(last.close));
+                    const order = await this.placeLimitBuyOrder(market, types_1.BN(quote.free), types_1.BN(last.close));
                 }
             }
             else if (signal == signal_1.SignalCode.SELL) {
                 let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
                 if (types_1.BN(base.free).isGreaterThan(0)) {
-                    const order = await this.placeLimitSellOrder(indicator.symbol, types_1.BN(base.free).toNumber(), types_1.BN(last.close));
+                    const order = await this.placeLimitSellOrder(market, types_1.BN(base.free), types_1.BN(last.close));
                 }
             }
             else {
@@ -62,15 +63,7 @@ class Strategy {
         }
         ;
     }
-    async placeLimitBuyOrder(symbol, budget, close) {
-        let amount = types_1.BN(budget).dividedBy(types_1.BN(close));
-        return await this.requestOrder(order_1.OrderType.LIMIT, order_1.OrderSide.BUY, symbol, amount, close);
-    }
-    async placeLimitSellOrder(symbol, budget, close) {
-        return await this.requestOrder(order_1.OrderType.LIMIT, order_1.OrderSide.SELL, symbol, budget, close);
-    }
-    async requestOrder(type, side, market, amount, price = null) {
-        let request = new order_1.OrderRequest(type, side, market, amount, price, this.portfolio.id);
+    async placeOrder(request) {
         try {
             let order = await this.tsi.requestOrderHandler(this, request);
             this.orders.set(order.state.id, order);
@@ -80,6 +73,12 @@ class Strategy {
             // default to doing nothing; strategy subclasses can handle this differently
             return null;
         }
+    }
+    async placeLimitBuyOrder(market, budget, close) {
+        return this.placeOrder(order_1.LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
+    }
+    async placeLimitSellOrder(market, budget, close) {
+        return this.placeOrder(new order_1.LimitSellOrderRequest(market, budget, close, this.portfolio.id));
     }
     getTitle() {
         return "Strategy";

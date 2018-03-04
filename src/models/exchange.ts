@@ -179,6 +179,8 @@ export class Exchange {
       const last:Order = ticker.last() as Order;
       const order:OrderTick = last.state;
       if (last) {
+        // For right now, only act if the order is completely closed
+        // TODO: Deal with partial fills
         if (order.status == OrderStatus.CLOSED || order.status == OrderStatus.CANCELED) {
           ticker.kill();
           this.feed.orders.delete(ticker.orderID);
@@ -269,10 +271,10 @@ export class Exchange {
     portfolio.reserve(request);
     switch (request.side) {
       case OrderSide.BUY:
-        order = new Order(await this.api.createLimitBuyOrder(request.marketSymbol, request.amount, request.price));
+        order = new Order(await this.api.createLimitBuyOrder(request.market.symbol, request.amount, request.price));
         break;
       case OrderSide.SELL:
-        order = new Order(await this.api.createLimitSellOrder(request.marketSymbol, request.amount, request.price));
+        order = new Order(await this.api.createLimitSellOrder(request.market.symbol, request.amount, request.price));
         break;
     
       default:

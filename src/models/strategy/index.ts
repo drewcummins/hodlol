@@ -1,11 +1,12 @@
 import { SignalJSON, Signal, SignalCode } from "../signal";
 import { ID, Num, BN, Value, Order, OHLCV } from "../types";
 import { Portfolio } from "../portfolio";
-import { OrderRequest, OrderType, OrderSide } from "../order";
+import { OrderRequest, OrderType, OrderSide, LimitOrderRequest, LimitSellOrderRequest } from "../order";
 import { Feed } from "../exchange";
 import { MACD } from "../signal/macd";
 import { OHLCVTicker } from "../ticker";
 import { InvalidSignalError } from "../../errors/exchange-error";
+import { IMarket } from "../market";
 const uuid = require('uuid/v4');
 
 export interface StrategyJSON {
@@ -39,11 +40,11 @@ export class Strategy {
   } 
 
   public async before() {
-    // console.log(`Strategy ${this.title} before called.`);
+    //
   }
 
   public async after() {
-    // console.log(`Strategy ${this.title} after called.`);
+    //
   }
 
   protected init(source:StrategyJSON) {
@@ -68,16 +69,17 @@ export class Strategy {
 
       let ticker:OHLCVTicker = feed.candles.get(indicator.symbol);
       let last:OHLCV = ticker.last() as OHLCV;
+      let market:IMarket = this.portfolio.marketBySymbol(indicator.symbol);
       if (signal == SignalCode.BUY) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
         if (BN(quote.free).isGreaterThan(0)) {
           // greedily use up funds
-          const order = await this.placeLimitBuyOrder(indicator.symbol, BN(quote.free).toNumber(), BN(last.close));
+          const order = await this.placeLimitBuyOrder(market, BN(quote.free), BN(last.close));
         }
       } else if (signal == SignalCode.SELL) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
         if (BN(base.free).isGreaterThan(0)) {
-          const order = await this.placeLimitSellOrder(indicator.symbol, BN(base.free).toNumber(), BN(last.close));
+          const order = await this.placeLimitSellOrder(market, BN(base.free), BN(last.close));
         }
       } else {
         throw new InvalidSignalError(indicator, signal);
@@ -85,17 +87,7 @@ export class Strategy {
     };
   }
 
-  protected async placeLimitBuyOrder(symbol:string, budget:Num, close:Num):Promise<Order> {
-    let amount = BN(budget).dividedBy(BN(close));
-    return await this.requestOrder(OrderType.LIMIT, OrderSide.BUY, symbol, amount, close);
-  }
-
-  protected async placeLimitSellOrder(symbol:string, budget:Num, close:Num):Promise<Order> {
-    return await this.requestOrder(OrderType.LIMIT, OrderSide.SELL, symbol, budget, close);
-  }
-
-  protected async requestOrder(type:OrderType, side:OrderSide, market:string, amount:Num, price:Num=null):Promise<Order> {
-    let request = new OrderRequest(type, side, market, amount, price, this.portfolio.id);
+  protected async placeOrder(request:OrderRequest):Promise<Order> {
     try {
       let order:Order = await this.tsi.requestOrderHandler(this, request);
       this.orders.set(order.state.id, order);
@@ -104,6 +96,14 @@ export class Strategy {
       // default to doing nothing; strategy subclasses can handle this differently
       return null; 
     }
+  }
+
+  protected async placeLimitBuyOrder(market:IMarket, budget:Num, close:Num):Promise<Order> {
+    return this.placeOrder(LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
+  }
+
+  protected async placeLimitSellOrder(market:IMarket, budget:Num, close:Num):Promise<Order> {
+    return this.placeOrder(new LimitSellOrderRequest(market, budget, close, this.portfolio.id));
   }
 
   protected getTitle():string {

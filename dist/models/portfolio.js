@@ -25,6 +25,17 @@ class Portfolio {
         return this.balances.get(symbol);
     }
     /**
+     * Gets market associated with symbol
+     *
+     * @param marketSymbol market symbol to get market for
+     *
+     * @returns Relevant market
+     * @throws InvalidMarketSymbolError if symbol doesn't exist in markets
+     */
+    marketBySymbol(marketSymbol) {
+        return this.markets.getWithSymbol(marketSymbol);
+    }
+    /**
      * Gets balance for base and quote of given market
      *
      * @param marketSymbol market symbol to get balance of
@@ -45,7 +56,7 @@ class Portfolio {
      * @throws InvalidOrderSideError if request.side not set correctly
      */
     hasSufficientFunds(request) {
-        let [base, quote] = this.balanceByMarket(request.marketSymbol);
+        let [base, quote] = this.balanceByMarket(request.market.symbol);
         if (request.side == order_1.OrderSide.BUY) {
             return types_1.BN(quote.free).isGreaterThanOrEqualTo(request.cost());
         }
@@ -67,7 +78,7 @@ class Portfolio {
         if (!this.hasSufficientFunds(request)) {
             throw new exchange_error_1.InsufficientFundsError(request);
         }
-        let market = this.markets.getWithSymbol(request.marketSymbol);
+        let market = this.markets.getWithSymbol(request.market.symbol);
         switch (request.side) {
             case order_1.OrderSide.BUY:
                 this.removeFree(market.quote, request.cost());

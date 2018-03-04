@@ -1,6 +1,6 @@
 import { Strategy, StrategyJSON, TraderStrategyInterface } from '../src/models/strategy';
 const ccxt = require('ccxt');
-import { Num, Scenario } from '../src/models/types';
+import { Num, Scenario, ScenarioMode } from '../src/models/types';
 import { IMarket, Marketplace } from '../src/models/market';
 import { Portfolio } from '../src/models/portfolio';
 import { Exchange } from '../src/models/exchange';
@@ -64,7 +64,12 @@ describe('Trader tests', async () => {
     Scenario.kill();
   })
 
-  it('should', async () => {
+  it('should be initialized correctly', () => {
+    expect(trader).to.exist;
+    expect(Scenario.getInstance().mode).to.equal(ScenarioMode.PLAYBACK);
+  })
+
+  it('should successfully run through scenario in under 30s', async () => {
     await trader.run();
-  }).timeout(20000)
+  }).timeout(30000)
 });

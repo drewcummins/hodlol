@@ -1,5 +1,5 @@
 import { Exchange } from "../exchange";
-import { BN, ID, API, Scenario, ScenarioMode } from "../types";
+import { BN, ID, API, Scenario, ScenarioMode, Order } from "../types";
 import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors/exchange-error";
 import { sleep, Thread, formatTimestamp } from "../../utils";
 import { Strategy, TraderStrategyInterface, StrategyJSON } from "../strategy";
@@ -33,6 +33,12 @@ export class Trader {
   protected strategies:Strategy[] = [];
   private thread:Thread;
 
+  /**
+   * Creates a new Trader
+   * 
+   * @param source The trader json that describes how to initialize strategies etc.
+   * @param params Parameters that describe how to interact with an exchange
+   */
   constructor(protected source:TraderJSON, protected params:TraderParams) {
     if (params.backtest) {
       Scenario.create(params.backtest);
@@ -40,10 +46,14 @@ export class Trader {
       Scenario.createWithName(formatTimestamp(+new Date()), +new Date(), 0);
       mkdirp.sync(`./data/${source.exchange}/${Scenario.getInstance().id}`);
     }
+
     let apiClass = ccxt[source.exchange];
-    let apiCreds = config[source.exchange];
     if (!apiClass) throw new InvalidExchangeNameError(source.exchange);
+    let apiCreds = config[source.exchange];
     let api:API = new apiClass(apiCreds);
+    // This is a little weird
+    // Basically we use a "real" API no matter what to pull markets
+    // Everything else gets faked when mocked
     if (params.mock) api = new MockAPI(api);
     this.thread = new Thread();
     this.exchange = new Exchange(api);
@@ -83,6 +93,9 @@ export class Trader {
     }
   }
 
+  /** 
+   * Kicks off everything necessary for the exchange and initializes all strategies
+  */
   public async run() {
     await this.exchange.validateFunds(this.params.symbol, this.params.amount);
     await this.exchange.loadFeeds(this.source.tickers);
@@ -125,16 +138,30 @@ export class Trader {
     }
   }
 
+  /** 
+   * Kills this trader's run thread
+   * 
+   * This will leave "orphaned threads"
+   * To kill everything call @Thread.killAll()
+  */
   public kill():void {
     this.thread.kill();
   }
 
-  public async consider(strategy:Strategy, orderRequest:OrderRequest) {
+  /**
+   * Asks the trader to "consider" an order
+   * 
+   * @param strategy Strategy requesting the order
+   * @param orderRequest Order being requested
+   * 
+   * @returns the created order if successful
+   */
+  public async consider(strategy:Strategy, orderRequest:OrderRequest):Promise<Order> {
     // this is not a clever trader--just create an order
     return this.exchange.createOrder(orderRequest);
   }
 
-  public async printPerformance() {
+  protected async printPerformance() {
     if (this.strategies.length == 0) return;
     let scenario = Scenario.getInstance();
     let out = "\x1Bc\n";

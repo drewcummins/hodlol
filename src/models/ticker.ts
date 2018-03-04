@@ -61,6 +61,9 @@ export class Ticker {
     return this.series.last();
   }
 
+  /** 
+   * Kills this ticker (stops its run loop)
+  */
   public kill():void {
     this.thread.kill();
   }
@@ -96,14 +99,17 @@ export class OHLCVTicker extends Ticker {
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 35000;
   }
 
+  /** 
+   * Grabbing candlestick data returns 0 <= n <= 500 ticks, so we have to iterate over all of them and add each
+  */
   public async step() {
     let last:Tick<ExchangeState> = this.last();
     let since:number = last ? last.timestamp : Scenario.getInstance().time;
     const ohlcv:OHLCV[] = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     ohlcv.forEach((candlestick:OHLCV) => {
       this.series.append(candlestick);
-      this.exchange.invalidate();
     });
+    this.exchange.invalidate();
     if (Scenario.getInstance().mode == ScenarioMode.RECORD) this.series.write();
   }
 
@@ -118,7 +124,7 @@ export class OHLCVTicker extends Ticker {
 
 export class OrderTicker extends Ticker {
   readonly orderID:ID;
-  constructor(exchange:Exchange, readonly order:Order, readonly portfolioID:ID) {
+  constructor(exchange:Exchange, order:Order, readonly portfolioID:ID) {
     super(exchange, order.state.symbol);
     this.orderID = order.state.id;
   }
@@ -127,7 +133,6 @@ export class OrderTicker extends Ticker {
     const tick:Order = await this.exchange.fetchOrder(this.orderID, this.symbol);
     if (this.hasChanged(tick)) {
       this.series.append(tick);
-      this.order.state.status = tick.state.status;
       this.exchange.invalidate();
     }
   }

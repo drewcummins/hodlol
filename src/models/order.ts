@@ -1,6 +1,7 @@
 import { BigNumber } from "bignumber.js"
 import { BN, Num, ID } from "./types"
 import { InvalidOrderTypeError } from "../errors/exchange-error";
+import { IMarket } from "./market";
 
 export enum OrderSide {
   BUY='buy',
@@ -18,24 +19,78 @@ export enum OrderStatus {
   CANCELED='canceled'
 }
 
-export class OrderRequest {
-  
+export abstract class OrderRequest {
   constructor(
     readonly type:OrderType,
     readonly side:OrderSide,
-    readonly marketSymbol:string, 
-    readonly amount:Num, 
-    readonly price:Num, 
-    readonly portfolioID:string) {}
+    readonly market:IMarket,
+    readonly portfolioID:ID) {}
+  
+  abstract cost():Num;
+  
+  protected feeExponent():BigNumber {
+    return OrderRequest.feeExponent(this.side, this.market.taker);
+  }
 
-  /** 
-   * Calculates the cost of the order
-   * 
-   * @returns cost
-  */
+  protected static feeExponent(side:OrderSide, fee:Num):BigNumber {
+    if (side == OrderSide.BUY) {
+      return BN(fee).plus(1);
+    }
+    return BN(1).minus(BN(fee));
+  }
+}
+
+export class MarketOrderRequest extends OrderRequest {
+  constructor(side:OrderSide, market:IMarket, readonly balance:Num, portfolioID:ID) {
+    super(OrderType.MARKET, side, market, portfolioID);
+  }
+
   public cost():Num {
-    let amount = new BigNumber(this.amount);
-    let price = new BigNumber(this.price);
-    return amount.multipliedBy(price);
+    return this.balance;
+  }
+}
+
+export class LimitOrderRequest extends OrderRequest {
+  constructor(side:OrderSide, market:IMarket, readonly amount:Num, readonly price:Num, portfolioID:ID) {
+    super(OrderType.MARKET, side, market, portfolioID);
+  }
+
+  public cost():Num {
+    let amount = BN(this.amount);
+    let price = BN(this.price);
+    return amount.multipliedBy(price).multipliedBy(this.feeExponent());
+  }
+
+  public static buyMaxWithBudget(market:IMarket, budget:Num, price:Num, portfolioID:ID):LimitOrderRequest {
+    // amount = b/(p*(1+f))
+    let feeExponent = OrderRequest.feeExponent(OrderSide.BUY, market.taker);
+    let amount:Num = BN(budget).dividedBy(BN(price).multipliedBy(feeExponent));
+    return new LimitOrderRequest(OrderSide.BUY, market, amount, price, portfolioID);
+  }
+}
+
+// these are just for convenience--provide no functionality except omitting side
+
+export class MarketBuyOrderRequest extends MarketOrderRequest {
+  constructor(market:IMarket, balance:Num, portfolioID:ID) {
+    super(OrderSide.BUY, market, balance, portfolioID);
+  }
+}
+
+export class MarketSellOrderRequest extends MarketOrderRequest {
+  constructor(market:IMarket, balance:Num, portfolioID:ID) {
+    super(OrderSide.SELL, market, balance, portfolioID);
+  }
+}
+
+export class LimitBuyOrderRequest extends LimitOrderRequest {
+  constructor(market:IMarket, amount:Num, price:Num, portfolioID:ID) {
+    super(OrderSide.BUY, market, amount, price, portfolioID);
+  }
+}
+
+export class LimitSellOrderRequest extends LimitOrderRequest {
+  constructor(market:IMarket, amount:Num, price:Num, portfolioID:ID) {
+    super(OrderSide.SELL, market, amount, price, portfolioID);
   }
 }

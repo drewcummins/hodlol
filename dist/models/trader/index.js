@@ -13,6 +13,12 @@ const dateFormat = require('dateformat');
 const colors = require('ansicolors');
 const columnify = require('columnify');
 class Trader {
+    /**
+     * Creates a new Trader
+     *
+     * @param source The trader json that describes how to initialize strategies etc.
+     * @param params Parameters that describe how to interact with an exchange
+     */
     constructor(source, params) {
         this.source = source;
         this.params = params;
@@ -25,10 +31,13 @@ class Trader {
             mkdirp.sync(`./data/${source.exchange}/${types_1.Scenario.getInstance().id}`);
         }
         let apiClass = ccxt[source.exchange];
-        let apiCreds = config_1.config[source.exchange];
         if (!apiClass)
             throw new exchange_error_1.InvalidExchangeNameError(source.exchange);
+        let apiCreds = config_1.config[source.exchange];
         let api = new apiClass(apiCreds);
+        // This is a little weird
+        // Basically we use a "real" API no matter what to pull markets
+        // Everything else gets faked when mocked
         if (params.mock)
             api = new mock_api_1.MockAPI(api);
         this.thread = new utils_1.Thread();
@@ -66,6 +75,9 @@ class Trader {
             }
         }
     }
+    /**
+     * Kicks off everything necessary for the exchange and initializes all strategies
+    */
     async run() {
         await this.exchange.validateFunds(this.params.symbol, this.params.amount);
         await this.exchange.loadFeeds(this.source.tickers);
@@ -101,9 +113,23 @@ class Trader {
             await strategy.after();
         }
     }
+    /**
+     * Kills this trader's run thread
+     *
+     * This will leave "orphaned threads"
+     * To kill everything call @Thread.killAll()
+    */
     kill() {
         this.thread.kill();
     }
+    /**
+     * Asks the trader to "consider" an order
+     *
+     * @param strategy Strategy requesting the order
+     * @param orderRequest Order being requested
+     *
+     * @returns the created order if successful
+     */
     async consider(strategy, orderRequest) {
         // this is not a clever trader--just create an order
         return this.exchange.createOrder(orderRequest);

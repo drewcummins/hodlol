@@ -1,7 +1,7 @@
 const uuid = require('uuid/v4');
 import { Balance, Num, BN, ID, Value, Order, Tick, OrderTick } from './types';
 import { OrderRequest, OrderSide, OrderType } from './order';
-import { Marketplace } from './market';
+import { Marketplace, IMarket } from './market';
 import { BigNumber } from "bignumber.js";
 import { InsufficientFundsError, InvalidOrderSideError } from '../errors/exchange-error';
 
@@ -27,6 +27,18 @@ export class Portfolio {
   }
 
   /**
+   * Gets market associated with symbol
+   * 
+   * @param marketSymbol market symbol to get market for
+   * 
+   * @returns Relevant market
+   * @throws InvalidMarketSymbolError if symbol doesn't exist in markets
+   */
+  public marketBySymbol(marketSymbol:string):IMarket {
+    return this.markets.getWithSymbol(marketSymbol);
+  }
+
+  /**
    * Gets balance for base and quote of given market
    * 
    * @param marketSymbol market symbol to get balance of
@@ -49,7 +61,7 @@ export class Portfolio {
    * @throws InvalidOrderSideError if request.side not set correctly
    */
   public hasSufficientFunds(request:OrderRequest):Boolean {
-    let [base, quote] = this.balanceByMarket(request.marketSymbol);
+    let [base, quote] = this.balanceByMarket(request.market.symbol);
     if (request.side == OrderSide.BUY) {
       return BN(quote.free).isGreaterThanOrEqualTo(request.cost());
     } else if (request.side == OrderSide.SELL) {
@@ -71,7 +83,7 @@ export class Portfolio {
     if (!this.hasSufficientFunds(request)) {
       throw new InsufficientFundsError(request);
     }
-    let market = this.markets.getWithSymbol(request.marketSymbol);
+    let market = this.markets.getWithSymbol(request.market.symbol);
     switch (request.side) {
       case OrderSide.BUY:
         this.removeFree(market.quote, request.cost());

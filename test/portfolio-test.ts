@@ -1,45 +1,45 @@
 import { Portfolio } from '../src/models/portfolio';
 import { Num, BN, Order, OrderTick } from '../src/models/types';
 import { Marketplace, IMarket } from '../src/models/market';
-import { OrderRequest, OrderStatus, OrderType, OrderSide } from '../src/models/order';
+import { OrderRequest, OrderStatus, OrderType, OrderSide, LimitBuyOrderRequest, LimitSellOrderRequest, LimitOrderRequest } from '../src/models/order';
 import { expect } from 'chai';
 import 'mocha';
 import { InvalidMarketSymbolError, InsufficientFundsError } from '../src/errors/exchange-error';
 
 const BTC:string = "BTC";
-const amount:Num = 10;
+const btcFunds:Num = 10;
 
 const market:IMarket = {
   symbol:"ETH/BTC",
   base:"ETH",
   quote:"BTC",
-  maker:0.01,
-  taker:0.01
+  maker:0.0,
+  taker:0.0
 }
 
 describe('Portfolio tests', () => {
   const json = {};
   json[market.symbol] = market;
   let marketplace = new Marketplace(json);
-  let portfolio = new Portfolio(marketplace, BTC, amount);
+  let portfolio = new Portfolio(marketplace, BTC, btcFunds);
   it('should have empty ethereum and 10 bitcoin -- Portfolio.balanceByMarket', () => {
     let [ethBalance, btcBalance] = portfolio.balanceByMarket(market.symbol);
     expect(ethBalance).to.exist;
     expect(btcBalance).to.exist;
     expect(BN(ethBalance.free).toNumber()).to.equal(0);
     expect(BN(ethBalance.reserved).toNumber()).to.equal(0);
-    expect(BN(btcBalance.free).toNumber()).to.equal(amount);
+    expect(BN(btcBalance.free).toNumber()).to.equal(btcFunds);
     expect(BN(btcBalance.reserved).toNumber()).to.equal(0);
   });
 
-  let buyRequest = new OrderRequest(OrderType.LIMIT, OrderSide.BUY, market.symbol, 50, 0.2, portfolio.id);
+  let buyRequest = new LimitBuyOrderRequest(market, 50, 0.2, portfolio.id);
   
   it('should reserve all of bitcoin to buy ethereum -- Portfolio.reserve, Portfolio.balance', () => {
     portfolio.reserve(buyRequest);
     let btcBalance = portfolio.balance(market.quote);
     expect(btcBalance).to.exist;
     expect(BN(btcBalance.free).toNumber()).to.equal(0);
-    expect(BN(btcBalance.reserved).toNumber()).to.equal(amount);
+    expect(BN(btcBalance.reserved).toNumber()).to.equal(btcFunds);
   });
 
   let buyOrderTick:OrderTick = { 
@@ -80,7 +80,7 @@ describe('Portfolio tests', () => {
     expect(portfolio.reserve.bind(portfolio, buyRequest)).to.throw(InsufficientFundsError, error.message);
   });
 
-  let sellRequest = new OrderRequest(OrderType.LIMIT, OrderSide.SELL, market.symbol, 50, 0.2, portfolio.id);
+  let sellRequest = new LimitSellOrderRequest(market, 50, 0.2, portfolio.id);
 
   it('should reserve all the ethereum to sell -- Portfolio.reserve, Portfolio.balance', () => {
     portfolio.reserve(sellRequest);
@@ -112,9 +112,23 @@ describe('Portfolio tests', () => {
   it('should fill the sell order giving us back our original 10 bitcoin -- Portfolio.fill, Portfolio.balanceByMarket', () => {
     portfolio.fill(sellOrder);
     let [ethBalance, btcBalance] = portfolio.balanceByMarket(market.symbol);
-    expect(BN(btcBalance.free).toNumber()).to.equal(amount);
+    expect(BN(btcBalance.free).toNumber()).to.equal(btcFunds);
     expect(BN(btcBalance.reserved).toNumber()).to.equal(0);
     expect(BN(ethBalance.free).toNumber()).to.equal(0);
     expect(BN(ethBalance.reserved).toNumber()).to.equal(0);
   });
+
+  it('should calculate with fees accordingly', () => {
+    let market:IMarket = {
+      symbol:"ETH/BTC",
+      base:"ETH",
+      quote:"BTC",
+      maker:0.01,
+      taker:0.01
+    };
+    let request:LimitOrderRequest = LimitOrderRequest.buyMaxWithBudget(market, btcFunds, 0.2, "lol");
+    expect(BN(request.amount).toNumber()).to.be.greaterThan(49);
+    expect(BN(request.amount).toNumber()).to.be.lessThan(50);
+    expect(BN(request.cost()).minus(BN(btcFunds)).abs().isLessThan(0.00001)).to.be.true;
+  })
 })
