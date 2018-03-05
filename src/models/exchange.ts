@@ -1,4 +1,4 @@
-import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, TickerTick, OHLCVTick, OrderTick, Order, Ticker, OHLCV } from "./types";
+import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, TickerTick, OHLCVTick, OrderTick, Order, Ticker, OHLCV, BNF } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { OHLCVTicker, OrderTicker } from "./ticker";
@@ -233,7 +233,7 @@ export class Exchange {
    * 
    * @return requested order if it exists
    */
-  public async fetchOrder(orderID:string, symbol:string):Promise<Order> {
+  public async fetchOrder(orderID:ID, symbol:string):Promise<Order> {
     return new Tick(await this.api.fetchOrder(orderID, symbol));
   }
 
@@ -244,8 +244,8 @@ export class Exchange {
    * 
    * @return 
    */
-  public async cancelOrder(orderID:ID):Promise<any> {
-    return await this.api.cancelOrder(orderID);
+  public async cancelOrder(orderID:ID, symbol:string):Promise<any> {
+    return await this.api.cancelOrder(orderID, symbol);
   }
 
   /** 
@@ -274,10 +274,10 @@ export class Exchange {
         let limit:LimitOrderRequest = request as LimitOrderRequest;
         switch (request.side) {
           case OrderSide.BUY:
-            order = new Order(await this.api.createLimitBuyOrder(limit.market.symbol, BN(limit.amount).toFixed(6), BN(limit.price).toFixed(6)));
+            order = new Order(await this.api.createLimitBuyOrder(limit.market.symbol, BNF(limit.amount), BNF(limit.price)));
             break;
           case OrderSide.SELL:
-            order = new Order(await this.api.createLimitSellOrder(limit.market.symbol, BN(limit.amount).toFixed(6), BN(limit.price).toFixed(6)));
+            order = new Order(await this.api.createLimitSellOrder(limit.market.symbol, BNF(limit.amount), BNF(limit.price)));
             break;
         
           default:

@@ -7,8 +7,12 @@ import * as ccxt from "ccxt";
 
 BigNumber.config({ DECIMAL_PLACES:15, ROUNDING_MODE:BigNumber.ROUND_DOWN });
 
-export function BN(x: Num):BigNumber {
+export function BN(x:Num):BigNumber {
   return new BigNumber(x.toString());
+}
+
+export function BNF(x:Num):BigNumber {
+  return BN(BN(x).toFixed(6));
 }
 
 export type ID = string;
@@ -34,7 +38,7 @@ export interface API {
   fetchOrders(symbol:string, since:number, limit:number):Promise<OrderTick[]>;
   fetchOrder(orderID:ID, symbol:string):Promise<OrderTick>;
   fetchBalance():Promise<any>;
-  cancelOrder(id:ID):Promise<any>;
+  cancelOrder(orderID:ID, symbol:string):Promise<any>;
 }
 
 

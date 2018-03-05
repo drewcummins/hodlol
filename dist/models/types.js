@@ -8,6 +8,10 @@ function BN(x) {
     return new bignumber_js_1.BigNumber(x.toString());
 }
 exports.BN = BN;
+function BNF(x) {
+    return BN(BN(x).toFixed(6));
+}
+exports.BNF = BNF;
 class Tick {
     constructor(state) {
         this.state = state;

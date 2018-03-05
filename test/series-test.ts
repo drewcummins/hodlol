@@ -40,8 +40,6 @@ describe('Series tests', async () => {
     new OHLCV(Object.assign([timestamp + 5, 7, 11, 4, 8, 200], {timestamp:timestamp + 5}) as OHLCVTick)
   ];
 
-  console.log(tick0.timestamp, tick1.timestamp)
-
   it('should add tick to candles', () => {
     candles.append(tick0);
     candles.append(tick1);

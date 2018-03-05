@@ -44,32 +44,33 @@ describe('Ordering tests', async () => {
 
   it('should create a valid order', async() => {
     let tick:Ticker = await exchange.fetchTicker(PAIR);
+    
     expect(tick).to.exist;
     expect(tick.state.symbol).to.equal(PAIR);
+    
     // choose a ridiculously low price so that the order doesn't get filled
-     
-    let price:Num = BN(tick.state.close).dividedBy(10);
-      // console.log("close:", tick.state.close);
-      // console.log("price:", BN(price).toFixed(6));
-      // let market = exchange.markets.getWithSymbol(PAIR);
-      // let coeff = OrderRequest.feeCoefficient(OrderSide.BUY, market.taker);
-      // console.log("coeff:", coeff.toFixed(6));
-      // console.log("price x 10:", BN(price).multipliedBy(BN(10)).toFixed(6));
-      // let feedPrice = price.times(coeff);
-      // console.log("price x coeff:", feedPrice.toFixed(6));
-      // let amt = BN(amount).div(feedPrice);
-      // console.log("amt can buy:", amt.toFixed(6));
-      // let cost = amt.times(feedPrice);
-      // console.log("cost", cost.toFixed(6));
-      // console.log("should equal", amount);
+    let price = BN(tick.state.close).dividedBy(10);
     
     let request = LimitOrderRequest.buyMaxWithBudget(exchange.markets.getWithSymbol(PAIR), amount, price, portfolio.id);
+    let market = exchange.markets.getWithSymbol(PAIR);
+    let coeff = OrderRequest.feeCoefficient(OrderSide.BUY, market.taker);
+
+    expect(BN(amount).isGreaterThanOrEqualTo(request.cost())).to.be.true;
+    expect(BN(amount).minus(request.cost()).isLessThan(0.001)).to.be.true;
     
-    // let cost:BigNumber = BN(request.cost());
-    // let amt:BigNumber = BN(amount).dividedBy(BN(request.amount));
-    // console.log("cost should equal amount", cost.decimalPlaces(6), amt.decimalPlaces(6), price.decimalPlaces(6));
     let order:Order = await exchange.createOrder(request);
-    console.log(order);
+
+    expect(order.state.symbol).to.equal(PAIR);
+    expect(BN(order.state.price).isEqualTo(request.price));
+    expect(order.state.status).to.equal(OrderStatus.OPEN);
+
+    await exchange.cancelOrder(order.state.id, order.state.symbol);
+    order = await exchange.fetchOrder(order.state.id, order.state.symbol);
+
+    expect(order.state.symbol).to.equal(PAIR);
+    expect(BN(order.state.price).isEqualTo(request.price));
+    expect(order.state.status).to.equal(OrderStatus.CANCELED);
+    
   }).timeout(10000);
 
 });
