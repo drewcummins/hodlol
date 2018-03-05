@@ -64,6 +64,26 @@ class MockAPI {
         this.orders.set(order.id, order);
         return order;
     }
+    async createMarketBuyOrder(market, amount) {
+        let order = {
+            id: uuid(),
+            datetime: "N/A",
+            timestamp: +new Date(),
+            status: order_1.OrderStatus.OPEN,
+            symbol: market,
+            type: order_1.OrderType.MARKET,
+            side: order_1.OrderSide.BUY,
+            amount: Number(amount),
+            cost: Number(amount),
+            filled: 0.0,
+            remaining: Number(amount),
+            fee: 0,
+            price: NaN,
+            info: {}
+        };
+        this.orders.set(order.id, order);
+        return order;
+    }
     createLimitSellOrder(market, amount, price) {
         let order = {
             id: uuid(),
@@ -76,6 +96,26 @@ class MockAPI {
             price: Number(price),
             amount: Number(amount),
             cost: types_1.BN(price).times(amount).toNumber(),
+            filled: 0.0,
+            remaining: Number(amount),
+            fee: 0,
+            info: {}
+        };
+        this.orders.set(order.id, order);
+        return Promise.resolve(order);
+    }
+    createMarketSellOrder(market, amount) {
+        let order = {
+            id: uuid(),
+            datetime: "N/A",
+            timestamp: +new Date(),
+            status: order_1.OrderStatus.OPEN,
+            symbol: market,
+            type: order_1.OrderType.MARKET,
+            side: order_1.OrderSide.SELL,
+            price: NaN,
+            amount: Number(amount),
+            cost: Number(amount),
             filled: 0.0,
             remaining: Number(amount),
             fee: 0,

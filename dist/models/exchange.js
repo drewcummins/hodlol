@@ -240,13 +240,26 @@ class Exchange {
         portfolio.reserve(request);
         switch (request.type) {
             case order_1.OrderType.LIMIT:
-                let limit = request;
+                let lo = request;
                 switch (request.side) {
                     case order_1.OrderSide.BUY:
-                        order = new types_1.Order(await this.api.createLimitBuyOrder(limit.market.symbol, types_1.BNF(limit.amount), types_1.BNF(limit.price)));
+                        order = new types_1.Order(await this.api.createLimitBuyOrder(lo.market.symbol, types_1.BNF(lo.amount), types_1.BNF(lo.price)));
                         break;
                     case order_1.OrderSide.SELL:
-                        order = new types_1.Order(await this.api.createLimitSellOrder(limit.market.symbol, types_1.BNF(limit.amount), types_1.BNF(limit.price)));
+                        order = new types_1.Order(await this.api.createLimitSellOrder(lo.market.symbol, types_1.BNF(lo.amount), types_1.BNF(lo.price)));
+                        break;
+                    default:
+                        throw new errors_1.InvalidOrderSideError(request);
+                }
+                break;
+            case order_1.OrderType.MARKET:
+                let mo = request;
+                switch (request.side) {
+                    case order_1.OrderSide.BUY:
+                        order = new types_1.Order(await this.api.createMarketBuyOrder(mo.market.symbol, types_1.BNF(mo.balance)));
+                        break;
+                    case order_1.OrderSide.SELL:
+                        order = new types_1.Order(await this.api.createMarketSellOrder(mo.market.symbol, types_1.BNF(mo.balance)));
                         break;
                     default:
                         throw new errors_1.InvalidOrderSideError(request);

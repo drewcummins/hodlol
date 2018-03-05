@@ -74,19 +74,61 @@ export class MockAPI implements API {
     return order;
   }
 
+  public async createMarketBuyOrder(market:string, amount:Num):Promise<OrderTick> {
+    let order:OrderTick = {
+      id:        uuid(),
+      datetime:  "N/A",
+      timestamp: +new Date(),     
+      status:    OrderStatus.OPEN,
+      symbol:    market,          
+      type:      OrderType.MARKET,
+      side:      OrderSide.BUY, 
+      amount:    Number(amount),
+      cost:      Number(amount),
+      filled:    0.0,
+      remaining: Number(amount),
+      fee: 0,
+      price: NaN,
+      info: {}
+    };
+    this.orders.set(order.id, order);
+    return order;
+  }
+
   public createLimitSellOrder(market:string, amount:Num, price:Num):Promise<OrderTick> {
     let order:OrderTick = {
       id:        uuid(),
       datetime:  "N/A",
-      timestamp: +new Date(),               // Unix timestamp in milliseconds
-      status:    OrderStatus.OPEN,          // 'open', 'closed', 'canceled'
-      symbol:    market,                    // symbol
-      type:      OrderType.LIMIT,           // 'market', 'limit'
-      side:      OrderSide.SELL,             // 'buy', 'sell'
-      price:     Number(price),                     // float price in quote currency
-      amount:    Number(amount),                    // ordered amount of base currency
+      timestamp: +new Date(),    
+      status:    OrderStatus.OPEN,
+      symbol:    market,          
+      type:      OrderType.LIMIT, 
+      side:      OrderSide.SELL,  
+      price:     Number(price),   
+      amount:    Number(amount),  
       cost:      BN(price).times(amount).toNumber(),
-      filled:    0.0,                       // filled amount of base currency
+      filled:    0.0,             
+      remaining: Number(amount),
+      fee: 0,
+      info: {}
+    };
+    this.orders.set(order.id, order);
+    return Promise.resolve(order);
+  }
+
+  public createMarketSellOrder(market:string, amount:Num):Promise<OrderTick> {
+    let order:OrderTick = {
+      id:        uuid(),
+      datetime:  "N/A",
+      timestamp: +new Date(),    
+      status:    OrderStatus.OPEN,
+      symbol:    market,          
+      type:      OrderType.MARKET, 
+      side:      OrderSide.SELL,  
+      price:     NaN,   
+      amount:    Number(amount),  
+      cost:      Number(amount),
+      filled:    0.0,             
       remaining: Number(amount),
       fee: 0,
       info: {}

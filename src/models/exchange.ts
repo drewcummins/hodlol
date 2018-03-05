@@ -2,7 +2,7 @@ import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, Tic
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
 import { OHLCVTicker, OrderTicker } from "./ticker";
-import { OrderStatus, OrderRequest, OrderType, OrderSide, LimitOrderRequest } from "./order";
+import { OrderStatus, OrderRequest, OrderType, OrderSide, LimitOrderRequest, MarketOrderRequest } from "./order";
 import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors";
 import { Portfolio } from "./portfolio";
 import * as ccxt from "ccxt";
@@ -271,13 +271,28 @@ export class Exchange {
     portfolio.reserve(request);
     switch (request.type) {
       case OrderType.LIMIT:
-        let limit:LimitOrderRequest = request as LimitOrderRequest;
+        let lo:LimitOrderRequest = request as LimitOrderRequest;
         switch (request.side) {
           case OrderSide.BUY:
-            order = new Order(await this.api.createLimitBuyOrder(limit.market.symbol, BNF(limit.amount), BNF(limit.price)));
+            order = new Order(await this.api.createLimitBuyOrder(lo.market.symbol, BNF(lo.amount), BNF(lo.price)));
             break;
           case OrderSide.SELL:
-            order = new Order(await this.api.createLimitSellOrder(limit.market.symbol, BNF(limit.amount), BNF(limit.price)));
+            order = new Order(await this.api.createLimitSellOrder(lo.market.symbol, BNF(lo.amount), BNF(lo.price)));
+            break;
+        
+          default:
+            throw new InvalidOrderSideError(request);
+        }
+        break;
+
+      case OrderType.MARKET:
+        let mo:MarketOrderRequest = request as MarketOrderRequest;
+        switch (request.side) {
+          case OrderSide.BUY:
+            order = new Order(await this.api.createMarketBuyOrder(mo.market.symbol, BNF(mo.balance)));
+            break;
+          case OrderSide.SELL:
+            order = new Order(await this.api.createMarketSellOrder(mo.market.symbol, BNF(mo.balance)));
             break;
         
           default:
