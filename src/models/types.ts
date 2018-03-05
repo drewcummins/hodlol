@@ -134,7 +134,8 @@ export interface IScenario {
   id: ID,
   start: number,
   end: number,
-  record?: boolean
+  record?: boolean,
+  test?: boolean
 }
 
 export enum ScenarioMode {
@@ -147,6 +148,7 @@ export class Scenario implements IScenario {
   readonly start:number;
   readonly end:number;
   readonly record:boolean;
+  readonly test:boolean;
 
   public time:number;
   public mode:ScenarioMode;
@@ -176,7 +178,13 @@ export class Scenario implements IScenario {
       this.record = json.record;
     }
 
+    this.test = json.test === true;
+
     this.time = this.start;
+  }
+
+  public dataDir():string {
+    return this.test ? "test/data" : "data";
   }
 
   public static getInstance():Scenario {
@@ -189,9 +197,9 @@ export class Scenario implements IScenario {
     }
   }
 
-  public static createWithName(name:string, start:number, end:number, record:boolean=true):void {
+  public static createWithName(name:string, start:number, end:number, record:boolean=true, test:boolean=false):void {
     if (!Scenario.instance) {
-      Scenario.instance = new Scenario({id:name, start:start, end:end, record:record});
+      Scenario.instance = new Scenario({id:name, start:start, end:end, record:record, test:test});
     }
   }
 

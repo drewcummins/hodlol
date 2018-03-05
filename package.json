@@ -4,8 +4,7 @@
   "description": "Algo trading platform for cryptocurrencies",
   "main": "index.js",
   "scripts": {
-    "start-dev": "NODE_ENV=dev node index.js",
-    "test-dev": "NODE_ENV=dev mocha"
+    "test-dev": "mocha -r ts-node/register test/*.ts"
   },
   "repository": {
     "type": "git",
@@ -43,6 +42,7 @@
     "dateformat": "^3.0.2",
     "dotenv": "^4.0.0",
     "mkdirp": "^0.5.1",
+    "npm": "^5.7.1",
     "ololog": "^1.1.84",
     "readline-sync": "^1.4.8",
     "request": "^2.83.0",

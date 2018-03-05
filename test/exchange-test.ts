@@ -8,7 +8,7 @@ import { Thread, sleep } from '../src/utils';
 describe('Exchange tests', async () => {
 
   before(() => {
-    Scenario.create("./scenarios/market-crash.scenario");
+    Scenario.create("./test/scenarios/market-crash.scenario");
   })
 
   after(async () => {

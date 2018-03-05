@@ -104,7 +104,11 @@ class Scenario {
         else {
             this.record = json.record;
         }
+        this.test = json.test === true;
         this.time = this.start;
+    }
+    dataDir() {
+        return this.test ? "test/data" : "data";
     }
     static getInstance() {
         return Scenario.instance;
@@ -114,9 +118,9 @@ class Scenario {
             Scenario.instance = new Scenario(filepath);
         }
     }
-    static createWithName(name, start, end, record = true) {
+    static createWithName(name, start, end, record = true, test = false) {
         if (!Scenario.instance) {
-            Scenario.instance = new Scenario({ id: name, start: start, end: end, record: record });
+            Scenario.instance = new Scenario({ id: name, start: start, end: end, record: record, test: test });
         }
     }
     static shouldWrite() {

@@ -8,6 +8,7 @@ Algo trading platform for cryptocurrencies
 1. Run `npm install`.
 1. Setup your binance API key/secret by duplicating `env/dev.example.env` to `env/dev.env` and filling in appropriately.
 1. Run `npm run test-dev`. If all the tests pass, you should be good.
+1. You can 
 
 
 ### Conceptual Model

@@ -18,7 +18,7 @@ const amount:Num = 10;
 let opts:TraderParams = {
   symbol: BTC,
   amount: amount,
-  backtest: "./scenarios/market-bounce.scenario",
+  backtest: "./test/scenarios/market-bounce.scenario",
   mock: true
 }
 

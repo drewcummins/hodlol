@@ -77,7 +77,7 @@ export class Ticker {
   }
 
   protected filepath():string {
-    return `./data/${this.exchange.name()}/${this.subdir()}/${this.filename()}`;
+    return `./${Scenario.getInstance().dataDir()}/${this.exchange.name()}/${this.subdir()}/${this.filename()}`;
   }
 
   protected extension():string {

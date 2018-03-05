@@ -2,8 +2,6 @@ node_modules
 dev.env
 prod.env
 fixtures
-*.ticker
-*.ohlcv
-*.order
+/data
 .DS_Store
 .vscode

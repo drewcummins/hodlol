@@ -67,7 +67,7 @@ class Ticker {
         return types_1.Scenario.getInstance().id;
     }
     filepath() {
-        return `./data/${this.exchange.name()}/${this.subdir()}/${this.filename()}`;
+        return `./${types_1.Scenario.getInstance().dataDir()}/${this.exchange.name()}/${this.subdir()}/${this.filename()}`;
     }
     extension() {
         return 'ticker';

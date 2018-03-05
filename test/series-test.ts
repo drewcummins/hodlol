@@ -12,7 +12,7 @@ function removeSeriesFile(filepath) {
 }
 
 describe('Series tests', async () => {
-  const filepath = "./rofl.csv";
+  const filepath = "./test/rofl.csv";
 
   before(() => {
     removeSeriesFile(filepath);
