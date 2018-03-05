@@ -57,22 +57,6 @@ Now this is obviously a pretty uninteresting trader. Let's look at a slightly mo
       ]
     },
     {
-      "fileName": "index",
-      "className": "Strategy",
-      "title": "All--MACD,OBV",
-      "weight": 1,
-      "indicators": [
-        {
-          "fileName": "all", 
-          "className": "All",
-          "subsignals": [
-            { "fileName": "macd", "className": "MACD" },
-            { "fileName": "obv", "className": "OBV" }
-          ]
-        }
-      ]
-    },
-    {
       "fileName": "hodl",
       "className": "HODL",
       "weight":1
@@ -85,7 +69,7 @@ Now this is obviously a pretty uninteresting trader. Let's look at a slightly mo
 
 ```
 
-The only thing that changes between this and the hodl strategy is the name and inclusion of 2 _additional_ strategies. Let's look at one of them:
+The only thing that changes between this and the hodl strategy is the name and inclusion of an _additional_ strategy. Let's look at it:
 
 ```javascript
 {
@@ -110,18 +94,32 @@ So the first 2 lines are the file and class name properties. These are hopefully
 
 After that, we give it a title which just helps us identify it as we test.
 
-The next bit is `weight`. You can think of this parameter as describing parts in a strategy cocktail--in this case each strategy will get to handle one third the total funds allocated to the trader since there are 3 of them each staking one part.
+The next bit is `weight`. You can think of this parameter as describing parts in a strategy cocktail--in this case each strategy will get to handle _half_ the total funds allocated to the trader since there are 2 of them each staking one part.
 
 Whenever a new tick gets pulled in, or an order status changes, each strategy will automatically have its `tick` method called. By default, a strategy will then call `tick` on all its signals. Signals emit buy/hold/sell signals according to the current price data. If a strategy chooses to react to a buy or sell signal, it requests that the trader places an order. The default trader will do this provided sufficient funds exist.
 
 So here we actually have a not-entirely-trivial strategy in that it listens for an `Any` signal which itself propagates a `MACD` or `OBV` signal when either are triggered. You can read about MACD [here](https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)) and OBV [here](https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)).
 
+Let's look at what `Any` is doing:
+
+```typescript
+export class Any extends MultiSignal {
+  public async evaluate(ticker:Ticker):Promise<SignalCode> {
+    for (const subsignal of this.subsignals) {
+      let signal:SignalCode = await subsignal.tick();
+      if (signal != SignalCode.PASS) return signal;
+    }
+    return SignalCode.PASS;
+  }
+}
+```
+
+So it should be apparent that all this does is let _either_ OBV or MACD signals propagate up to the `Strategy`.
+
 ### Running A Trader
 To run a trader, you simply point to your `.trader` file and indicate which and how much funds to give it access to. For instance, if you have half a Bitcoin you'd like to trade with, you'd run:
 
     ./index.js your-trader.trader --symbol BTC --amount 0.5
-
-If you don't want to place actual order, you can add `--fake` or `-f` to simulate orders only.
 
 Once you have recorded data, you may wish to run backtests against it. This is accomplished by providing a _scenario_. A scenario is defined in a `.scenario` file, which basically just points to a directory you've previously recorded tick data in. Here's what that looks like:
 
