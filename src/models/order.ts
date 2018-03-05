@@ -28,11 +28,11 @@ export abstract class OrderRequest {
   
   abstract cost():Num;
   
-  protected feeExponent():BigNumber {
-    return OrderRequest.feeExponent(this.side, this.market.taker);
+  protected feeCoefficient():BigNumber {
+    return OrderRequest.feeCoefficient(this.side, this.market.taker);
   }
 
-  protected static feeExponent(side:OrderSide, fee:Num):BigNumber {
+  public static feeCoefficient(side:OrderSide, fee:Num):BigNumber {
     if (side == OrderSide.BUY) {
       return BN(fee).plus(1);
     }
@@ -58,13 +58,14 @@ export class LimitOrderRequest extends OrderRequest {
   public cost():Num {
     let amount = BN(this.amount);
     let price = BN(this.price);
-    return amount.multipliedBy(price).multipliedBy(this.feeExponent());
+    return amount.multipliedBy(price).multipliedBy(this.feeCoefficient());
   }
 
   public static buyMaxWithBudget(market:IMarket, budget:Num, price:Num, portfolioID:ID):LimitOrderRequest {
     // amount = b/(p*(1+f))
-    let feeExponent = OrderRequest.feeExponent(OrderSide.BUY, market.taker);
+    let feeExponent = OrderRequest.feeCoefficient(OrderSide.BUY, market.taker);
     let amount:Num = BN(budget).dividedBy(BN(price).multipliedBy(feeExponent));
+    
     return new LimitOrderRequest(OrderSide.BUY, market, amount, price, portfolioID);
   }
 }

@@ -24,10 +24,10 @@ class OrderRequest {
         this.market = market;
         this.portfolioID = portfolioID;
     }
-    feeExponent() {
-        return OrderRequest.feeExponent(this.side, this.market.taker);
+    feeCoefficient() {
+        return OrderRequest.feeCoefficient(this.side, this.market.taker);
     }
-    static feeExponent(side, fee) {
+    static feeCoefficient(side, fee) {
         if (side == OrderSide.BUY) {
             return types_1.BN(fee).plus(1);
         }
@@ -54,11 +54,11 @@ class LimitOrderRequest extends OrderRequest {
     cost() {
         let amount = types_1.BN(this.amount);
         let price = types_1.BN(this.price);
-        return amount.multipliedBy(price).multipliedBy(this.feeExponent());
+        return amount.multipliedBy(price).multipliedBy(this.feeCoefficient());
     }
     static buyMaxWithBudget(market, budget, price, portfolioID) {
         // amount = b/(p*(1+f))
-        let feeExponent = OrderRequest.feeExponent(OrderSide.BUY, market.taker);
+        let feeExponent = OrderRequest.feeCoefficient(OrderSide.BUY, market.taker);
         let amount = types_1.BN(budget).dividedBy(types_1.BN(price).multipliedBy(feeExponent));
         return new LimitOrderRequest(OrderSide.BUY, market, amount, price, portfolioID);
     }

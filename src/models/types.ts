@@ -5,7 +5,7 @@ import * as mkdirp from "mkdirp";
 import { ScenarioFileMissingError } from "../errors";
 import * as ccxt from "ccxt";
 
-BigNumber.config({ DECIMAL_PLACES:5 });
+BigNumber.config({ DECIMAL_PLACES:15, ROUNDING_MODE:BigNumber.ROUND_DOWN });
 
 export function BN(x: Num):BigNumber {
   return new BigNumber(x.toString());
@@ -127,7 +127,8 @@ export class BitfieldState {
 export interface IScenario {
   id: ID,
   start: number,
-  end: number
+  end: number,
+  record?: boolean
 }
 
 export enum ScenarioMode {
@@ -139,6 +140,7 @@ export class Scenario implements IScenario {
   readonly id:ID;
   readonly start:number;
   readonly end:number;
+  readonly record:boolean;
 
   public time:number;
   public mode:ScenarioMode;
@@ -162,6 +164,12 @@ export class Scenario implements IScenario {
     this.start = Number(json.start);
     this.end = Number(json.end);
 
+    if (!json.record) {
+      this.record = this.mode == ScenarioMode.RECORD;
+    } else {
+      this.record = json.record;
+    }
+
     this.time = this.start;
   }
 
@@ -175,10 +183,14 @@ export class Scenario implements IScenario {
     }
   }
 
-  public static createWithName(name:string, start:number, end:number):void {
+  public static createWithName(name:string, start:number, end:number, record:boolean=true):void {
     if (!Scenario.instance) {
-      Scenario.instance = new Scenario({id:name, start:start, end:end});
+      Scenario.instance = new Scenario({id:name, start:start, end:end, record:record});
     }
+  }
+
+  public static shouldWrite() {
+    return Scenario.getInstance().record;
   }
 
   public static kill():void {

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bignumber_js_1 = require("bignumber.js");
 const fs = require("fs");
 const errors_1 = require("../errors");
-bignumber_js_1.BigNumber.config({ DECIMAL_PLACES: 5 });
+bignumber_js_1.BigNumber.config({ DECIMAL_PLACES: 15, ROUNDING_MODE: bignumber_js_1.BigNumber.ROUND_DOWN });
 function BN(x) {
     return new bignumber_js_1.BigNumber(x.toString());
 }
@@ -94,6 +94,12 @@ class Scenario {
         this.id = json.id;
         this.start = Number(json.start);
         this.end = Number(json.end);
+        if (!json.record) {
+            this.record = this.mode == ScenarioMode.RECORD;
+        }
+        else {
+            this.record = json.record;
+        }
         this.time = this.start;
     }
     static getInstance() {
@@ -104,10 +110,13 @@ class Scenario {
             Scenario.instance = new Scenario(filepath);
         }
     }
-    static createWithName(name, start, end) {
+    static createWithName(name, start, end, record = true) {
         if (!Scenario.instance) {
-            Scenario.instance = new Scenario({ id: name, start: start, end: end });
+            Scenario.instance = new Scenario({ id: name, start: start, end: end, record: record });
         }
+    }
+    static shouldWrite() {
+        return Scenario.getInstance().record;
     }
     static kill() {
         Scenario.instance = null;

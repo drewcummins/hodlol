@@ -97,7 +97,7 @@ class OHLCVTicker extends Ticker {
             this.series.append(candlestick);
         });
         this.exchange.invalidate();
-        if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.RECORD)
+        if (types_1.Scenario.getInstance().record)
             this.series.write();
     }
     extension() {

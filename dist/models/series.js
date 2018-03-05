@@ -165,7 +165,7 @@ class Series {
         if (!this.map[tick.key()]) {
             this.map[tick.key()] = true;
             this.list.push(tick);
-            if (types_1.Scenario.getInstance().mode == types_1.ScenarioMode.RECORD && !lock)
+            if (types_1.Scenario.getInstance().record && !lock)
                 this.write();
         }
     }

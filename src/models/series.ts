@@ -174,7 +174,7 @@ export class Series {
     if (!this.map[tick.key()]) {
       this.map[tick.key()] = true;
       this.list.push(tick);
-      if (Scenario.getInstance().mode == ScenarioMode.RECORD && !lock) this.write();
+      if (Scenario.getInstance().record && !lock) this.write();
     }
   }
 

@@ -243,10 +243,10 @@ class Exchange {
                 let limit = request;
                 switch (request.side) {
                     case order_1.OrderSide.BUY:
-                        order = new types_1.Order(await this.api.createLimitBuyOrder(limit.market.symbol, limit.amount, limit.price));
+                        order = new types_1.Order(await this.api.createLimitBuyOrder(limit.market.symbol, types_1.BN(limit.amount).toFixed(6), types_1.BN(limit.price).toFixed(6)));
                         break;
                     case order_1.OrderSide.SELL:
-                        order = new types_1.Order(await this.api.createLimitSellOrder(limit.market.symbol, limit.amount, limit.price));
+                        order = new types_1.Order(await this.api.createLimitSellOrder(limit.market.symbol, types_1.BN(limit.amount).toFixed(6), types_1.BN(limit.price).toFixed(6)));
                         break;
                     default:
                         throw new errors_1.InvalidOrderSideError(request);

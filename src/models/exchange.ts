@@ -274,10 +274,10 @@ export class Exchange {
         let limit:LimitOrderRequest = request as LimitOrderRequest;
         switch (request.side) {
           case OrderSide.BUY:
-            order = new Order(await this.api.createLimitBuyOrder(limit.market.symbol, limit.amount, limit.price));
+            order = new Order(await this.api.createLimitBuyOrder(limit.market.symbol, BN(limit.amount).toFixed(6), BN(limit.price).toFixed(6)));
             break;
           case OrderSide.SELL:
-            order = new Order(await this.api.createLimitSellOrder(limit.market.symbol, limit.amount, limit.price));
+            order = new Order(await this.api.createLimitSellOrder(limit.market.symbol, BN(limit.amount).toFixed(6), BN(limit.price).toFixed(6)));
             break;
         
           default:
