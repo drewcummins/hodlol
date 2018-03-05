@@ -35,8 +35,8 @@ export interface API {
   fetchOHLCV(symbol:string, period:string, since:number|undefined):Promise<OHLCVTick[]>;
   createLimitBuyOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
   createLimitSellOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
-  createMarketBuyOrder(market:string, amount:Num):Promise<OrderTick>;
-  createMarketSellOrder(market:string, amount:Num):Promise<OrderTick>;
+  createMarketBuyOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
+  createMarketSellOrder(market:string, amount:Num, price:Num):Promise<OrderTick>;
   fetchOrders(symbol:string, since:number, limit:number):Promise<OrderTick[]>;
   fetchOrder(orderID:ID, symbol:string):Promise<OrderTick>;
   fetchBalance():Promise<any>;

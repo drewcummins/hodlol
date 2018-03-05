@@ -6,7 +6,7 @@ import { Portfolio } from '../src/models/portfolio';
 import { Exchange } from '../src/models/exchange';
 import { MockAPI } from '../src/models/mock-api';
 import { config } from '../src/config';
-import { OrderRequest, OrderSide, OrderStatus, LimitBuyOrderRequest, LimitOrderRequest } from '../src/models/order';
+import { OrderRequest, OrderSide, OrderStatus, LimitBuyOrderRequest, LimitOrderRequest, LimitSellOrderRequest } from '../src/models/order';
 
 import { expect } from 'chai';
 import 'mocha';
@@ -14,7 +14,9 @@ import { Thread, sleep } from '../src/utils';
 
 const BTC:string = "BTC";
 const amount:Num = 0.05;
+const budget:Num = amount*0.5;
 const PAIR:string = `ETH/${BTC}`;
+const USDT:string = `${BTC}/USDT`;
 
 let api = new ccxt.binance(config.binance);
 let exchange:Exchange = new Exchange(api);
@@ -42,7 +44,7 @@ describe('Ordering tests', async () => {
     // expect(exchange.isLoaded()).to.be.true;
   }).timeout(10000);
 
-  it('should create a valid order', async() => {
+  it('should create and cancel a valid buy order', async() => {
     let tick:Ticker = await exchange.fetchTicker(PAIR);
     
     expect(tick).to.exist;
@@ -51,12 +53,12 @@ describe('Ordering tests', async () => {
     // choose a ridiculously low price so that the order doesn't get filled
     let price = BN(tick.state.close).dividedBy(10);
     
-    let request = LimitOrderRequest.buyMaxWithBudget(exchange.markets.getWithSymbol(PAIR), amount, price, portfolio.id);
+    let request = LimitOrderRequest.buyMaxWithBudget(exchange.markets.getWithSymbol(PAIR), budget, price, portfolio.id);
     let market = exchange.markets.getWithSymbol(PAIR);
     let coeff = OrderRequest.feeCoefficient(OrderSide.BUY, market.taker);
 
-    expect(BN(amount).isGreaterThanOrEqualTo(request.cost())).to.be.true;
-    expect(BN(amount).minus(request.cost()).isLessThan(0.001)).to.be.true;
+    expect(BN(budget).isGreaterThanOrEqualTo(request.cost())).to.be.true;
+    expect(BN(budget).minus(request.cost()).isLessThan(0.001)).to.be.true;
     
     let order:Order = await exchange.createOrder(request);
 
@@ -68,6 +70,34 @@ describe('Ordering tests', async () => {
     order = await exchange.fetchOrder(order.state.id, order.state.symbol);
 
     expect(order.state.symbol).to.equal(PAIR);
+    expect(BN(order.state.price).isEqualTo(request.price));
+    expect(order.state.status).to.equal(OrderStatus.CANCELED);
+
+    portfolio.undo(request);
+    let [a,b] = portfolio.balanceByMarket(PAIR);
+    
+  }).timeout(10000);
+
+  it('should create and cancel a valid sell order', async() => {
+    let tick:Ticker = await exchange.fetchTicker(USDT);
+    
+    expect(tick).to.exist;
+    expect(tick.state.symbol).to.equal(USDT);
+    
+    // choose a ridiculously high price so that the order doesn't get filled
+    let price = BN(tick.state.close).times(10);
+    let request = new LimitSellOrderRequest(exchange.markets.getWithSymbol(USDT), budget, price, portfolio.id);
+    // console.log(request)
+    let order:Order = await exchange.createOrder(request);
+
+    expect(order.state.symbol).to.equal(USDT);
+    expect(BN(order.state.price).isEqualTo(request.price));
+    expect(order.state.status).to.equal(OrderStatus.OPEN);
+
+    await exchange.cancelOrder(order.state.id, order.state.symbol);
+    order = await exchange.fetchOrder(order.state.id, order.state.symbol);
+
+    expect(order.state.symbol).to.equal(USDT);
     expect(BN(order.state.price).isEqualTo(request.price));
     expect(order.state.status).to.equal(OrderStatus.CANCELED);
     

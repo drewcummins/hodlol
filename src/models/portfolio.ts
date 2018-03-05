@@ -65,11 +65,7 @@ export class Portfolio {
     if (request.side == OrderSide.BUY) {
       return BN(quote.free).isGreaterThanOrEqualTo(request.cost());
     } else if (request.side == OrderSide.SELL) {
-      if (request.type == OrderType.LIMIT) {
-        return BN(base.free).isGreaterThanOrEqualTo(BN((request as LimitOrderRequest).amount));
-      } else {
-        return BN(base.free).isGreaterThanOrEqualTo(BN((request as MarketOrderRequest).balance));
-      }
+      return BN(base.free).isGreaterThanOrEqualTo(request.cost());
     } else {
       throw new InvalidOrderSideError(request);
     }
@@ -88,25 +84,21 @@ export class Portfolio {
       throw new InsufficientFundsError(request);
     }
     let market = this.markets.getWithSymbol(request.market.symbol);
-    switch (request.side) {
-      case OrderSide.BUY:
-        this.removeFree(market.quote, request.cost());
-        this.addReserved(market.quote, request.cost());
-        break;
+    let symbol = request.side === OrderSide.BUY ? market.quote : market.base;
+    this.removeFree(symbol, request.cost());
+    this.addReserved(symbol, request.cost());
+  }
 
-      case OrderSide.SELL:
-        if (request.type == OrderType.LIMIT) {
-          this.removeFree(market.base, (request as LimitOrderRequest).amount);
-          this.addReserved(market.base, (request as LimitOrderRequest).amount);
-        } else {
-          this.removeFree(market.base, (request as MarketOrderRequest).balance);
-          this.addReserved(market.base, (request as MarketOrderRequest).balance);
-        }
-        break;
-    
-      default:
-        break;
-    }
+  /**
+   * Undoes a reservation made for a request
+   * 
+   * @param request request to undo
+   */
+  public undo(request:OrderRequest):void {
+    let market = this.markets.getWithSymbol(request.market.symbol);
+    let symbol = request.side === OrderSide.BUY ? market.quote : market.base;
+    this.removeReserved(symbol, request.cost());
+    this.addFree(symbol, request.cost());
   }
 
 

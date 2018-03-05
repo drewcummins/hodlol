@@ -18,11 +18,29 @@ var OrderStatus;
     OrderStatus["CANCELED"] = "canceled";
 })(OrderStatus = exports.OrderStatus || (exports.OrderStatus = {}));
 class OrderRequest {
-    constructor(type, side, market, portfolioID) {
+    constructor(type, side, market, amount, price, portfolioID) {
         this.type = type;
         this.side = side;
         this.market = market;
+        this.amount = amount;
+        this.price = price;
         this.portfolioID = portfolioID;
+    }
+    cost() {
+        if (this.side === OrderSide.BUY) {
+            return types_1.BN(this.amount).times(this.price);
+        }
+        else {
+            return this.amount;
+        }
+    }
+    benefit() {
+        if (this.side === OrderSide.BUY) {
+            return this.amount;
+        }
+        else {
+            return types_1.BN(this.amount).times(this.price);
+        }
     }
     feeCoefficient() {
         return OrderRequest.feeCoefficient(this.side, this.market.taker);
@@ -36,25 +54,14 @@ class OrderRequest {
 }
 exports.OrderRequest = OrderRequest;
 class MarketOrderRequest extends OrderRequest {
-    constructor(side, market, balance, portfolioID) {
-        super(OrderType.MARKET, side, market, portfolioID);
-        this.balance = balance;
-    }
-    cost() {
-        return this.balance;
+    constructor(side, market, amount, price, portfolioID) {
+        super(OrderType.MARKET, side, market, amount, price, portfolioID);
     }
 }
 exports.MarketOrderRequest = MarketOrderRequest;
 class LimitOrderRequest extends OrderRequest {
     constructor(side, market, amount, price, portfolioID) {
-        super(OrderType.LIMIT, side, market, portfolioID);
-        this.amount = amount;
-        this.price = price;
-    }
-    cost() {
-        let amount = types_1.BN(this.amount);
-        let price = types_1.BN(this.price);
-        return amount.multipliedBy(price).multipliedBy(this.feeCoefficient());
+        super(OrderType.LIMIT, side, market, amount, price, portfolioID);
     }
     static buyMaxWithBudget(market, budget, price, portfolioID) {
         // amount = b/(p*(1+f))
@@ -66,14 +73,14 @@ class LimitOrderRequest extends OrderRequest {
 exports.LimitOrderRequest = LimitOrderRequest;
 // these are just for convenience--provide no functionality except omitting side
 class MarketBuyOrderRequest extends MarketOrderRequest {
-    constructor(market, balance, portfolioID) {
-        super(OrderSide.BUY, market, balance, portfolioID);
+    constructor(market, amount, price, portfolioID) {
+        super(OrderSide.BUY, market, amount, price, portfolioID);
     }
 }
 exports.MarketBuyOrderRequest = MarketBuyOrderRequest;
 class MarketSellOrderRequest extends MarketOrderRequest {
-    constructor(market, balance, portfolioID) {
-        super(OrderSide.SELL, market, balance, portfolioID);
+    constructor(market, amount, price, portfolioID) {
+        super(OrderSide.SELL, market, amount, price, portfolioID);
     }
 }
 exports.MarketSellOrderRequest = MarketSellOrderRequest;

@@ -24,9 +24,25 @@ export abstract class OrderRequest {
     readonly type:OrderType,
     readonly side:OrderSide,
     readonly market:IMarket,
+    readonly amount:Num,
+    readonly price:Num,
     readonly portfolioID:ID) {}
   
-  abstract cost():Num;
+  public cost():Num {
+    if (this.side === OrderSide.BUY) {
+      return BN(this.amount).times(this.price);
+    } else {
+      return this.amount;
+    }
+  }
+
+  public benefit():Num {
+    if (this.side === OrderSide.BUY) {
+      return this.amount;
+    } else {
+      return BN(this.amount).times(this.price);
+    }
+  }
   
   protected feeCoefficient():BigNumber {
     return OrderRequest.feeCoefficient(this.side, this.market.taker);
@@ -41,24 +57,14 @@ export abstract class OrderRequest {
 }
 
 export class MarketOrderRequest extends OrderRequest {
-  constructor(side:OrderSide, market:IMarket, readonly balance:Num, portfolioID:ID) {
-    super(OrderType.MARKET, side, market, portfolioID);
-  }
-
-  public cost():Num {
-    return this.balance;
+  constructor(side:OrderSide, market:IMarket, amount:Num, price:Num, portfolioID:ID) {
+    super(OrderType.MARKET, side, market, amount, price, portfolioID);
   }
 }
 
 export class LimitOrderRequest extends OrderRequest {
-  constructor(side:OrderSide, market:IMarket, readonly amount:Num, readonly price:Num, portfolioID:ID) {
-    super(OrderType.LIMIT, side, market, portfolioID);
-  }
-
-  public cost():Num {
-    let amount = BN(this.amount);
-    let price = BN(this.price);
-    return amount.multipliedBy(price).multipliedBy(this.feeCoefficient());
+  constructor(side:OrderSide, market:IMarket, amount:Num, price:Num, portfolioID:ID) {
+    super(OrderType.LIMIT, side, market, amount, price, portfolioID);
   }
 
   public static buyMaxWithBudget(market:IMarket, budget:Num, price:Num, portfolioID:ID):LimitOrderRequest {
@@ -73,14 +79,14 @@ export class LimitOrderRequest extends OrderRequest {
 // these are just for convenience--provide no functionality except omitting side
 
 export class MarketBuyOrderRequest extends MarketOrderRequest {
-  constructor(market:IMarket, balance:Num, portfolioID:ID) {
-    super(OrderSide.BUY, market, balance, portfolioID);
+  constructor(market:IMarket, amount:Num, price:Num, portfolioID:ID) {
+    super(OrderSide.BUY, market, amount, price, portfolioID);
   }
 }
 
 export class MarketSellOrderRequest extends MarketOrderRequest {
-  constructor(market:IMarket, balance:Num, portfolioID:ID) {
-    super(OrderSide.SELL, market, balance, portfolioID);
+  constructor(market:IMarket, amount:Num, price:Num, portfolioID:ID) {
+    super(OrderSide.SELL, market, amount, price, portfolioID);
   }
 }
 

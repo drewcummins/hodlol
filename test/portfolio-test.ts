@@ -51,7 +51,7 @@ describe('Portfolio tests', () => {
     symbol:market.symbol,
     status:OrderStatus.CLOSED,
     cost:Number(buyRequest.cost()),
-    filled:50,
+    filled:Number(buyRequest.benefit()),
     price:Number(buyRequest.price),
     remaining:0,
     amount:50,
@@ -99,8 +99,8 @@ describe('Portfolio tests', () => {
     id:"sell",
     symbol:market.symbol,
     status:OrderStatus.CLOSED,
-    cost:Number(sellRequest.cost()),
-    filled:50,
+    cost:Number(sellRequest.benefit()),
+    filled:Number(sellRequest.amount),
     remaining:0,
     info: {},
     price:Number(sellRequest.price),
@@ -118,17 +118,27 @@ describe('Portfolio tests', () => {
     expect(BN(ethBalance.reserved).toNumber()).to.equal(0);
   });
 
-  it('should calculate with fees accordingly', () => {
-    let market:IMarket = {
-      symbol:"ETH/BTC",
-      base:"ETH",
-      quote:"BTC",
-      maker:0.01,
-      taker:0.01
-    };
-    let request:LimitOrderRequest = LimitOrderRequest.buyMaxWithBudget(market, btcFunds, 0.2, "lol");
-    expect(BN(request.amount).toNumber()).to.be.greaterThan(49);
-    expect(BN(request.amount).toNumber()).to.be.lessThan(50);
-    expect(BN(request.cost()).minus(BN(btcFunds)).abs().isLessThan(0.00001)).to.be.true;
-  })
+  it('should reserve and undo correctly', () => {
+    portfolio.reserve(buyRequest);
+    let [ethBalance, btcBalance] = portfolio.balanceByMarket(market.symbol);
+    expect(BN(btcBalance.free).toNumber()).to.equal(0);
+    expect(BN(btcBalance.reserved).toNumber()).to.equal(btcFunds);
+    portfolio.undo(buyRequest);
+    expect(BN(btcBalance.free).toNumber()).to.equal(btcFunds);
+    expect(BN(btcBalance.reserved).toNumber()).to.equal(0);
+  });
+
+  // it('should calculate with fees accordingly', () => {
+  //   let market:IMarket = {
+  //     symbol:"ETH/BTC",
+  //     base:"ETH",
+  //     quote:"BTC",
+  //     maker:0.01,
+  //     taker:0.01
+  //   };
+  //   let request:LimitOrderRequest = LimitOrderRequest.buyMaxWithBudget(market, btcFunds, 0.2, "lol");
+  //   expect(BN(request.amount).toNumber()).to.be.greaterThan(49);
+  //   expect(BN(request.amount).toNumber()).to.be.lessThan(50);
+  //   expect(BN(request.cost()).minus(BN(btcFunds)).abs().isLessThan(0.00001)).to.be.true;
+  // })
 })

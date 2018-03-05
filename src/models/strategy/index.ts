@@ -1,7 +1,7 @@
 import { SignalJSON, Signal, SignalCode } from "../signal";
 import { ID, Num, BN, Value, Order, OHLCV } from "../types";
 import { Portfolio } from "../portfolio";
-import { OrderRequest, OrderType, OrderSide, LimitOrderRequest, LimitSellOrderRequest } from "../order";
+import { OrderRequest, OrderType, OrderSide, LimitOrderRequest, LimitSellOrderRequest, MarketBuyOrderRequest, MarketSellOrderRequest } from "../order";
 import { Feed } from "../exchange";
 import { MACD } from "../signal/macd";
 import { OHLCVTicker } from "../ticker";
@@ -99,11 +99,15 @@ export class Strategy {
   }
 
   protected async placeLimitBuyOrder(market:IMarket, budget:Num, close:Num):Promise<Order> {
-    return this.placeOrder(LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
+    let max = LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id);
+    let order = new MarketBuyOrderRequest(market, max.amount, close, this.portfolio.id);
+    return this.placeOrder(order);
+    // return this.placeOrder(LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
   }
 
   protected async placeLimitSellOrder(market:IMarket, budget:Num, close:Num):Promise<Order> {
-    return this.placeOrder(new LimitSellOrderRequest(market, budget, close, this.portfolio.id));
+    return this.placeOrder(new MarketSellOrderRequest(market, budget, close, this.portfolio.id));
+    // return this.placeOrder(new LimitSellOrderRequest(market, budget, close, this.portfolio.id));
   }
 
   protected getTitle():string {

@@ -271,13 +271,12 @@ export class Exchange {
     portfolio.reserve(request);
     switch (request.type) {
       case OrderType.LIMIT:
-        let lo:LimitOrderRequest = request as LimitOrderRequest;
         switch (request.side) {
           case OrderSide.BUY:
-            order = new Order(await this.api.createLimitBuyOrder(lo.market.symbol, BNF(lo.amount), BNF(lo.price)));
+            order = new Order(await this.api.createLimitBuyOrder(request.market.symbol, BNF(request.amount), BNF(request.price)));
             break;
           case OrderSide.SELL:
-            order = new Order(await this.api.createLimitSellOrder(lo.market.symbol, BNF(lo.amount), BNF(lo.price)));
+            order = new Order(await this.api.createLimitSellOrder(request.market.symbol, BNF(request.amount), BNF(request.price)));
             break;
         
           default:
@@ -286,13 +285,12 @@ export class Exchange {
         break;
 
       case OrderType.MARKET:
-        let mo:MarketOrderRequest = request as MarketOrderRequest;
         switch (request.side) {
           case OrderSide.BUY:
-            order = new Order(await this.api.createMarketBuyOrder(mo.market.symbol, BNF(mo.balance)));
+            order = new Order(await this.api.createMarketBuyOrder(request.market.symbol, BNF(request.amount), BNF(request.price)));
             break;
           case OrderSide.SELL:
-            order = new Order(await this.api.createMarketSellOrder(mo.market.symbol, BNF(mo.balance)));
+            order = new Order(await this.api.createMarketSellOrder(request.market.symbol, BNF(request.amount), BNF(request.price)));
             break;
         
           default:

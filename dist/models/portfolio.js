@@ -61,12 +61,7 @@ class Portfolio {
             return types_1.BN(quote.free).isGreaterThanOrEqualTo(request.cost());
         }
         else if (request.side == order_1.OrderSide.SELL) {
-            if (request.type == order_1.OrderType.LIMIT) {
-                return types_1.BN(base.free).isGreaterThanOrEqualTo(types_1.BN(request.amount));
-            }
-            else {
-                return types_1.BN(base.free).isGreaterThanOrEqualTo(types_1.BN(request.balance));
-            }
+            return types_1.BN(base.free).isGreaterThanOrEqualTo(request.cost());
         }
         else {
             throw new errors_1.InvalidOrderSideError(request);
@@ -84,24 +79,20 @@ class Portfolio {
             throw new errors_1.InsufficientFundsError(request);
         }
         let market = this.markets.getWithSymbol(request.market.symbol);
-        switch (request.side) {
-            case order_1.OrderSide.BUY:
-                this.removeFree(market.quote, request.cost());
-                this.addReserved(market.quote, request.cost());
-                break;
-            case order_1.OrderSide.SELL:
-                if (request.type == order_1.OrderType.LIMIT) {
-                    this.removeFree(market.base, request.amount);
-                    this.addReserved(market.base, request.amount);
-                }
-                else {
-                    this.removeFree(market.base, request.balance);
-                    this.addReserved(market.base, request.balance);
-                }
-                break;
-            default:
-                break;
-        }
+        let symbol = request.side === order_1.OrderSide.BUY ? market.quote : market.base;
+        this.removeFree(symbol, request.cost());
+        this.addReserved(symbol, request.cost());
+    }
+    /**
+     * Undoes a reservation made for a request
+     *
+     * @param request request to undo
+     */
+    undo(request) {
+        let market = this.markets.getWithSymbol(request.market.symbol);
+        let symbol = request.side === order_1.OrderSide.BUY ? market.quote : market.base;
+        this.removeReserved(symbol, request.cost());
+        this.addFree(symbol, request.cost());
     }
     /**
      * Fills the given order.

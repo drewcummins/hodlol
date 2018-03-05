@@ -240,26 +240,24 @@ class Exchange {
         portfolio.reserve(request);
         switch (request.type) {
             case order_1.OrderType.LIMIT:
-                let lo = request;
                 switch (request.side) {
                     case order_1.OrderSide.BUY:
-                        order = new types_1.Order(await this.api.createLimitBuyOrder(lo.market.symbol, types_1.BNF(lo.amount), types_1.BNF(lo.price)));
+                        order = new types_1.Order(await this.api.createLimitBuyOrder(request.market.symbol, types_1.BNF(request.amount), types_1.BNF(request.price)));
                         break;
                     case order_1.OrderSide.SELL:
-                        order = new types_1.Order(await this.api.createLimitSellOrder(lo.market.symbol, types_1.BNF(lo.amount), types_1.BNF(lo.price)));
+                        order = new types_1.Order(await this.api.createLimitSellOrder(request.market.symbol, types_1.BNF(request.amount), types_1.BNF(request.price)));
                         break;
                     default:
                         throw new errors_1.InvalidOrderSideError(request);
                 }
                 break;
             case order_1.OrderType.MARKET:
-                let mo = request;
                 switch (request.side) {
                     case order_1.OrderSide.BUY:
-                        order = new types_1.Order(await this.api.createMarketBuyOrder(mo.market.symbol, types_1.BNF(mo.balance)));
+                        order = new types_1.Order(await this.api.createMarketBuyOrder(request.market.symbol, types_1.BNF(request.amount), types_1.BNF(request.price)));
                         break;
                     case order_1.OrderSide.SELL:
-                        order = new types_1.Order(await this.api.createMarketSellOrder(mo.market.symbol, types_1.BNF(mo.balance)));
+                        order = new types_1.Order(await this.api.createMarketSellOrder(request.market.symbol, types_1.BNF(request.amount), types_1.BNF(request.price)));
                         break;
                     default:
                         throw new errors_1.InvalidOrderSideError(request);

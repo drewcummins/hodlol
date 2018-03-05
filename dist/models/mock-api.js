@@ -64,7 +64,7 @@ class MockAPI {
         this.orders.set(order.id, order);
         return order;
     }
-    async createMarketBuyOrder(market, amount) {
+    async createMarketBuyOrder(market, amount, price) {
         let order = {
             id: uuid(),
             datetime: "N/A",
@@ -74,11 +74,11 @@ class MockAPI {
             type: order_1.OrderType.MARKET,
             side: order_1.OrderSide.BUY,
             amount: Number(amount),
-            cost: Number(amount),
+            cost: types_1.BN(price).times(amount).toNumber(),
             filled: 0.0,
             remaining: Number(amount),
             fee: 0,
-            price: NaN,
+            price: Number(price),
             info: {}
         };
         this.orders.set(order.id, order);
@@ -104,7 +104,7 @@ class MockAPI {
         this.orders.set(order.id, order);
         return Promise.resolve(order);
     }
-    createMarketSellOrder(market, amount) {
+    createMarketSellOrder(market, amount, price) {
         let order = {
             id: uuid(),
             datetime: "N/A",
@@ -113,9 +113,9 @@ class MockAPI {
             symbol: market,
             type: order_1.OrderType.MARKET,
             side: order_1.OrderSide.SELL,
-            price: NaN,
+            price: Number(price),
             amount: Number(amount),
-            cost: Number(amount),
+            cost: types_1.BN(price).times(amount).toNumber(),
             filled: 0.0,
             remaining: Number(amount),
             fee: 0,
