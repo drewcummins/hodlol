@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const signal_1 = require("../signal");
+const indicator_1 = require("../indicator");
 const types_1 = require("../types");
 const order_1 = require("../order");
 const errors_1 = require("../../errors");
@@ -26,7 +26,7 @@ class Strategy {
         const feed = this.tsi.feed;
         if (source.indicators) {
             source.indicators.forEach(async (signal) => {
-                const sig = await Promise.resolve().then(() => require(`../signal/${signal.fileName}`));
+                const sig = await Promise.resolve().then(() => require(`../indicator/${signal.fileName}`));
                 const sigClass = sig[signal.className];
                 for (const [symbol, ticker] of feed.candles.entries()) {
                     let indicator = new sigClass(feed, symbol, signal);
@@ -39,19 +39,19 @@ class Strategy {
         const feed = this.tsi.feed;
         for (let indicator of this.indicators) {
             let signal = await indicator.tick();
-            if (signal == signal_1.SignalCode.PASS)
+            if (signal == indicator_1.Signal.PASS)
                 continue;
             let ticker = feed.candles.get(indicator.symbol);
             let last = ticker.last();
             let market = this.portfolio.marketBySymbol(indicator.symbol);
-            if (signal == signal_1.SignalCode.BUY) {
+            if (signal == indicator_1.Signal.BUY) {
                 let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
                 if (types_1.BN(quote.free).isGreaterThan(0)) {
                     // greedily use up funds
                     const order = await this.placeLimitBuyOrder(market, types_1.BN(quote.free), types_1.BN(last.close));
                 }
             }
-            else if (signal == signal_1.SignalCode.SELL) {
+            else if (signal == indicator_1.Signal.SELL) {
                 let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
                 if (types_1.BN(base.free).isGreaterThan(0)) {
                     const order = await this.placeLimitSellOrder(market, types_1.BN(base.free), types_1.BN(last.close));

@@ -5,9 +5,14 @@
     {
       "fileName": "",
       "className": "Strategy",
+      "title": "Jumpy",
       "weight": 1,
       "indicators": [
-        { "fileName": "threshold", "className": "Threshold", "threshold": 0.001 }
+        { 
+          "fileName": "threshold", 
+          "className": "Threshold", 
+          "threshold": 0.001 
+        }
       ]
     },
     {

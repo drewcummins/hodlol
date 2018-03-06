@@ -12,7 +12,7 @@ Algo trading platform for cryptocurrencies
 
 
 ### Conceptual Model
-The whole of hodlol is modeled around the idea of a _trader_. A trader implements any number of _strategies_ on a given exchange. A trader is described by a `.trader` JSON file. There's an extremely prudent, hard-to-beat trader named _dummy_ in the `traders` directory:
+The whole of hodlol is modeled around the idea of a _trader_. A trader implements any number of _strategies_ on a given exchange. A trader is described by a `.trader` JSON file:
 
 ```javascript
 {
@@ -33,33 +33,30 @@ The whole of hodlol is modeled around the idea of a _trader_. A trader implement
 
 This trader implements a hold strategy on Binance. The `tickers` indicate which markets to follow. Hodlol pulls all the data you want to track in the background and gives you the most recent data as it becomes available.
 
-Now this is obviously a pretty uninteresting trader. Let's look at a slightly more involved trader:
+Now this is obviously a pretty uninteresting trader. Let's look at a slightly more involved trader (`dummy-lite.trader` in the `traders` directory):
 
 ```javascript
 {
-  "name": "obv-macd-lite",
+  "name": "dummy",
   "exchange": "binance",
   "strategies": [
     {
-      "fileName": "index",
+      "fileName": "",
       "className": "Strategy",
-      "title": "Any--MACD,OBV",
+      "title": "Jumpy",
       "weight": 1,
       "indicators": [
-        {
-          "fileName": "any", 
-          "className": "Any",
-          "subsignals": [
-            { "fileName": "macd", "className": "MACD" },
-            { "fileName": "obv", "className": "OBV" }
-          ]
+        { 
+          "fileName": "threshold", 
+          "className": "Threshold", 
+          "threshold": 0.001 
         }
       ]
     },
     {
       "fileName": "hodl",
       "className": "HODL",
-      "weight":1
+      "weight": 1
     }
   ],
   "tickers": [
@@ -75,28 +72,44 @@ The only thing that changes between this and the hodl strategy is the name and i
 {
   "fileName": "index",
   "className": "Strategy",
-  "title": "Any--MACD,OBV",
+  "title": "Jumpy",
   "weight": 1,
   "indicators": [
-    {
-      "fileName": "any", 
-      "className": "Any",
-      "subsignals": [
-        { "fileName": "macd", "className": "MACD" },
-        { "fileName": "obv", "className": "OBV" }
-      ]
+    { 
+      "fileName": "threshold", 
+      "className": "Threshold", 
+      "threshold": 0.001 
     }
   ]
 }
 ```
-
 So the first 2 lines are the file and class name properties. These are hopefully self-explanatory as the whole idea is to make writing new strategies quick and easy. The `fileName` tells where _in the strategy directory_ the file is located. The `className` indicates the name of the `Strategy` or `Strategy` subclass.
 
-After that, we give it a title which just helps us identify it as we test.
+After that, we give it a title which is just for display purposes.
 
-The next bit is `weight`. You can think of this parameter as describing parts in a strategy cocktail--in this case each strategy will get to handle _half_ the total funds allocated to the trader since there are 2 of them each staking one part.
+The next field is `weight`. You can think of this parameter as describing parts in a strategy cocktail--in this case each strategy will get to handle _half_ the total funds allocated to the trader since there are 2 of them, each staking one part.
 
-Whenever a new tick gets pulled in, or an order status changes, each strategy will automatically have its `tick` method called. By default, a strategy will then call `tick` on all its signals. Signals emit buy/hold/sell signals according to the current price data. If a strategy chooses to react to a buy or sell signal, it requests that the trader places an order. The default trader will do this provided sufficient funds exist.
+Whenever a new tick gets pulled in, or an order status changes, each strategy will automatically have its `tick` method called. By default, a strategy will then call `tick` on all its indicators. Indicators emit buy/pass/sell signals according to the current price data. If a strategy chooses to react to a buy or sell signal, it requests that the trader places an order. The default trader will do this provided sufficient funds exist.
+
+Indicators can be added to the vanilla strategy class via its `indicators` field. In our example, we add one indicator strategy, which looks for a change between the previous and current price data. If it exceeds some threshold down, it issues a buy signal. Likewise, if it exceeds some threshold up, it issues a sell signal. Here's what that looks like in practice:
+
+```typescript
+public async evaluate(ticker:Ticker):Promise<Signal> {
+  let series:Series = ticker.series;
+  // we need at least 2 data points to look at whether we jumped or not
+  if (series && series.length() > 1) {
+    let prev:OHLCV = series.getAt(-2) as OHLCV;
+    let curr:OHLCV = series.getAt(-1) as OHLCV;
+    let phi:number = curr.close/prev.close;
+    if (phi - 1 > this.threshold) {
+      return Signal.SELL;
+    } else if (1 - phi > this.threshold) {
+      return Signal.BUY;
+    }
+  }
+  return Signal.PASS;
+}
+```
 
 So here we actually have a not-entirely-trivial strategy in that it listens for an `Any` signal which itself propagates a `MACD` or `OBV` signal when either are triggered. You can read about MACD [here](https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)) and OBV [here](https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)).
 

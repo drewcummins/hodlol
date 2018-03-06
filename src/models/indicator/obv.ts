@@ -1,14 +1,14 @@
-import { Signal, SignalJSON, SignalCode } from ".";
-import { Ticker } from "../ticker";
+import { Indicator, IndicatorJSON, Signal } from ".";
+import { Ticker, OHLCVTicker } from "../ticker";
 import { Tick, ExchangeState } from "../types";
 
 const tulind = require('tulind');
 
-interface OBVJSON extends SignalJSON {
+interface OBVJSON extends IndicatorJSON {
   props?: string[]
 }
 
-export class OBV extends Signal {
+export class OBV extends Indicator {
 
   protected props:string[];
   protected periods:number[];
@@ -17,16 +17,16 @@ export class OBV extends Signal {
     this.props = source.props || ["close", "volume"];
   }
 
-  public async evaluate(ticker:Ticker):Promise<SignalCode> {
+  public async evaluate(ticker:OHLCVTicker):Promise<Signal> {
     let series = ticker.series;
     if (series && series.length() > 0) {
       let slice:Number[][] = series.transpose(this.props, 50);
       let last:Tick<ExchangeState> = series.last();
       let obv = await tulind.indicators.obv.indicator(slice, []);
-      if (this.hasBuySignal(obv[0])) return SignalCode.BUY;
-      else if (this.hasSellSignal(obv[0])) return SignalCode.SELL;
+      if (this.hasBuySignal(obv[0])) return Signal.BUY;
+      else if (this.hasSellSignal(obv[0])) return Signal.SELL;
     }
-    return SignalCode.PASS;
+    return Signal.PASS;
   }
 
   protected hasBuySignal(obv:number[]):boolean {

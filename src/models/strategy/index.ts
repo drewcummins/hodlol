@@ -1,9 +1,9 @@
-import { SignalJSON, Signal, SignalCode } from "../signal";
+import { Indicator, IndicatorJSON, Signal } from "../indicator";
 import { ID, Num, BN, Value, Order, OHLCV } from "../types";
 import { Portfolio } from "../portfolio";
 import { OrderRequest, OrderType, OrderSide, LimitOrderRequest, LimitSellOrderRequest, MarketBuyOrderRequest, MarketSellOrderRequest } from "../order";
 import { Feed } from "../exchange";
-import { MACD } from "../signal/macd";
+import { MACD } from "../indicator/macd";
 import { OHLCVTicker } from "../ticker";
 import { InvalidSignalError } from "../../errors";
 import { IMarket } from "../market";
@@ -13,7 +13,7 @@ export interface StrategyJSON {
   fileName: string,
   className: string,
   weight: number,
-  indicators?: SignalJSON[],
+  indicators?: IndicatorJSON[],
   title?: string
 }
 
@@ -28,7 +28,7 @@ export class Strategy {
   readonly id:ID;
   readonly title:string;
   readonly initialValue:Num;
-  protected indicators:Signal[] = [];
+  protected indicators:Indicator[] = [];
   protected orders:Map<ID,Order> = new Map<ID,Order>();
   public originalValue:Value;
 
@@ -51,9 +51,9 @@ export class Strategy {
     const feed = this.tsi.feed;
     if (source.indicators) {
       source.indicators.forEach(async signal => {
-        const sig = await import(`../signal/${signal.fileName}`);
+        const sig = await import(`../indicator/${signal.fileName}`);
         const sigClass = sig[signal.className];
-        for (const [symbol,ticker] of feed.candles.entries()) {
+        for (const [symbol, ticker] of feed.candles.entries()) {
           let indicator = new sigClass(feed, symbol, signal);
           this.indicators.push(indicator);
         }
@@ -65,18 +65,18 @@ export class Strategy {
     const feed = this.tsi.feed;
     for (let indicator of this.indicators) {
       let signal = await indicator.tick();
-      if (signal == SignalCode.PASS) continue;
+      if (signal == Signal.PASS) continue;
 
       let ticker:OHLCVTicker = feed.candles.get(indicator.symbol);
-      let last:OHLCV = ticker.last() as OHLCV;
+      let last:OHLCV = ticker.last();
       let market:IMarket = this.portfolio.marketBySymbol(indicator.symbol);
-      if (signal == SignalCode.BUY) {
+      if (signal == Signal.BUY) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
         if (BN(quote.free).isGreaterThan(0)) {
           // greedily use up funds
           const order = await this.placeLimitBuyOrder(market, BN(quote.free), BN(last.close));
         }
-      } else if (signal == SignalCode.SELL) {
+      } else if (signal == Signal.SELL) {
         let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
         if (BN(base.free).isGreaterThan(0)) {
           const order = await this.placeLimitSellOrder(market, BN(base.free), BN(last.close));

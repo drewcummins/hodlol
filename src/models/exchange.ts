@@ -1,7 +1,7 @@
-import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, TickerTick, OHLCVTick, OrderTick, Order, Ticker, OHLCV, BNF } from "./types";
+import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, TickerTick, OHLCVTick, OrderTick, Order, TTicker, OHLCV, BNF } from "./types";
 import { Series } from "./series";
 import { Marketplace, Market } from "./market";
-import { OHLCVTicker, OrderTicker } from "./ticker";
+import { BaseTicker, OHLCVTicker, OrderTicker } from "./ticker";
 import { OrderStatus, OrderRequest, OrderType, OrderSide, LimitOrderRequest, MarketOrderRequest } from "./order";
 import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors";
 import { Portfolio } from "./portfolio";
@@ -207,7 +207,7 @@ export class Exchange {
    * 
    * @returns ticker data
    */
-  public async fetchTicker(pair:string):Promise<Ticker> {
+  public async fetchTicker(pair:string):Promise<TTicker> {
     return new Tick(await this.api.fetchTicker(pair));
   }
 

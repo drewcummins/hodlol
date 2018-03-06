@@ -1,4 +1,4 @@
-import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick, Ticker, TickerTick, ID } from "./types";
+import { API, Num, BN, Balance, Scenario, OrderTick, Order, OHLCVTick, TTicker, TickerTick, ID, OHLCV } from "./types";
 import { OrderType, OrderSide, OrderStatus } from "./order"
 import { Feed } from "./exchange";
 import { Series, OHLCVSerializer } from "./series";
@@ -9,7 +9,7 @@ const uuid = require('uuid/v4');
 export class MockAPI implements API {
   public name:string;
   private thread:Thread;
-  protected candles:Map<string, Series> = new Map<string, Series>();
+  protected candles:Map<string, Series<OHLCV>> = new Map<string, Series<OHLCV>>();
   protected orders:Map<string, OrderTick> = new Map<string, OrderTick>();
   constructor(protected api:API) {
     this.name = api.name;

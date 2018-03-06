@@ -1,14 +1,14 @@
 import { Exchange } from "./exchange";
 import { Series, Serializer, TickerSerializer, OrderSerializer, OHLCVSerializer } from "./series";
 import { sleep, Thread } from "../utils";
-import { ID, Scenario, ScenarioMode, Tick, ExchangeState, OHLCVTick, OrderTick, Order, OHLCV } from "./types";
+import { ID, Scenario, ScenarioMode, TTicker, Tick, ExchangeState, OHLCVTick, OrderTick, Order, OHLCV, Element } from "./types";
 
-export class Ticker {
-  readonly series:Series;
+export class BaseTicker<T extends Element> {
+  readonly series:Series<T>;
   protected thread:Thread;
   protected timeout:number;
   constructor(protected exchange:Exchange, readonly symbol:string) {
-    this.series = new Series(this.filepath(), this.generateSerializer());
+    this.series = new Series<T>(this.filepath(), this.generateSerializer() as Serializer<T>);
     this.thread = new Thread();
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 5000;
   }
@@ -27,7 +27,7 @@ export class Ticker {
    * Move one step forward
   */
   public async step() {
-    const tick = await this.exchange.fetchTicker(this.symbol);
+    const tick = await this.exchange.fetchTicker(this.symbol) as T;
     this.series.append(tick);
     this.exchange.invalidate();
   }
@@ -48,8 +48,8 @@ export class Ticker {
    * 
    * @returns tick 
    */
-  public getAt(idx:number):Tick<ExchangeState> {
-    return this.series.getAt(idx);
+  public getAt(idx:number):T {
+    return this.series.getAt(idx) as T;
   }
 
   /** 
@@ -57,8 +57,8 @@ export class Ticker {
    * 
    * @returns the last tick in the series
   */
-  public last():Tick<ExchangeState> {
-    return this.series.last();
+  public last():T {
+    return this.series.last() as T;
   }
 
   /** 
@@ -84,16 +84,22 @@ export class Ticker {
     return 'ticker';
   }
 
-  protected generateSerializer():Serializer {
-    return new TickerSerializer();
+  protected generateSerializer():Serializer<T> {
+    return null;
   }
 
-  public seriesFromTicker() {
-    return new Series(this.filepath(), this.generateSerializer());
+  public seriesFromTicker():Series<T> {
+    return new Series<T>(this.filepath(), this.generateSerializer());
   }
 }
 
-export class OHLCVTicker extends Ticker {
+export class Ticker extends BaseTicker<TTicker> {
+  protected generateSerializer():TickerSerializer {
+    return new TickerSerializer();
+  }
+}
+
+export class OHLCVTicker extends BaseTicker<OHLCV> {
   constructor(exchange:Exchange, symbol:string, private period:string="1m") {
     super(exchange, symbol);
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 35000;
@@ -117,12 +123,12 @@ export class OHLCVTicker extends Ticker {
     return 'ohlcv';
   }
 
-  protected generateSerializer():Serializer {
+  protected generateSerializer():OHLCVSerializer {
     return new OHLCVSerializer();
   }
 }
 
-export class OrderTicker extends Ticker {
+export class OrderTicker extends BaseTicker<Order> {
   readonly orderID:ID;
   constructor(exchange:Exchange, order:Order, readonly portfolioID:ID) {
     super(exchange, order.state.symbol);
@@ -149,7 +155,7 @@ export class OrderTicker extends Ticker {
     return 'order';
   }
 
-  protected generateSerializer():Serializer {
+  protected generateSerializer():OrderSerializer {
     return new OrderSerializer();
   }
 }

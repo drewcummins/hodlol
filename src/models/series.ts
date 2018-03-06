@@ -2,11 +2,11 @@ import * as fs from "fs";
 import { bnearest } from "../utils";
 import { BacktestFileMissingError, InvalidCSVError } from "../errors";
 import { OrderSide, OrderType } from "./order";
-import { Scenario, ScenarioMode, Tick, ExchangeState, OHLCVTick, OHLCV, TickerTick, Ticker, OrderTick, Order } from "./types";
+import { Scenario, ScenarioMode, Tick, ExchangeState, OHLCVTick, OHLCV, TickerTick, TTicker, OrderTick, Order, Element } from "./types";
 
-export class Serializer {
+export class Serializer<T extends Element> {
 
-  protected properties(tick:Tick<ExchangeState>):any[] {
+  protected properties(tick:T):any[] {
     return [tick.timestamp];
   }
 
@@ -17,7 +17,7 @@ export class Serializer {
    * 
    * @returns CSV string
    */
-  public toCSV(tick:Tick<ExchangeState>):string {
+  public toCSV(tick:T):string {
     return this.properties(tick).join(",");
   }
 
@@ -28,13 +28,13 @@ export class Serializer {
    * 
    * @returns Tick
    */
-  public fromCSV(csv:string):Tick<ExchangeState> {
+  public fromCSV(csv:string):T {
     return;
   }
 }
 
-export class TickerSerializer extends Serializer {
-  protected properties(tick:Ticker):any[] {
+export class TickerSerializer extends Serializer<TTicker> {
+  protected properties(tick:TTicker):any[] {
     let state = tick.state;
     return [tick.timestamp,state.high,state.low,state.bid,state.ask];
   }
@@ -45,7 +45,7 @@ export class TickerSerializer extends Serializer {
    * 
    * @returns TickerTick
    */
-  public fromCSV(csv:string):Ticker {
+  public fromCSV(csv:string):TTicker {
     let props:any = csv.split(",").map((x) => Number(x));
     if (props.length != 5) {
       throw new InvalidCSVError(csv, TickerSerializer);
@@ -64,7 +64,7 @@ export class TickerSerializer extends Serializer {
   }
 }
 
-export class OHLCVSerializer extends Serializer {
+export class OHLCVSerializer extends Serializer<OHLCV> {
   protected properties(tick:OHLCV):any[] {
     return tick.state;
   }
@@ -85,7 +85,7 @@ export class OHLCVSerializer extends Serializer {
   }
 }
 
-export class OrderSerializer extends Serializer {
+export class OrderSerializer extends Serializer<Order> {
   protected properties(tick:Order):any[] {
     let state = tick.state;
     return [tick.timestamp,state.id,state.status,state.symbol,state.type,state.side,state.price,state.cost,state.amount,state.filled,state.remaining,state.fee];
@@ -123,14 +123,12 @@ export class OrderSerializer extends Serializer {
   }
 }
 
-type Point = Tick<ExchangeState>;
-
-export class Series {
+export class Series<T extends Element> {
   private map:{ [idx:string]:boolean } = {};
-  private list:Point[] = [];
+  private list:T[] = [];
   private lastWrite:number = 0;
 
-  constructor(readonly filepath:string, readonly serializer:Serializer) {}
+  constructor(readonly filepath:string, readonly serializer:Serializer<T>) {}
 
   /** 
    * Gets the current length of the series
@@ -144,7 +142,7 @@ export class Series {
    * 
    * @returns the last tick
   */
-  public last():Point {
+  public last():T {
     return this.list[this.length()-1];
   }
 
@@ -157,7 +155,7 @@ export class Series {
    * 
    * @param idx index to get tick at
    */
-  public getAt(idx:number):Point {
+  public getAt(idx:number):T {
     if (idx < 0) {
       idx = this.length() + idx;
     }
@@ -170,7 +168,7 @@ export class Series {
    * @param tick tick to add to series
    * @param lock whether to ignore autowrite regardless
    */
-  public append(tick:Point, lock:boolean=false):void {
+  public append(tick:T, lock:boolean=false):void {
     if (!this.map[tick.key()]) {
       this.map[tick.key()] = true;
       this.list.push(tick);
@@ -185,7 +183,7 @@ export class Series {
    * @param lock whether to ignore autowrite regardless
    */
   public appendFromCSV(csv:string, lock:boolean=false):void {
-    let tick:Point = this.serializer.fromCSV(csv);
+    let tick:T = this.serializer.fromCSV(csv);
     this.append(tick, lock);
   }
 
@@ -222,7 +220,7 @@ export class Series {
    * 
    * @returns tuple of closest tick and that tick's index in the list
    */
-  public nearest(timestamp:number):[Point, number] {
+  public nearest(timestamp:number):[T, number] {
     return bnearest(this.list, timestamp, (x) => timestamp - x.timestamp);
   }
 

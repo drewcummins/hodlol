@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const series_1 = require("./series");
 const utils_1 = require("../utils");
 const types_1 = require("./types");
-class Ticker {
+class BaseTicker {
     constructor(exchange, symbol) {
         this.exchange = exchange;
         this.symbol = symbol;
@@ -73,14 +73,20 @@ class Ticker {
         return 'ticker';
     }
     generateSerializer() {
-        return new series_1.TickerSerializer();
+        return null;
     }
     seriesFromTicker() {
         return new series_1.Series(this.filepath(), this.generateSerializer());
     }
 }
+exports.BaseTicker = BaseTicker;
+class Ticker extends BaseTicker {
+    generateSerializer() {
+        return new series_1.TickerSerializer();
+    }
+}
 exports.Ticker = Ticker;
-class OHLCVTicker extends Ticker {
+class OHLCVTicker extends BaseTicker {
     constructor(exchange, symbol, period = "1m") {
         super(exchange, symbol);
         this.period = period;
@@ -108,7 +114,7 @@ class OHLCVTicker extends Ticker {
     }
 }
 exports.OHLCVTicker = OHLCVTicker;
-class OrderTicker extends Ticker {
+class OrderTicker extends BaseTicker {
     constructor(exchange, order, portfolioID) {
         super(exchange, order.state.symbol);
         this.portfolioID = portfolioID;

@@ -1,5 +1,5 @@
 import { OrderRequest } from "../models/order";
-import { SignalCode, Signal } from "../models/signal";
+import { Indicator, Signal } from "../models/indicator";
 
 export class InvalidMarketSymbolError extends Error {
   constructor(symbol:string) {
@@ -26,7 +26,7 @@ export class InvalidExchangeNameError extends Error {
 }
 
 export class InvalidSignalError extends Error {
-  constructor(indicator:Signal, signal:any) {
+  constructor(indicator:Indicator, signal:any) {
     super(`Invalid signal from ${indicator}: ${signal}`);
   }
 }

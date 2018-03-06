@@ -10,7 +10,7 @@ import { OrderRequest, OrderSide, OrderStatus } from '../src/models/order';
 import { expect } from 'chai';
 import 'mocha';
 import { sleep, Thread } from '../src/utils';
-import { MultiSignalJSON } from '../src/models/signal';
+import { MultiIndicatorJSON } from '../src/models/indicator';
 
 const BTC:string = "BTC";
 const amount:Num = 10;
@@ -32,10 +32,10 @@ let json:TraderJSON = {
       title: "Any--MACD,OBV",
       weight: 1,
       indicators: [
-        <MultiSignalJSON>{
+        <MultiIndicatorJSON>{
           fileName: "any", 
           className: "Any",
-          subsignals: [
+          subindicators: [
             { fileName: "macd", className: "MACD" },
             { fileName: "obv", className: "OBV" }
           ]

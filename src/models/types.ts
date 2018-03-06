@@ -70,7 +70,7 @@ export class Tick<T extends ExchangeState> {
 
 export type OrderBook = Tick<OrderBookTick>;
 export type Trade = Tick<TradeTick>;
-export type Ticker = Tick<TickerTick>;
+export type TTicker = Tick<TickerTick>;
 export class OHLCV extends Tick<OHLCVTick> {
   readonly open:number; 
   readonly high:number;
@@ -89,7 +89,8 @@ export class Order extends Tick<OrderTick> {
   }
 }
 
-
+export type SeriesElement = Order | OHLCV | TTicker | Trade | OrderBook;
+export type Element = SeriesElement; // shorthand
 
 export type BitState = number;
 
