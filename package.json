@@ -4,7 +4,8 @@
   "description": "Algo trading platform for cryptocurrencies",
   "main": "index.js",
   "scripts": {
-    "test-dev": "mocha -r ts-node/register test/*.ts"
+    "test-dev": "mocha -r ts-node/register test/*.ts",
+    "dev": "NODE_ENV=dev node ./dist/TraderApp.js"
   },
   "repository": {
     "type": "git",

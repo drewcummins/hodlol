@@ -8,7 +8,8 @@ Algo trading platform for cryptocurrencies
 1. Run `npm install`.
 1. Setup your binance API key/secret by duplicating `env/dev.example.env` to `env/dev.env` and filling in appropriately.
 1. Run `npm run test-dev`. If all the tests pass, you should be good!
-1. If you'd like to test order creation against Binance, set `TEST_LIVE=1` on your environment and rerun the tests.
+1. If you'd like to test order creation against Binance (an extra 2 or 3 tests), set `TEST_LIVE=1` on your environment and rerun the tests.
+1. [Run a trader](#running-a-trader)
 
 
 ### Conceptual Model
@@ -94,40 +95,23 @@ Whenever a new tick gets pulled in, or an order status changes, each strategy wi
 Indicators can be added to the vanilla strategy class via its `indicators` field. In our example, we add one indicator strategy, which looks for a change between the previous and current price data. If it exceeds some threshold down, it issues a buy signal. Likewise, if it exceeds some threshold up, it issues a sell signal. Here's what that looks like in practice:
 
 ```typescript
-public async evaluate(ticker:Ticker):Promise<Signal> {
-  let series:Series = ticker.series;
-  // we need at least 2 data points to look at whether we jumped or not
-  if (series && series.length() > 1) {
-    let prev:OHLCV = series.getAt(-2) as OHLCV;
-    let curr:OHLCV = series.getAt(-1) as OHLCV;
-    let phi:number = curr.close/prev.close;
-    if (phi - 1 > this.threshold) {
-      return Signal.SELL;
-    } else if (1 - phi > this.threshold) {
-      return Signal.BUY;
+public async evaluate(ticker:OHLCVTicker):Promise<Signal> {
+    // we need at least 2 data points to look at whether we jumped or not
+    if (ticker.length() > 1) {
+      let prev:OHLCV = ticker.getAt(-2);
+      let curr:OHLCV = ticker.getAt(-1);
+      let phi:number = curr.close/prev.close;
+      if (phi - 1 > this.threshold) {
+        return Signal.SELL;
+      } else if (1 - phi > this.threshold) {
+        return Signal.BUY;
+      }
     }
+    return Signal.PASS;
   }
-  return Signal.PASS;
-}
 ```
 
-So here we actually have a not-entirely-trivial strategy in that it listens for an `Any` signal which itself propagates a `MACD` or `OBV` signal when either are triggered. You can read about MACD [here](https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)) and OBV [here](https://www.tradingview.com/wiki/MACD_(Moving_Average_Convergence/Divergence)).
-
-Let's look at what `Any` is doing:
-
-```typescript
-export class Any extends MultiSignal {
-  public async evaluate(ticker:Ticker):Promise<SignalCode> {
-    for (const subsignal of this.subsignals) {
-      let signal:SignalCode = await subsignal.tick();
-      if (signal != SignalCode.PASS) return signal;
-    }
-    return SignalCode.PASS;
-  }
-}
-```
-
-So it should be apparent that all this does is let _either_ OBV or MACD signals propagate up to the `Strategy`.
+`OHLCV` stands for "open-high-low-close-volume", also known as candlesticks. We're looking at the close price of the past 2 time periods.
 
 #### Quick Review
 Indicators emit buy or sell _signals_. Strategies react to those signals by suggesting a trader buy or sell accordingly. Traders have the final say and respond to those strategies.
@@ -135,25 +119,31 @@ Indicators emit buy or sell _signals_. Strategies react to those signals by sugg
 ### Running A Trader
 To run a trader, you simply point to your `.trader` file and indicate which and how much funds to give it access to. For instance, if you have half a Bitcoin you'd like to trade with, you'd run:
 
-    ./index.js your-trader.trader --symbol BTC --amount 0.5
+    npm run dev -- my.trader --symbol BTC --amount 0.5
 
-Once you have recorded data, you may wish to run backtests against it. This is accomplished by providing a _scenario_. A scenario is defined in a `.scenario` file, which basically just points to a directory you've previously recorded tick data in. Here's what that looks like:
+### Backtesting
+Running a trader and placing live trades should be _absolute last_ thing you do. Hodlol is all about backtesting.
 
-```javascript
-{
-  "start": 1517254274948,
-  "end": 1517254652314,
-  "date_id": "January-29-2018-2:31:13-PM"
-}
-```
+#### Running A Backtest
+Running a backtest is done exactly like running a regular trader, but adding the backtest flag:
 
-The `date_id` tells the trader where to grab the ticker data from (this is the format created when running in regular mode). You can optionally supply a start and end timestamp. All together, backtesting looks like so:
+    npm run dev -- my.trader --symbol BTC --amount 0.5 -b
 
-    ./index.js your-trader.trader --symbol BTC --amount 0.5 --backtest my-backtest.scenario
+This will ask you to put in the date range you'd like to grab data for. The `Backfiller` will then go and download the necessary OHLCV data to run the backtest, save a scenario file for future use, and run your trader against this data, mocking all orders and balances.
 
-It's quite likely that you'll want to just record some data. For this purpse, it's perfectly acceptable to run a trader with no strategies and `record` set to true.
+To test against this with a different trader, simply point the backtest flag at the newly generates scenario file:
+
+    npm run dev -- another.trader --symbol BTC --amount 0.5 -b scenarios/my.scenario
 
 ### Full Paranoia Verification
-Since hodlol accesses sensitive shit like your precious money, I've decided to sign all commits and tags. If there end up being more contributors, you should make sure the commit you're checking out is verified by me/someone you trust. Github puts a little "verified" flag on all such commits; you can also verify a commit locally with `git verify-commit <commit>`.
+Since hodlol accesses sensitive shit like your _money_, it's fair to be cautious around the sanctity of the code. If there end up being more contributors, you should make sure the commit you're checking out is verified by me/someone you trust. Github puts a little "verified" flag on all such commits; you can also verify a commit locally with `git verify-commit <commit>`.
 
 However, if you want to go full paranoid nutter, you should find my public key on a keyserver like https://pgp.mit.edu and verify that the commit you checked out is, in fact, authentic. You do this by finding `HEAD` in your `.git` directory and splitting out the signature and commit into separate files, then running `gpg --verify commit.sig commit` once you've added my public key to your keyring. This should be about as secure as you can be, assuming you trust me.
+
+### Future Work
+* Add in and generalize order books, trades and vanilla ticker into the exchange feed
+* Add real mocking in for tests
+* Add in fees (this is tricky with CCXT)
+* Test more exchanges
+* Write some basic strategies
+* Portfolio renormalization (this is tricky)

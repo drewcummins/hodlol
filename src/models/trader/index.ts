@@ -32,6 +32,7 @@ export class Trader {
   protected exchange:Exchange;
   protected strategies:Strategy[] = [];
   private thread:Thread;
+  private print:boolean = true;
 
   /**
    * Creates a new Trader
@@ -66,6 +67,7 @@ export class Trader {
         await strategy.tick();
       }
       this.exchange.clean();
+      this.print = true;
     }
   }
 
@@ -118,15 +120,15 @@ export class Trader {
     while (this.thread.isRunning()) {
       await this.stepExchange();
 
-      if (this.thread.hasCycled(100)) this.printPerformance();
-
       if (this.params.backtest) {
+        if (this.thread.hasCycled(100)) this.printPerformance();
         Scenario.getInstance().time += 10000;
         if (Scenario.getInstance().time > Scenario.getInstance().end) {
           Thread.killAll();
           this.printPerformance();
         }
       } else {
+        if (this.print) this.printPerformance();
         Scenario.getInstance().time = +new Date();
       }
 
@@ -195,5 +197,6 @@ export class Trader {
       out += (`\n | ${date}\n`);
     }
     console.log(`\n${out}\n`);
+    this.print = false;
   }
 }

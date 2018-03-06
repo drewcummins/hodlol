@@ -23,6 +23,7 @@ class Trader {
         this.source = source;
         this.params = params;
         this.strategies = [];
+        this.print = true;
         if (params.backtest) {
             types_1.Scenario.create(params.backtest);
         }
@@ -50,6 +51,7 @@ class Trader {
                 await strategy.tick();
             }
             this.exchange.clean();
+            this.print = true;
         }
     }
     async initStrategies() {
@@ -95,9 +97,9 @@ class Trader {
         }
         while (this.thread.isRunning()) {
             await this.stepExchange();
-            if (this.thread.hasCycled(100))
-                this.printPerformance();
             if (this.params.backtest) {
+                if (this.thread.hasCycled(100))
+                    this.printPerformance();
                 types_1.Scenario.getInstance().time += 10000;
                 if (types_1.Scenario.getInstance().time > types_1.Scenario.getInstance().end) {
                     utils_1.Thread.killAll();
@@ -105,6 +107,8 @@ class Trader {
                 }
             }
             else {
+                if (this.print)
+                    this.printPerformance();
                 types_1.Scenario.getInstance().time = +new Date();
             }
             await this.thread.sleep(1);
@@ -171,6 +175,7 @@ class Trader {
             out += (`\n | ${date}\n`);
         }
         console.log(`\n${out}\n`);
+        this.print = false;
     }
 }
 exports.Trader = Trader;
