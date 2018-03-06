@@ -42,7 +42,7 @@ Now this is obviously a pretty uninteresting trader. Let's look at a slightly mo
   "exchange": "binance",
   "strategies": [
     {
-      "fileName": "",
+      "fileName": "index",
       "className": "Strategy",
       "title": "Jumpy",
       "weight": 1,
@@ -67,7 +67,7 @@ Now this is obviously a pretty uninteresting trader. Let's look at a slightly mo
 
 ```
 
-The only thing that changes between this and the hodl strategy is the name and inclusion of an _additional_ strategy. Let's look at it:
+The only thing that changes between this and the hodl strategy is the name and inclusion of an additional strategy. Let's look at it:
 
 ```javascript
 {
@@ -84,7 +84,7 @@ The only thing that changes between this and the hodl strategy is the name and i
   ]
 }
 ```
-So the first 2 lines are the file and class name properties. These are hopefully self-explanatory as the whole idea is to make writing new strategies quick and easy. The `fileName` tells where _in the strategy directory_ the file is located. The `className` indicates the name of the `Strategy` or `Strategy` subclass.
+So the first 2 lines are the file and class name properties. These are hopefully self-explanatory as the whole idea is to make writing new strategies quick and easy. The `fileName` tells where in the strategy directory the file is located. The `className` indicates the name of the `Strategy` or `Strategy` subclass.
 
 After that, we give it a title which is just for display purposes.
 
