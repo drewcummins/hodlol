@@ -15,7 +15,6 @@ export interface SignalJSON {
 
 export class Signal {
   private last:number = 0;
-  protected filename:string;
   constructor(protected feed:Feed, public symbol:string, source:SignalJSON) {
     this.init(source);
   }

@@ -75,14 +75,10 @@ class Strategy {
         }
     }
     async placeLimitBuyOrder(market, budget, close) {
-        let max = order_1.LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id);
-        let order = new order_1.MarketBuyOrderRequest(market, max.amount, close, this.portfolio.id);
-        return this.placeOrder(order);
-        // return this.placeOrder(LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
+        return this.placeOrder(order_1.LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
     }
     async placeLimitSellOrder(market, budget, close) {
-        return this.placeOrder(new order_1.MarketSellOrderRequest(market, budget, close, this.portfolio.id));
-        // return this.placeOrder(new LimitSellOrderRequest(market, budget, close, this.portfolio.id));
+        return this.placeOrder(new order_1.LimitSellOrderRequest(market, budget, close, this.portfolio.id));
     }
     getTitle() {
         return "Strategy";

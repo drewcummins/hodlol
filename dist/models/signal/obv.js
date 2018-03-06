@@ -4,7 +4,6 @@ const _1 = require(".");
 const tulind = require('tulind');
 class OBV extends _1.Signal {
     init(source) {
-        this.filename = "obv";
         this.props = source.props || ["close", "volume"];
     }
     async evaluate(ticker) {

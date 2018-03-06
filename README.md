@@ -8,7 +8,7 @@ Algo trading platform for cryptocurrencies
 1. Run `npm install`.
 1. Setup your binance API key/secret by duplicating `env/dev.example.env` to `env/dev.env` and filling in appropriately.
 1. Run `npm run test-dev`. If all the tests pass, you should be good!
-1. If you'd like to test order creation against Binance, set `TEST_LIVE=1` on your environment and rerun `npm run test-dev`
+1. If you'd like to test order creation against Binance, set `TEST_LIVE=1` on your environment and rerun the tests.
 
 
 ### Conceptual Model
@@ -115,6 +115,9 @@ export class Any extends MultiSignal {
 ```
 
 So it should be apparent that all this does is let _either_ OBV or MACD signals propagate up to the `Strategy`.
+
+#### Quick Review
+Indicators emit buy or sell _signals_. Strategies react to those signals by suggesting a trader buy or sell accordingly. Traders have the final say and respond to those strategies.
 
 ### Running A Trader
 To run a trader, you simply point to your `.trader` file and indicate which and how much funds to give it access to. For instance, if you have half a Bitcoin you'd like to trade with, you'd run:

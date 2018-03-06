@@ -14,7 +14,6 @@ export class MACD extends Signal {
   protected periods:number[];
 
   public init(source:MACDJSON) {
-    this.filename = "macd";
     this.props = source.props || ["close"];
     this.periods = source.periods || [2, 5, 9];
   }

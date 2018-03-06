@@ -99,15 +99,11 @@ export class Strategy {
   }
 
   protected async placeLimitBuyOrder(market:IMarket, budget:Num, close:Num):Promise<Order> {
-    let max = LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id);
-    let order = new MarketBuyOrderRequest(market, max.amount, close, this.portfolio.id);
-    return this.placeOrder(order);
-    // return this.placeOrder(LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
+    return this.placeOrder(LimitOrderRequest.buyMaxWithBudget(market, budget, close, this.portfolio.id));
   }
 
   protected async placeLimitSellOrder(market:IMarket, budget:Num, close:Num):Promise<Order> {
-    return this.placeOrder(new MarketSellOrderRequest(market, budget, close, this.portfolio.id));
-    // return this.placeOrder(new LimitSellOrderRequest(market, budget, close, this.portfolio.id));
+    return this.placeOrder(new LimitSellOrderRequest(market, budget, close, this.portfolio.id));
   }
 
   protected getTitle():string {

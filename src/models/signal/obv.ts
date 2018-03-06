@@ -14,7 +14,6 @@ export class OBV extends Signal {
   protected periods:number[];
 
   public init(source:OBVJSON) {
-    this.filename = "obv";
     this.props = source.props || ["close", "volume"];
   }
 

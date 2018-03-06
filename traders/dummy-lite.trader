@@ -3,6 +3,14 @@
   "exchange": "binance",
   "strategies": [
     {
+      "fileName": "",
+      "className": "Strategy",
+      "weight": 1,
+      "indicators": [
+        { "fileName": "threshold", "className": "Threshold", "threshold": 0.001 }
+      ]
+    },
+    {
       "fileName": "hodl",
       "className": "HODL",
       "weight": 1

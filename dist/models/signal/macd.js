@@ -4,7 +4,6 @@ const _1 = require(".");
 const tulind = require('tulind');
 class MACD extends _1.Signal {
     init(source) {
-        this.filename = "macd";
         this.props = source.props || ["close"];
         this.periods = source.periods || [2, 5, 9];
     }
