@@ -14,10 +14,10 @@ class Backfiller {
     async run(name, start, end) {
         const trader = this.trader;
         types_1.Scenario.createWithName(name, start, end);
-        mkdirp.sync(`./data/${trader.exchange}/${name}`);
         const apiClass = ccxt[trader.exchange];
         if (!apiClass)
             throw new errors_1.InvalidExchangeNameError(trader.exchange);
+        mkdirp.sync(`./${types_1.Scenario.getInstance().dataDir()}/${trader.exchange}/${name}`);
         let api = new apiClass();
         const exchange = new exchange_1.Exchange(api);
         await exchange.loadFeeds(trader.tickers);

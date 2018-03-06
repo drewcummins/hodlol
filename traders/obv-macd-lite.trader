@@ -11,7 +11,7 @@
         {
           "fileName": "any", 
           "className": "Any",
-          "subsignals": [
+          "subindicators": [
             { "fileName": "macd", "className": "MACD" },
             { "fileName": "obv", "className": "OBV" }
           ]
@@ -27,7 +27,7 @@
         {
           "fileName": "all", 
           "className": "All",
-          "subsignals": [
+          "subindicators": [
             { "fileName": "macd", "className": "MACD" },
             { "fileName": "obv", "className": "OBV" }
           ]

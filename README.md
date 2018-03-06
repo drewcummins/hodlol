@@ -34,7 +34,7 @@ The whole of hodlol is modeled around the idea of a _trader_. A trader implement
 
 This trader implements a hold strategy on Binance. The `tickers` indicate which markets to follow. Hodlol pulls all the data you want to track in the background and gives you the most recent data as it becomes available.
 
-Now this is obviously a pretty uninteresting trader. Let's look at a slightly more involved trader (`dummy-lite.trader` in the `traders` directory):
+Now this is obviously a pretty uninteresting trader. Let's look at a slightly more involved trader ([`dummy-lite.trader`](traders/dummy-lite.trader) in the `traders` directory):
 
 ```javascript
 {
@@ -84,7 +84,7 @@ The only thing that changes between this and the hodl strategy is the name and i
   ]
 }
 ```
-So the first 2 lines are the file and class name properties. These are hopefully self-explanatory as the whole idea is to make writing new strategies quick and easy. The `fileName` tells where in the strategy directory the file is located. The `className` indicates the name of the `Strategy` or `Strategy` subclass.
+So the first 2 lines are the file and class name properties. These are hopefully self-explanatory as the whole idea is to make writing new strategies quick and easy. The `fileName` tells where in the strategy directory the file is located. The `className` indicates the name of the [`Strategy`](src/models/indicator/index.ts) or [`Strategy` subclass](src/models/indicator/).
 
 After that, we give it a title which is just for display purposes.
 
@@ -122,21 +122,21 @@ To run a trader, you simply point to your `.trader` file and indicate which and 
     npm run dev -- my.trader --symbol BTC --amount 0.5
 
 ### Backtesting
-Running a trader and placing live trades should be _absolute last_ thing you do. Hodlol is all about backtesting.
+Running a trader and placing live trades should be the _absolute last_ thing you do. Hodlol is all about backtesting.
 
 #### Running A Backtest
-Running a backtest is done exactly like running a regular trader, but adding the backtest flag:
+Running a backtest is done exactly like running a regular trader, but adding the backtest (`-b` or `--backtest`) flag:
 
     npm run dev -- my.trader --symbol BTC --amount 0.5 -b
 
-This will ask you to put in the date range you'd like to grab data for. The `Backfiller` will then go and download the necessary OHLCV data to run the backtest, save a scenario file for future use, and run your trader against this data, mocking all orders and balances.
+This will ask you to put in the date range you'd like to grab data for. The [`Backfiller`](src/models/backfiller.ts) will then go and download the necessary OHLCV data to run the backtest, save a scenario file for future use, and run your trader against this data, mocking all orders and balances.
 
-To test against this with a different trader, simply point the backtest flag at the newly generates scenario file:
+To test against this with a different trader, simply point the backtest flag at the newly generated scenario file:
 
     npm run dev -- another.trader --symbol BTC --amount 0.5 -b scenarios/my.scenario
 
 ### Full Paranoia Verification
-Since hodlol accesses sensitive shit like your _money_, it's fair to be cautious around the sanctity of the code. If there end up being more contributors, you should make sure the commit you're checking out is verified by me/someone you trust. Github puts a little "verified" flag on all such commits; you can also verify a commit locally with `git verify-commit <commit>`.
+Since hodlol accesses sensitive shit, it's fair to be cautious around the sanctity of the code. If there end up being more contributors, you should make sure the commit you're checking out is verified by me/someone you trust. Github puts a little "verified" flag on all such commits; you can also verify a commit locally with `git verify-commit <commit>`.
 
 However, if you want to go full paranoid nutter, you should find my public key on a keyserver like https://pgp.mit.edu and verify that the commit you checked out is, in fact, authentic. You do this by finding `HEAD` in your `.git` directory and splitting out the signature and commit into separate files, then running `gpg --verify commit.sig commit` once you've added my public key to your keyring. This should be about as secure as you can be, assuming you trust me.
 
@@ -147,3 +147,4 @@ However, if you want to go full paranoid nutter, you should find my public key o
 * Test more exchanges
 * Write some basic strategies
 * Portfolio renormalization (this is tricky)
+* Add a proper logging solution

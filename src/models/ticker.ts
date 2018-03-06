@@ -113,7 +113,7 @@ export class OHLCVTicker extends BaseTicker<OHLCV> {
     let since:number = last ? last.timestamp : Scenario.getInstance().time;
     const ohlcv:OHLCV[] = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
     ohlcv.forEach((candlestick:OHLCV) => {
-      this.series.append(candlestick);
+      this.series.append(candlestick, true);
     });
     this.exchange.invalidate();
     if (Scenario.getInstance().record) this.series.write();

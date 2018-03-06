@@ -100,7 +100,7 @@ class OHLCVTicker extends BaseTicker {
         let since = last ? last.timestamp : types_1.Scenario.getInstance().time;
         const ohlcv = await this.exchange.fetchOHLCV(this.symbol, this.period, since);
         ohlcv.forEach((candlestick) => {
-            this.series.append(candlestick);
+            this.series.append(candlestick, true);
         });
         this.exchange.invalidate();
         if (types_1.Scenario.getInstance().record)

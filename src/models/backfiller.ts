@@ -13,9 +13,9 @@ export class Backfiller {
   async run(name:string, start:number, end:number):Promise<string> {
     const trader:TraderJSON = this.trader;
     Scenario.createWithName(name, start, end);
-    mkdirp.sync(`./data/${trader.exchange}/${name}`);
     const apiClass = ccxt[trader.exchange];
     if (!apiClass) throw new InvalidExchangeNameError(trader.exchange);
+    mkdirp.sync(`./${Scenario.getInstance().dataDir()}/${trader.exchange}/${name}`);
     let api:API = new apiClass();
     const exchange = new Exchange(api);
     await exchange.loadFeeds(trader.tickers);
