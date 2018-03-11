@@ -3,7 +3,7 @@ import { Ticker, OHLCVTicker } from "../ticker";
 import { Series } from "../series";
 import { OHLCV } from "../types";
 
-interface ThresholdJSON extends IndicatorJSON {
+export interface ThresholdJSON extends IndicatorJSON {
   threshold:number
 }
 

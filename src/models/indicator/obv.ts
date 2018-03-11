@@ -4,7 +4,7 @@ import { Tick, ExchangeState } from "../types";
 
 const tulind = require('tulind');
 
-interface OBVJSON extends IndicatorJSON {
+export interface OBVJSON extends IndicatorJSON {
   props?: string[]
 }
 

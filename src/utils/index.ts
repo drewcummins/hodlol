@@ -7,15 +7,15 @@ export function sleep(ms:number):Promise<NodeJS.Timer> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-type Compare = (candidate:any) => number;
-interface IState {
+export type Compare = (candidate:any) => number;
+export interface IState {
   min:number,
   max:number,
   nearest:any,
   nearIdx:number,
   nearDist:number
 };
-type State = IState | undefined;
+export type State = IState | undefined;
 
 export function bnearest(list:Array<any>, value:number, compare:Compare, state:State=undefined):[any, number] {
   if (state == undefined) {

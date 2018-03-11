@@ -3,7 +3,7 @@ import { Ticker, OHLCVTicker } from "../ticker";
 
 const tulind = require('tulind');
 
-interface MACDJSON extends IndicatorJSON {
+export interface MACDJSON extends IndicatorJSON {
   props?: string[],
   periods?: number[]
 }
