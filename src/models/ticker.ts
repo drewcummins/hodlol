@@ -8,7 +8,7 @@ export class BaseTicker<T extends Element> {
   protected thread:Thread;
   protected timeout:number;
   constructor(protected exchange:Exchange, readonly symbol:string) {
-    this.series = new Series<T>(this.filepath(), this.generateSerializer() as Serializer<T>);
+    this.series = new Series<T>(this.filepath(), this.generateSerializer());
     this.thread = new Thread();
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 5000;
   }

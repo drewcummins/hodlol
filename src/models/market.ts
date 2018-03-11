@@ -11,7 +11,7 @@ export interface IMarket {
 
 export type Market = IMarket | undefined
 
-type MarketMap = { [symbol:string]:Market };
+export type MarketMap = { [symbol:string]:Market };
 type MarketMapMap = { [symbol:string]:MarketMap };
 
 export class Marketplace {

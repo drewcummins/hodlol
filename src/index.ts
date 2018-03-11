@@ -9,6 +9,8 @@ import * as fs from "fs";
 import { formatTimestamp } from "./utils";
 import { Backfiller } from "./models/backfiller";
 
+export { Trader, TraderJSON } from "./models/trader"
+
 const optionDefinitions = [
   { name: 'help', alias: 'h', type: Boolean },
   { name: 'symbol', alias: 's', type: String, defaultValue: "BTC" },

@@ -8,6 +8,8 @@ const chrono = require('chrono-node');
 const fs = require("fs");
 const utils_1 = require("./utils");
 const backfiller_1 = require("./models/backfiller");
+var trader_2 = require("./models/trader");
+exports.Trader = trader_2.Trader;
 const optionDefinitions = [
     { name: 'help', alias: 'h', type: Boolean },
     { name: 'symbol', alias: 's', type: String, defaultValue: "BTC" },
@@ -37,4 +39,4 @@ const opts = commandLineArgs(optionDefinitions);
         opts.mock = true;
     new trader_1.Trader(traderJSON, opts).run();
 })();
-//# sourceMappingURL=TraderApp.js.map
+//# sourceMappingURL=index.js.map

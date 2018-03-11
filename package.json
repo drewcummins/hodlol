@@ -2,10 +2,11 @@
   "name": "hodlol",
   "version": "1.0.0",
   "description": "Algo trading platform for cryptocurrencies",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
   "scripts": {
     "test-dev": "mocha -r ts-node/register test/*.ts",
-    "dev": "NODE_ENV=dev node ./dist/TraderApp.js"
+    "dev": "NODE_ENV=dev node ./dist/index.js"
   },
   "repository": {
     "type": "git",
