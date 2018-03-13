@@ -77,14 +77,17 @@ class Trader {
             }
         }
     }
-    /**
-     * Kicks off everything necessary for the exchange and initializes all strategies
-    */
-    async run() {
+    async initExchange() {
         await this.exchange.validateFunds(this.params.symbol, this.params.amount);
         await this.exchange.loadFeeds(this.source.tickers);
         await this.exchange.loadMarketplace(this.source.tickers);
         await this.initStrategies();
+    }
+    /**
+     * Kicks off everything necessary for the exchange and initializes all strategies
+    */
+    async run() {
+        await this.initExchange();
         if (this.params.mock) {
             let api = this.exchange.api;
             await api.loadTickers(this.exchange.feed);

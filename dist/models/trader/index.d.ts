@@ -30,6 +30,7 @@ export declare class Trader {
     constructor(source: TraderJSON, params: TraderParams);
     protected stepExchange(): Promise<void>;
     protected initStrategies(): Promise<void>;
+    protected initExchange(): Promise<void>;
     /**
      * Kicks off everything necessary for the exchange and initializes all strategies
     */
