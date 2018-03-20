@@ -31,8 +31,8 @@ export interface TraderParams {
 export class Trader {
   protected exchange:Exchange;
   protected strategies:Strategy[] = [];
-  private thread:Thread;
-  private print:boolean = true;
+  protected thread:Thread;
+  protected print:boolean = true;
 
   /**
    * Creates a new Trader
