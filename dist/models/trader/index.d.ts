@@ -1,5 +1,6 @@
 import { Exchange } from "../exchange";
 import { Order } from "../types";
+import { Thread } from "../../utils";
 import { Strategy, StrategyJSON } from "../strategy";
 import { OrderRequest } from "../order";
 export interface TraderJSON {
@@ -19,8 +20,8 @@ export declare class Trader {
     protected params: TraderParams;
     protected exchange: Exchange;
     protected strategies: Strategy[];
-    private thread;
-    private print;
+    protected thread: Thread;
+    protected print: boolean;
     /**
      * Creates a new Trader
      *
