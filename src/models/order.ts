@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js"
 import { BN, Num, ID } from "./types"
 import { InvalidOrderTypeError } from "../errors";
 import { IMarket } from "./market";
+const uuid = require('uuid/v4');
 
 export enum OrderSide {
   BUY='buy',
@@ -20,13 +21,16 @@ export enum OrderStatus {
 }
 
 export abstract class OrderRequest {
+  readonly id:ID;
   constructor(
     readonly type:OrderType,
     readonly side:OrderSide,
     readonly market:IMarket,
     readonly amount:Num,
     readonly price:Num,
-    readonly portfolioID:ID) {}
+    readonly portfolioID:ID) {
+      this.id = uuid();
+    }
   
   public cost():Num {
     if (this.side === OrderSide.BUY) {

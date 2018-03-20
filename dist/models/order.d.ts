@@ -21,6 +21,7 @@ export declare abstract class OrderRequest {
     readonly amount: Num;
     readonly price: Num;
     readonly portfolioID: ID;
+    readonly id: ID;
     constructor(type: OrderType, side: OrderSide, market: IMarket, amount: Num, price: Num, portfolioID: ID);
     cost(): Num;
     benefit(): Num;

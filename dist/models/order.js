@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
+const uuid = require('uuid/v4');
 var OrderSide;
 (function (OrderSide) {
     OrderSide["BUY"] = "buy";
@@ -25,6 +26,7 @@ class OrderRequest {
         this.amount = amount;
         this.price = price;
         this.portfolioID = portfolioID;
+        this.id = uuid();
     }
     cost() {
         if (this.side === OrderSide.BUY) {
