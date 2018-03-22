@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.js",
   "scripts": {
-    "test-dev": "mocha -r ts-node/register test/*.ts",
-    "dev": "NODE_ENV=dev node ./dist/index.js"
+    "test-dev": "NODE_ENV=dev NODE_PATH=./dist mocha -r ts-node/register test/*.ts",
+    "dev": "NODE_ENV=dev NODE_PATH=./dist node ./dist/index.js"
   },
   "repository": {
     "type": "git",

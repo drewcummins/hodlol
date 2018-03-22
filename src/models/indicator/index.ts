@@ -1,6 +1,7 @@
 import { Feed } from "../exchange";
 import { Ticker, BaseTicker } from "../ticker";
 import { ID, Element } from "../types";
+import { load } from "../../utils";
 
 export enum Signal {
   BUY,
@@ -59,7 +60,7 @@ export class MultiIndicator extends Indicator {
   public async init(source:MultiIndicatorJSON) {
     this.subindicators = [];
     for (const sub of source.subindicators) {
-      const sig = await import(`./${sub.fileName}`);
+      const sig = await load(sub.fileName, "models/indicator");
       const sigClass = sig[sub.className];
       this.subindicators.push(new sigClass(this.feed, this.symbol, sub));
     }

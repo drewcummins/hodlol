@@ -7,6 +7,7 @@ import { MACD } from "../indicator/macd";
 import { OHLCVTicker } from "../ticker";
 import { InvalidSignalError } from "../../errors";
 import { IMarket } from "../market";
+import { load } from "../../utils";
 const uuid = require('uuid/v4');
 
 export interface StrategyJSON {
@@ -51,7 +52,7 @@ export class Strategy {
     const feed = this.tsi.feed;
     if (source.indicators) {
       source.indicators.forEach(async signal => {
-        const sig = await import(`../indicator/${signal.fileName}`);
+        const sig = await load(signal.fileName, "models/indicator");
         const sigClass = sig[signal.className];
         for (const [symbol, ticker] of feed.candles.entries()) {
           let indicator = new sigClass(feed, symbol, signal);

@@ -4,6 +4,7 @@ const indicator_1 = require("../indicator");
 const types_1 = require("../types");
 const order_1 = require("../order");
 const errors_1 = require("../../errors");
+const utils_1 = require("../../utils");
 const uuid = require('uuid/v4');
 class Strategy {
     constructor(portfolio, source, tsi) {
@@ -26,7 +27,7 @@ class Strategy {
         const feed = this.tsi.feed;
         if (source.indicators) {
             source.indicators.forEach(async (signal) => {
-                const sig = await Promise.resolve().then(() => require(`../indicator/${signal.fileName}`));
+                const sig = await utils_1.load(signal.fileName, "models/indicator");
                 const sigClass = sig[signal.className];
                 for (const [symbol, ticker] of feed.candles.entries()) {
                     let indicator = new sigClass(feed, symbol, signal);

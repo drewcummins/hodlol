@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = require("../../utils");
 var Signal;
 (function (Signal) {
     Signal[Signal["BUY"] = 0] = "BUY";
@@ -44,7 +45,7 @@ class MultiIndicator extends Indicator {
     async init(source) {
         this.subindicators = [];
         for (const sub of source.subindicators) {
-            const sig = await Promise.resolve().then(() => require(`./${sub.fileName}`));
+            const sig = await utils_1.load(sub.fileName, "models/indicator");
             const sigClass = sig[sub.className];
             this.subindicators.push(new sigClass(this.feed, this.symbol, sub));
         }

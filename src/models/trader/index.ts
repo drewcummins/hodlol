@@ -1,7 +1,7 @@
 import { Exchange } from "../exchange";
 import { BN, ID, API, Scenario, ScenarioMode, Order } from "../types";
 import { InvalidExchangeNameError, InvalidOrderSideError, InsufficientFundsError } from "../../errors";
-import { sleep, Thread, formatTimestamp } from "../../utils";
+import { sleep, Thread, formatTimestamp, load } from "../../utils";
 import { Strategy, TraderStrategyInterface, StrategyJSON } from "../strategy";
 import { OrderRequest, OrderType, OrderSide } from "../order";
 import { request } from "https";
@@ -87,7 +87,7 @@ export class Trader {
       if (amount > 0) {
         let portfolio = new Portfolio(this.exchange.markets, tsi.fundSymbol, amount);
         this.exchange.registerPortfolio(portfolio);
-        const strat = await import(`../strategy/${stratJSON.fileName}`);
+        const strat = await load(stratJSON.fileName, `models/strategy`);
         const stratClass = strat[stratJSON.className];
         let strategy:Strategy = new stratClass(portfolio, stratJSON, tsi);
         this.strategies.push(strategy);

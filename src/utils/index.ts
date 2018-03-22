@@ -1,4 +1,5 @@
 import { ID } from "../models/types";
+import * as fs from "fs";
 
 const uuid = require('uuid/v4');
 const dateFormat = require('dateformat');
@@ -45,6 +46,16 @@ export function bnearest(list:Array<any>, value:number, compare:Compare, state:S
 
 export function formatTimestamp(time:number) {
   return dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
+}
+
+export async function load(filepath:string, rootdir:string) {
+  var file;
+  try {
+    file = await import(`${rootdir}/${filepath}`);
+  } catch(err) {
+    file = await import(filepath);
+  }
+  return file;
 }
 
 export class Thread {

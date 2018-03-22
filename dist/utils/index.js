@@ -40,6 +40,17 @@ function formatTimestamp(time) {
     return dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
 }
 exports.formatTimestamp = formatTimestamp;
+async function load(filepath, rootdir) {
+    var file;
+    try {
+        file = await Promise.resolve().then(() => require(`${rootdir}/${filepath}`));
+    }
+    catch (err) {
+        file = await Promise.resolve().then(() => require(filepath));
+    }
+    return file;
+}
+exports.load = load;
 class Thread {
     constructor() {
         this.running = true;
