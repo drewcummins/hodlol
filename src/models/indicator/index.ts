@@ -60,7 +60,7 @@ export class MultiIndicator extends Indicator {
   public async init(source:MultiIndicatorJSON) {
     this.subindicators = [];
     for (const sub of source.subindicators) {
-      const sig = await load(sub.fileName, "models/indicator", "./");
+      const sig = await load(sub.fileName, "models/indicator", "../models/indicator");
       const sigClass = sig[sub.className];
       this.subindicators.push(new sigClass(this.feed, this.symbol, sub));
     }

@@ -70,7 +70,7 @@ class Trader {
             if (amount > 0) {
                 let portfolio = new portfolio_1.Portfolio(this.exchange.markets, tsi.fundSymbol, amount);
                 this.exchange.registerPortfolio(portfolio);
-                const strat = await utils_1.load(stratJSON.fileName, `models/strategy`, '../strategy');
+                const strat = await utils_1.load(stratJSON.fileName, `models/strategy`, '../models/strategy');
                 const stratClass = strat[stratJSON.className];
                 let strategy = new stratClass(portfolio, stratJSON, tsi);
                 this.strategies.push(strategy);
