@@ -52,7 +52,7 @@ export class Strategy {
     const feed = this.tsi.feed;
     if (source.indicators) {
       source.indicators.forEach(async signal => {
-        const sig = await load(signal.fileName, "models/indicator");
+        const sig = await load(signal.fileName, "models/indicator", "../indicator");
         const sigClass = sig[signal.className];
         for (const [symbol, ticker] of feed.candles.entries()) {
           let indicator = new sigClass(feed, symbol, signal);

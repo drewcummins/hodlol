@@ -11,7 +11,7 @@ export interface IState {
 export declare type State = IState | undefined;
 export declare function bnearest(list: Array<any>, value: number, compare: Compare, state?: State): [any, number];
 export declare function formatTimestamp(time: number): any;
-export declare function load(filepath: string, rootdir: string): Promise<any>;
+export declare function load(filepath: string, rootdir: string, relativepath: string): Promise<any>;
 export declare class Thread {
     private static threads;
     private running;

@@ -40,13 +40,18 @@ function formatTimestamp(time) {
     return dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
 }
 exports.formatTimestamp = formatTimestamp;
-async function load(filepath, rootdir) {
+async function load(filepath, rootdir, relativepath) {
     var file;
     try {
-        file = await Promise.resolve().then(() => require(`${rootdir}/${filepath}`));
+        file = await Promise.resolve().then(() => require(`${relativepath}/${filepath}`));
     }
     catch (err) {
-        file = await Promise.resolve().then(() => require(filepath));
+        try {
+            file = await Promise.resolve().then(() => require(`${rootdir}/${filepath}`));
+        }
+        catch (err) {
+            file = await Promise.resolve().then(() => require(filepath));
+        }
     }
     return file;
 }

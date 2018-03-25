@@ -48,12 +48,16 @@ export function formatTimestamp(time:number) {
   return dateFormat(time, "mmmm-d-yyyy-h:MM:ss-TT");
 }
 
-export async function load(filepath:string, rootdir:string) {
+export async function load(filepath:string, rootdir:string, relativepath:string) {
   var file;
   try {
-    file = await import(`${rootdir}/${filepath}`);
+    file = await import(`${relativepath}/${filepath}`);
   } catch(err) {
-    file = await import(filepath);
+    try {
+      file = await import(`${rootdir}/${filepath}`);
+    } catch(err) {
+      file = await import(filepath);
+    }
   }
   return file;
 }
