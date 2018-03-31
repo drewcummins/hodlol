@@ -5,3 +5,4 @@ fixtures
 /data
 .DS_Store
 .vscode
+.idea

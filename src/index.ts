@@ -5,6 +5,9 @@ const commandLineArgs = require("command-line-args");
 const rs = require('readline-sync');
 const chrono = require('chrono-node');
 
+//throw unhandled rejections for a stack until node does by default
+process.on('unhandledRejection', e => { throw e; } );
+
 import * as fs from "fs";
 import { formatTimestamp } from "./utils";
 import { Backfiller } from "./models/backfiller";
