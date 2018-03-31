@@ -5,6 +5,8 @@ const commandLineArgs = require("command-line-args");
 // const Trader = require("./app/model/trader");
 const rs = require('readline-sync');
 const chrono = require('chrono-node');
+//throw unhandled rejections for a stack until node does by default
+process.on('unhandledRejection', e => { throw e; });
 const fs = require("fs");
 const utils_1 = require("./utils");
 const backfiller_1 = require("./models/backfiller");
