@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bignumber_js_1 = require("bignumber.js");
 const fs = require("fs");
 const errors_1 = require("../errors");
+const logger_1 = require("../utils/logger");
+const logger = new logger_1.LoggerApi();
 bignumber_js_1.BigNumber.config({ DECIMAL_PLACES: 15, ROUNDING_MODE: bignumber_js_1.BigNumber.ROUND_DOWN });
 function BN(x) {
     return new bignumber_js_1.BigNumber(x.toString());
@@ -83,6 +85,7 @@ class Scenario {
     constructor(file) {
         let json = null;
         if (typeof file === "string") {
+            logger.info("constructing Scenario from:" + file);
             if (fs.existsSync(file)) {
                 json = JSON.parse(fs.readFileSync(file, 'utf8'));
                 this.mode = ScenarioMode.PLAYBACK;

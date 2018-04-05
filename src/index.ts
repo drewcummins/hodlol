@@ -1,4 +1,7 @@
 import { Trader, TraderJSON } from "./models/trader";
+import { LoggerApi } from "./utils/logger";
+const logger = new LoggerApi("main");
+const path = require("path");
 
 const commandLineArgs = require("command-line-args");
 // const Trader = require("./app/model/trader");
@@ -24,8 +27,18 @@ const optionDefinitions = [
 ];
 
 const opts = commandLineArgs(optionDefinitions);
+logger.info("interpreted options: ", opts);
+logger.info("cwd: ", process.cwd());
+logger.info("trader: ", opts.trader);
+const resolvedTraderPath = path.resolve(process.cwd(), opts.trader);
+logger.info("resolve to: ", resolvedTraderPath);
+
 
 (async () => {
+  const foundTrader =  fs.existsSync(resolvedTraderPath);
+  if (!foundTrader){
+    logger.fatal("We couldn't find trader. Fully resolved path: " + resolvedTraderPath, " supplied opts:", opts, " current cwd: ", process.cwd());
+  }
   let traderJSON:TraderJSON = JSON.parse(fs.readFileSync(opts.trader).toString());
   
   // if we're asking to backtest without providing a scenario file,

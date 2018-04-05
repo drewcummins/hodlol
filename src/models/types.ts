@@ -4,6 +4,9 @@ import * as fs from "fs";
 import * as mkdirp from "mkdirp";
 import { ScenarioFileMissingError } from "../errors";
 import * as ccxt from "ccxt";
+import { LoggerApi } from "../utils/logger";
+
+const logger = new LoggerApi();
 
 BigNumber.config({ DECIMAL_PLACES:15, ROUNDING_MODE:BigNumber.ROUND_DOWN });
 
@@ -159,6 +162,7 @@ export class Scenario implements IScenario {
   private constructor(file:string | IScenario) {
     let json:IScenario = null;
     if (typeof file === "string") {
+      logger.info("constructing Scenario from:" + file);
       if (fs.existsSync(file as string)) {
         json = JSON.parse(fs.readFileSync(file as string, 'utf8'));
         this.mode = ScenarioMode.PLAYBACK;
