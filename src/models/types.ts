@@ -5,6 +5,7 @@ import * as mkdirp from "mkdirp";
 import { ScenarioFileMissingError } from "../errors";
 import * as ccxt from "ccxt";
 import { LoggerApi } from "../utils/logger";
+const chrono =  require("chrono-node");
 
 const logger = new LoggerApi();
 
@@ -136,8 +137,8 @@ export class BitfieldState {
 
 export interface IScenario {
   id: ID,
-  start: number,
-  end: number,
+    start: number | string,
+    end: number | string,
   record?: boolean,
   test?: boolean
 }
@@ -174,8 +175,9 @@ export class Scenario implements IScenario {
       this.mode = ScenarioMode.RECORD;
     }
     this.id = json.id;
-    this.start = Number(json.start);
-    this.end = Number(json.end);
+        const [start, end]:number[] = this.tryParseStartEnd(json);
+        this.start = start;
+        this.end = end;
 
     if (!json.record) {
       this.record = this.mode == ScenarioMode.RECORD;
@@ -187,6 +189,33 @@ export class Scenario implements IScenario {
 
     this.time = this.start;
   }
+
+    public tryParseStartEnd(json:IScenario): number[]{
+        let start:any = Number(json.start);
+        let end:any = Number(json.end);
+        //non numbers will fail out as nan
+        if (isNaN(start)){
+            start = this.tryParseDateString(json.start);
+        }
+
+        if (isNaN(end)){
+            end = this.tryParseDateString(json.end);
+        }
+
+        logger.info("Scenario running: ", start, " to ", end);
+
+        return [start, end];
+    }
+
+    public tryParseDateString(input:number | string):number {
+        let startDate:Date = chrono.parseDate(input);
+        if (startDate === null){
+            logger.fatal("Bailing out, couldn't interpret scenario file start time", "start:", input);
+        }
+        else {
+            return startDate.getTime();
+        }
+    }
 
   public dataDir():string {
     return this.test ? "test/data" : "data";
@@ -207,6 +236,12 @@ export class Scenario implements IScenario {
       Scenario.instance = new Scenario({id:name, start:start, end:end, record:record, test:test});
     }
   }
+
+    public static createWithObject(json:IScenario, force:boolean):void {
+        if (!Scenario.instance || force) {
+            Scenario.instance = new Scenario(json);
+        }
+    }
 
   public static shouldWrite() {
     return Scenario.getInstance().record;
