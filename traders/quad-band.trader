@@ -1,0 +1,29 @@
+{
+  "name": "quad-band",
+  "exchange": "binance",
+  "strategies": [
+    {
+      "fileName": "index",
+      "className": "Strategy",
+      "title": "Any--QUAD BAND",
+      "weight": 1,
+      "indicators": [
+        {
+          "fileName": "quad-band",
+          "className": "QuadBand",
+          "period": 15,
+          "buySeverity": 0,
+          "sellSeverity": 0
+        }
+      ]
+    },
+    {
+      "fileName": "hodl",
+      "className": "HODL",
+      "weight":1
+    }
+  ],
+  "tickers": [
+    "ETH/BTC", "BTC/USDT"
+  ]
+}
