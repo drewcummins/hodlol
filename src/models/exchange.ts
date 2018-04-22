@@ -1,11 +1,25 @@
-import { ID, BN, API, BitState, BitfieldState, Scenario, ScenarioMode, Tick, TickerTick, OHLCVTick, OrderTick, Order, TTicker, OHLCV, BNF } from "./types";
-import { Series } from "./series";
-import { Marketplace, Market } from "./market";
-import { BaseTicker, OHLCVTicker, OrderTicker } from "./ticker";
-import { OrderStatus, OrderRequest, OrderType, OrderSide, LimitOrderRequest, MarketOrderRequest } from "./order";
-import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientFundsError, InsufficientExchangeFundsError } from "../errors";
+import {
+    ID,
+    API,
+    BitState,
+    BitfieldState,
+    Scenario,
+    ScenarioMode,
+    Tick,
+    OHLCVTick,
+    OrderTick,
+    Order,
+    TTicker,
+    OHLCV,
+    BNF,
+    ReadableBalance, Balance
+} from "./types";
+import { Marketplace } from "./market";
+import { OHLCVTicker, OrderTicker } from "./ticker";
+import { OrderStatus, OrderRequest, OrderType, OrderSide } from "./order";
+import { InvalidOrderSideError, InvalidOrderTypeError, InsufficientExchangeFundsError } from "../errors";
 import { Portfolio } from "./portfolio";
-import * as ccxt from "ccxt";
+import { TradeLogger } from "../utils/trade-logger";
 
 export type Feed = { candles:Map<string,OHLCVTicker>, orders:Map<string,OrderTicker> };
 
@@ -182,10 +196,15 @@ export class Exchange {
         // For right now, only act if the order is completely closed
         // TODO: Deal with partial fills
         if (order.status == OrderStatus.CLOSED || order.status == OrderStatus.CANCELED) {
+          TradeLogger.logTradeEvent("Order closed", order);
           ticker.kill();
           this.feed.orders.delete(ticker.orderID);
           let portfolio:Portfolio = this.portfolios.get(ticker.portfolioID);
-          if (portfolio) portfolio.fill(last);
+          if (portfolio) {
+              portfolio.fill(last);
+              //get readable portfolio state and log it
+              TradeLogger.logTradeEvent("Portfolio state", portfolio);
+          }
         }
       }
     })

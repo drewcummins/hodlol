@@ -9,6 +9,18 @@ export interface Balance {
     free: Num;
     reserved: Num;
 }
+/**
+ * Turns a Balance into human readable set of strings
+ * that can be logged easily
+ */
+export declare class ReadableBalance implements Balance, IHumanReadable {
+    private innerBalance;
+    free: string;
+    reserved: string;
+    constructor(balance: Balance);
+    format(value: Num): string;
+    readable(): any;
+}
 export declare type Value = {
     [key: string]: Balance;
 };
@@ -48,13 +60,20 @@ export declare class Tick<T extends ExchangeState> {
 export declare type OrderBook = Tick<OrderBookTick>;
 export declare type Trade = Tick<TradeTick>;
 export declare type TTicker = Tick<TickerTick>;
-export declare class OHLCV extends Tick<OHLCVTick> {
+export declare class OHLCV extends Tick<OHLCVTick> implements IHumanReadable {
     readonly open: number;
     readonly high: number;
     readonly low: number;
     readonly close: number;
     readonly volume: number;
     constructor(state: OHLCVTick);
+    readable(): {
+        open: number;
+        high: number;
+        low: number;
+        close: number;
+        volume: number;
+    };
 }
 export declare class Order extends Tick<OrderTick> {
     key(): string;
@@ -76,8 +95,8 @@ export declare class BitfieldState {
 }
 export interface IScenario {
     id: ID;
-    start: number;
-    end: number;
+    start: number | string;
+    end: number | string;
     record?: boolean;
     test?: boolean;
 }
@@ -95,10 +114,22 @@ export declare class Scenario implements IScenario {
     mode: ScenarioMode;
     private static instance;
     private constructor();
+    tryParseStartEnd(json: IScenario): number[];
+    tryParseDateString(input: number | string): number;
     dataDir(): string;
     static getInstance(): Scenario;
     static create(filepath: string): void;
     static createWithName(name: string, start: number, end: number, record?: boolean, test?: boolean): void;
+    static createWithObject(json: IScenario, force: boolean): void;
     static shouldWrite(): boolean;
     static kill(): void;
+}
+/**
+ * Contract to expose a plain old object form
+ * of yourself that is easily readable in serialized
+ * form. Useful for sticking a readable summary into the
+ * logger and events
+ */
+export interface IHumanReadable {
+    readable(): any;
 }

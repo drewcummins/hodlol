@@ -5,6 +5,7 @@ const market_1 = require("./market");
 const ticker_1 = require("./ticker");
 const order_1 = require("./order");
 const errors_1 = require("../errors");
+const trade_logger_1 = require("../utils/trade-logger");
 class Exchange {
     constructor(api) {
         this.api = api;
@@ -157,11 +158,15 @@ class Exchange {
                 // For right now, only act if the order is completely closed
                 // TODO: Deal with partial fills
                 if (order.status == order_1.OrderStatus.CLOSED || order.status == order_1.OrderStatus.CANCELED) {
+                    trade_logger_1.TradeLogger.logTradeEvent("Order closed", order);
                     ticker.kill();
                     this.feed.orders.delete(ticker.orderID);
                     let portfolio = this.portfolios.get(ticker.portfolioID);
-                    if (portfolio)
+                    if (portfolio) {
                         portfolio.fill(last);
+                        //get readable portfolio state and log it
+                        trade_logger_1.TradeLogger.logTradeEvent("Portfolio state", portfolio);
+                    }
                 }
             }
         });

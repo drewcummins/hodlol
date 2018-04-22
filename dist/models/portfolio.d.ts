@@ -1,13 +1,18 @@
-import { Balance, Num, Value, Order } from './types';
+import { Balance, Num, Value, Order, IHumanReadable } from './types';
 import { OrderRequest } from './order';
 import { Marketplace, IMarket } from './market';
-export declare class Portfolio {
+export declare class Portfolio implements IHumanReadable {
     private markets;
     readonly fundSymbol: string;
     readonly fundAmount: Num;
     readonly id: string;
     private balances;
     constructor(markets: Marketplace, fundSymbol?: string, fundAmount?: Num);
+    /**
+     * Render a human readable symbol/balance object
+     * @returns {any}
+     */
+    readable(): any;
     /**
      * Gets balance for the given currency
      *

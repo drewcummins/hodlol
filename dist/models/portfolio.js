@@ -14,6 +14,18 @@ class Portfolio {
         this.balances.set(fundSymbol, { free: fundAmount, reserved: 0 });
     }
     /**
+     * Render a human readable symbol/balance object
+     * @returns {any}
+     */
+    readable() {
+        const readable = {};
+        this.balances.forEach((value, key) => {
+            const balance = new types_1.ReadableBalance(value);
+            readable[key] = balance.readable();
+        });
+        return readable;
+    }
+    /**
      * Gets balance for the given currency
      *
      * @param symbol currency symbol to get balance for

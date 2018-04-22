@@ -5,6 +5,7 @@ const types_1 = require("../types");
 const order_1 = require("../order");
 const errors_1 = require("../../errors");
 const utils_1 = require("../../utils");
+const trade_logger_1 = require("../../utils/trade-logger");
 const uuid = require('uuid/v4');
 class Strategy {
     constructor(portfolio, source, tsi) {
@@ -46,16 +47,28 @@ class Strategy {
             let last = ticker.last();
             let market = this.portfolio.marketBySymbol(indicator.symbol);
             if (signal == indicator_1.Signal.BUY) {
-                let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
+                let [, quote] = this.portfolio.balanceByMarket(indicator.symbol);
+                trade_logger_1.TradeLogger.logTradeEvent("Advice buy", indicator.symbol, "@", last);
                 if (types_1.BN(quote.free).isGreaterThan(0)) {
                     // greedily use up funds
+                    trade_logger_1.TradeLogger.logTradeEvent("Place buy order:", indicator.symbol, types_1.BN(quote.free), types_1.BN(last.close));
                     const order = await this.placeLimitBuyOrder(market, types_1.BN(quote.free), types_1.BN(last.close));
+                    trade_logger_1.TradeLogger.logTradeEvent("Buy order placed:", order.state);
+                }
+                else {
+                    trade_logger_1.TradeLogger.logTradeEvent("Unable to buy", indicator.symbol, "free:", types_1.BN(quote.free));
                 }
             }
             else if (signal == indicator_1.Signal.SELL) {
-                let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
+                let [base,] = this.portfolio.balanceByMarket(indicator.symbol);
+                trade_logger_1.TradeLogger.logTradeEvent("Advice sell", indicator.symbol, "@", last);
                 if (types_1.BN(base.free).isGreaterThan(0)) {
+                    trade_logger_1.TradeLogger.logTradeEvent("Place sell order", indicator.symbol, "free:", types_1.BN(base.free), "last:", types_1.BN(last.close));
                     const order = await this.placeLimitSellOrder(market, types_1.BN(base.free), types_1.BN(last.close));
+                    trade_logger_1.TradeLogger.logTradeEvent("Sell order placed", order.state);
+                }
+                else {
+                    trade_logger_1.TradeLogger.logTradeEvent("Unable to sell", indicator.symbol, "free:", types_1.BN(base.free));
                 }
             }
             else {
