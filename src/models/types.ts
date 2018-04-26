@@ -30,6 +30,34 @@ export interface Balance {
   reserved: Num;
 }
 
+/**
+ * Turns a Balance into human readable set of strings
+ * that can be logged easily
+ */
+export class ReadableBalance implements Balance, IHumanReadable {
+  private innerBalance: Balance;
+  public free : string;
+  public reserved : string;
+  constructor(balance: Balance){
+      this.innerBalance = balance;
+      this.free = this.format(this.innerBalance.free);
+      this.reserved = this.format(this.innerBalance.reserved);
+  }
+
+  format(value:Num):string{
+      return BN(value).toFormat(2);
+  }
+
+  readable():any{
+    this.free = this.format(this.innerBalance.free);
+    this.reserved = this.format(this.innerBalance.reserved);
+    return {
+        free: this.free,
+        reserved: this.reserved
+    }
+  }
+}
+
 export type Value = { [key:string]:Balance };
 
 export interface API {
@@ -75,7 +103,7 @@ export class Tick<T extends ExchangeState> {
 export type OrderBook = Tick<OrderBookTick>;
 export type Trade = Tick<TradeTick>;
 export type TTicker = Tick<TickerTick>;
-export class OHLCV extends Tick<OHLCVTick> {
+export class OHLCV extends Tick<OHLCVTick> implements IHumanReadable{
   readonly open:number; 
   readonly high:number;
   readonly low:number;
@@ -85,12 +113,21 @@ export class OHLCV extends Tick<OHLCVTick> {
     super(state);
     [,this.open,this.high,this.low,this.close,this.volume] = state;
   }
+  readable(){
+      return {
+          open: this.open,
+          high: this.high,
+          low: this.low,
+          close: this.close,
+          volume: this.volume
+      }
+  }
 }
 
 export class Order extends Tick<OrderTick> {
-  public key():string {
-    return this.state.status + super.key();
-  }
+    public key():string {
+        return this.state.status + super.key();
+    }
 }
 
 export type SeriesElement = Order | OHLCV | TTicker | Trade | OrderBook;
@@ -250,4 +287,14 @@ export class Scenario implements IScenario {
   public static kill():void {
     Scenario.instance = null;
   }
+}
+
+/**
+ * Contract to expose a plain old object form
+ * of yourself that is easily readable in serialized
+ * form. Useful for sticking a readable summary into the
+ * logger and events
+ */
+export interface IHumanReadable {
+  readable(): any
 }

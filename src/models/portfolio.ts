@@ -1,17 +1,29 @@
 const uuid = require('uuid/v4');
-import { Balance, Num, BN, ID, Value, Order, Tick, OrderTick } from './types';
-import { OrderRequest, OrderSide, OrderType, LimitOrderRequest, MarketOrderRequest } from './order';
+import {Balance, Num, BN, Value, Order, IHumanReadable, ReadableBalance} from './types';
+import { OrderRequest, OrderSide } from './order';
 import { Marketplace, IMarket } from './market';
-import { BigNumber } from "bignumber.js";
 import { InsufficientFundsError, InvalidOrderSideError } from '../errors';
 
-export class Portfolio {
+export class Portfolio implements IHumanReadable {
   readonly id:string;
   private balances: Map<string,Balance> = new Map<string,Balance>();
 
   constructor(private markets:Marketplace, readonly fundSymbol:string='BTC', readonly fundAmount:Num=10) {
     this.id = uuid();
     this.balances.set(fundSymbol, { free:fundAmount, reserved:0 });
+  }
+
+  /**
+   * Render a human readable symbol/balance object
+   * @returns {any}
+   */
+  public readable():any{
+    const readable:any = {};
+    this.balances.forEach((value, key) => {
+      const balance:ReadableBalance = new ReadableBalance(value);
+      readable[key] = balance.readable();
+    });
+    return readable;
   }
 
   /**
@@ -126,10 +138,6 @@ export class Portfolio {
         break;
     }
   }
-
-
-
-
 
   private addFree(symbol:string, amount:Num):void {
     let balance = this.balance(symbol);

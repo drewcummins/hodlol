@@ -8,6 +8,7 @@ import { OHLCVTicker } from "../ticker";
 import { InvalidSignalError } from "../../errors";
 import { IMarket } from "../market";
 import { load } from "../../utils";
+import { TradeLogger } from "../../utils/trade-logger";
 const uuid = require('uuid/v4');
 
 export interface StrategyJSON {
@@ -72,15 +73,27 @@ export class Strategy {
       let last:OHLCV = ticker.last();
       let market:IMarket = this.portfolio.marketBySymbol(indicator.symbol);
       if (signal == Signal.BUY) {
-        let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
+        let [, quote] = this.portfolio.balanceByMarket(indicator.symbol);
+        TradeLogger.logTradeEvent("Advice buy", indicator.symbol,  "@", last);
         if (BN(quote.free).isGreaterThan(0)) {
           // greedily use up funds
+          TradeLogger.logTradeEvent("Place buy order:", indicator.symbol, BN(quote.free), BN(last.close));
           const order = await this.placeLimitBuyOrder(market, BN(quote.free), BN(last.close));
+          TradeLogger.logTradeEvent("Buy order placed:", order.state);
+        }
+        else {
+            TradeLogger.logTradeEvent("Unable to buy", indicator.symbol, "free:", BN(quote.free));
         }
       } else if (signal == Signal.SELL) {
-        let [base, quote] = this.portfolio.balanceByMarket(indicator.symbol);
+        let [base,] = this.portfolio.balanceByMarket(indicator.symbol);
+        TradeLogger.logTradeEvent("Advice sell", indicator.symbol, "@", last);
         if (BN(base.free).isGreaterThan(0)) {
+          TradeLogger.logTradeEvent("Place sell order", indicator.symbol, "free:", BN(base.free), "last:", BN(last.close));
           const order = await this.placeLimitSellOrder(market, BN(base.free), BN(last.close));
+          TradeLogger.logTradeEvent("Sell order placed", order.state);
+        }
+        else {
+            TradeLogger.logTradeEvent("Unable to sell", indicator.symbol, "free:", BN(base.free));
         }
       } else {
         throw new InvalidSignalError(indicator, signal);
