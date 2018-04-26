@@ -70,6 +70,8 @@ export class Strategy {
       if (signal == Signal.PASS) continue;
 
       let ticker:OHLCVTicker = feed.candles.get(indicator.symbol);
+      // If we get a ticker that's being tracked for non-trading reasons
+      if (!ticker.isTradeable) continue;
       let last:OHLCV = ticker.last();
       let market:IMarket = this.portfolio.marketBySymbol(indicator.symbol);
       if (signal == Signal.BUY) {

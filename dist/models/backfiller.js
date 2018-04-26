@@ -8,8 +8,9 @@ const errors_1 = require("../errors");
 const exchange_1 = require("./exchange");
 const utils_1 = require("../utils");
 class Backfiller {
-    constructor(trader) {
+    constructor(trader, params) {
         this.trader = trader;
+        this.params = params;
     }
     async run(name, start, end) {
         const trader = this.trader;
@@ -21,6 +22,10 @@ class Backfiller {
         let api = new apiClass();
         const exchange = new exchange_1.Exchange(api);
         await exchange.loadFeeds(trader.tickers);
+        const basis = `${this.params.symbol}/${this.params.quote}`;
+        if (!exchange.feed.candles.has(basis)) {
+            const ticker = exchange.addCandlestick(basis);
+        }
         await exchange.loadMarketplace(trader.tickers);
         const tickers = Array.from(exchange.feed.candles.values());
         const thread = new utils_1.Thread();

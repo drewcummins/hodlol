@@ -1,14 +1,14 @@
 import * as fs from "fs";
 import * as mkdirp from "mkdirp";
 const ccxt = require('ccxt');
-import { TraderJSON } from "./trader";
+import { TraderJSON, TraderParams } from "./trader";
 import { Scenario, API, IScenario } from "./types";
 import { InvalidExchangeNameError } from "../errors";
 import { Exchange } from "./exchange";
 import { Thread } from "../utils";
 
 export class Backfiller {
-  constructor(readonly trader:TraderJSON) {}
+  constructor(readonly trader:TraderJSON, readonly params:TraderParams) {}
 
   async run(name:string, start:number, end:number):Promise<string> {
     const trader:TraderJSON = this.trader;
@@ -19,6 +19,10 @@ export class Backfiller {
     let api:API = new apiClass();
     const exchange = new Exchange(api);
     await exchange.loadFeeds(trader.tickers);
+    const basis = `${this.params.symbol}/${this.params.quote}`
+    if (!exchange.feed.candles.has(basis)) {
+      const ticker = exchange.addCandlestick(basis);
+    }
     await exchange.loadMarketplace(trader.tickers);
     const tickers = Array.from(exchange.feed.candles.values());
     const thread:Thread = new Thread();

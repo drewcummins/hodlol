@@ -44,6 +44,9 @@ class Strategy {
             if (signal == indicator_1.Signal.PASS)
                 continue;
             let ticker = feed.candles.get(indicator.symbol);
+            // If we get a ticker that's being tracked for non-trading reasons
+            if (!ticker.isTradeable)
+                continue;
             let last = ticker.last();
             let market = this.portfolio.marketBySymbol(indicator.symbol);
             if (signal == indicator_1.Signal.BUY) {

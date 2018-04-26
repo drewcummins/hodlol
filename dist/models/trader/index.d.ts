@@ -11,6 +11,7 @@ export interface TraderJSON {
 }
 export interface TraderParams {
     symbol: string;
+    quote: string;
     amount: number;
     backtest?: string;
     mock: boolean;

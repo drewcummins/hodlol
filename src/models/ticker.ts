@@ -100,7 +100,7 @@ export class Ticker extends BaseTicker<TTicker> {
 }
 
 export class OHLCVTicker extends BaseTicker<OHLCV> {
-  constructor(exchange:Exchange, symbol:string, private period:string="1m") {
+  constructor(exchange:Exchange, symbol:string, private period:string="1m", public isTradeable:boolean=true) {
     super(exchange, symbol);
     this.timeout = Scenario.getInstance().mode == ScenarioMode.PLAYBACK ? 1 : 35000;
   }

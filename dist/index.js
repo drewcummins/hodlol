@@ -18,6 +18,7 @@ exports.Trader = trader_2.Trader;
 const optionDefinitions = [
     { name: 'help', alias: 'h', type: Boolean },
     { name: 'symbol', alias: 's', type: String, defaultValue: "BTC" },
+    { name: 'quote', alias: 'q', type: String, defaultValue: "USDT" },
     { name: 'amount', alias: 'a', type: Number },
     { name: 'trader', alias: 't', type: String, defaultOption: true },
     { name: 'backtest', alias: 'b', type: String },
@@ -45,7 +46,7 @@ logger.info("resolve to: ", resolvedTraderPath);
         let name = rs.question("Give this backtest a name (default is data start date): ");
         if (!name || name.length < 1)
             name = utils_1.formatTimestamp(+start);
-        const backfiller = new backfiller_1.Backfiller(traderJSON);
+        const backfiller = new backfiller_1.Backfiller(traderJSON, opts);
         opts.backtest = await backfiller.run(name, +start, +end);
     }
     // don't require explicit mock

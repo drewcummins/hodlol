@@ -13,10 +13,12 @@ import { sleep, Thread } from '../src/utils';
 import { MultiIndicatorJSON } from '../src/models/indicator';
 
 const BTC:string = "BTC";
+const USDT:string = "USDT";
 const amount:Num = 10;
 
 let opts:TraderParams = {
   symbol: BTC,
+  quote: USDT,
   amount: amount,
   backtest: "./test/scenarios/market-bounce.scenario",
   mock: true

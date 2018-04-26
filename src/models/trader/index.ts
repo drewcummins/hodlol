@@ -23,6 +23,7 @@ export interface TraderJSON {
 
 export interface TraderParams {
   symbol: string,
+  quote: string,
   amount: number,
   backtest?: string,
   mock: boolean
@@ -98,6 +99,12 @@ export class Trader {
   protected async initExchange() {
     await this.exchange.validateFunds(this.params.symbol, this.params.amount);
     await this.exchange.loadFeeds(this.source.tickers);
+    const basis = `${this.params.symbol}/${this.params.quote}`
+    if (!this.exchange.feed.candles.has(basis)) {
+      const ticker = this.exchange.addCandlestick(basis);
+      ticker.isTradeable = false;
+      this.source.tickers.push(basis);
+    }
     await this.exchange.loadMarketplace(this.source.tickers);
     await this.initStrategies();
   }
@@ -182,7 +189,7 @@ export class Trader {
     for (var i = 0; i < this.strategies.length; i++) {
       let strategy = this.strategies[i];
       try {
-        let value = await strategy.portfolio.value("USDT", this.exchange.price.bind(this.exchange));
+        let value = await strategy.portfolio.value(this.params.quote, this.exchange.price.bind(this.exchange));
         if(!strategy.originalValue) strategy.originalValue = value;
         let total:string = BN(value.all.free).plus(value.all.reserved).toFixed(2);
         let originalTotal:string = BN(strategy.originalValue.all.free).plus(strategy.originalValue.all.reserved).toFixed(2);

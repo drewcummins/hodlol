@@ -53,7 +53,8 @@ export declare class Ticker extends BaseTicker<TTicker> {
 }
 export declare class OHLCVTicker extends BaseTicker<OHLCV> {
     private period;
-    constructor(exchange: Exchange, symbol: string, period?: string);
+    isTradeable: boolean;
+    constructor(exchange: Exchange, symbol: string, period?: string, isTradeable?: boolean);
     /**
      * Grabbing candlestick data returns 0 <= n <= 500 ticks, so we have to iterate over all of them and add each
     */

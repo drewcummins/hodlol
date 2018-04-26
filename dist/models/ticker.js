@@ -87,9 +87,10 @@ class Ticker extends BaseTicker {
 }
 exports.Ticker = Ticker;
 class OHLCVTicker extends BaseTicker {
-    constructor(exchange, symbol, period = "1m") {
+    constructor(exchange, symbol, period = "1m", isTradeable = true) {
         super(exchange, symbol);
         this.period = period;
+        this.isTradeable = isTradeable;
         this.timeout = types_1.Scenario.getInstance().mode == types_1.ScenarioMode.PLAYBACK ? 1 : 35000;
     }
     /**

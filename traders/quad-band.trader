@@ -24,6 +24,6 @@
     }
   ],
   "tickers": [
-    "ETH/BTC", "BTC/USDT"
+    "ETH/BTC"
   ]
 }

@@ -20,6 +20,7 @@ export { Trader, TraderJSON } from "./models/trader"
 const optionDefinitions = [
   { name: 'help', alias: 'h', type: Boolean },
   { name: 'symbol', alias: 's', type: String, defaultValue: "BTC" },
+  { name: 'quote', alias: 'q', type: String, defaultValue: "USDT" },
   { name: 'amount', alias: 'a', type: Number },
   { name: 'trader', alias: 't', type: String, defaultOption: true},
   { name: 'backtest', alias: 'b', type: String},
@@ -39,6 +40,7 @@ logger.info("resolve to: ", resolvedTraderPath);
   if (!foundTrader){
     logger.fatal("We couldn't find trader. Fully resolved path: " + resolvedTraderPath, " supplied opts:", opts, " current cwd: ", process.cwd());
   }
+
   let traderJSON:TraderJSON = JSON.parse(fs.readFileSync(opts.trader).toString());
   
   // if we're asking to backtest without providing a scenario file,
@@ -50,7 +52,7 @@ logger.info("resolve to: ", resolvedTraderPath);
     let end = parsed.end.date();
     let name = rs.question("Give this backtest a name (default is data start date): ");
     if (!name || name.length < 1) name = formatTimestamp(+start);
-    const backfiller:Backfiller = new Backfiller(traderJSON);
+    const backfiller:Backfiller = new Backfiller(traderJSON, opts);
     opts.backtest = await backfiller.run(name, +start, +end);
   }
 
